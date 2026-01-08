@@ -1,273 +1,548 @@
-# HRAS - Configuration Reference
+# ⚙️ HRAS Configuration Reference
 
-This document provides comprehensive reference for system configuration in the HRAS (Human Rights Advisory System).
+*Complete guide to configuring HRAS for your environment*
 
-## Configuration Philosophy
+---
 
-The HRAS system follows these configuration principles:
+## 🎯 Configuration at a Glance
 
-1. **Environment Variable Configuration:** All settings should be configurable via environment variables
-2. **Separation of Concerns:** Different configuration contexts (development, staging, production) should be isolated
-3. **Default Sensible Values:** Provide reasonable defaults that can be overridden
-4. **Secrets Management:** Sensitive data should not be hardcoded
-5. **Configuration Hierarchy:** Environment variables > command line args > defaults
+HRAS follows a **"configuration-as-code"** philosophy - everything is controlled through environment variables, making it easy to deploy across different environments without code changes.
 
-## Configuration Sources
+### 📋 **Quick Reference Card**
 
-### 1. Environment Variables
+| Component | Config File | Key Settings |
+|-----------|-------------|--------------|
+| **Backend** | `backend/.env` | Ollama URL, Models, Database |
+| **Frontend** | `frontend/.env.local` | API URL, Feature Flags |
+| **Kubernetes** | `k8s/dev/backend/dev-backend-configmap.yaml` | Environment-specific overrides |
+| **Docker** | `docker-compose.yml` + `.env` | Container orchestration |
 
-All configuration is driven by environment variables. The following variables are supported:
+---
 
-#### Backend Configuration (.env file)
+## 🔧 Backend Configuration (`backend/.env`)
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `OLLAMA_BASE_URL` | Ollama server URL | `http://localhost:11434` | Yes |
-| `OLLAMA_MODEL` | LLM model for chat | `nemotron-3-nano:30b-cloud` | Yes |
-| `OLLAMA_EMBEDDING_MODEL` | Embedding model | `nomic-embed-text` | Yes |
-| `CHROMA_PERSIST_DIRECTORY` | Vector store path | `./chroma_db` | Yes |
-| `DATABASE_URL` | Database connection | `sqlite+aiosqlite:///./hras.db` | Yes |
-| `CORS_ORIGINS` | Allowed origins | `["http://localhost:3000"]` | No |
-| `REDIS_URL` | Redis cache URL | `redis://localhost:6379/0` | No |
-| `LOG_LEVEL` | Logging level | `INFO` | No |
+### Essential Settings
 
-#### Frontend Configuration (.env.local file)
-
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8000` | Yes |
-| `NEXT_PUBLIC_FEATURE_FLAGS` | Feature flags | `{} ` | No |
-| `NEXT_PUBLIC_ANALYTICS_ID` | Analytics tracking ID | `null` | No |
-
-### 2. Configuration Hierarchy
-
-Configuration follows this precedence (highest to lowest):
-
-1. Environment variables
-2. Command line arguments
-3. Default values in code
-4. Hardcoded fallbacks (not recommended)
-
-### 3. Configuration Management Tools
-
-- **dotenv:** For local development (.env files)
-- **Kubernetes ConfigMaps:** For cluster configuration
-- **Vault/Secrets Manager:** For production secrets
-- **Consul/HCP:** For distributed configuration
-
-## Configuration Files
-
-### 1. Backend Configuration (.env.example)
-
-```
-# Ollama Configuration
+```bash
+# 🤖 AI/LLM Configuration
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=nemotron-3-nano:30b-cloud
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 
-# Vector Store Configuration
+# 💾 Data Storage
 CHROMA_PERSIST_DIRECTORY=./chroma_db
-
-# Database Configuration
 DATABASE_URL=sqlite+aiosqlite:///./hras.db
 
-# Security Configuration
+# 🌐 Network & Security  
 CORS_ORIGINS=["http://localhost:3000"]
-
-# Feature Flags
-ENABLE_FEATURE_X=true
-FEATURE_Y_CONFIG=value
 ```
 
-### 2. Frontend Configuration (.env.example)
+### Complete Variable Reference
 
+| Variable | Required | Default | Description | Example |
+|----------|----------|---------|-------------|---------|
+| **🤖 AI & LLM** |
+| `OLLAMA_BASE_URL` | ✅ | `http://localhost:11434` | Ollama server endpoint | `http://your-ollama:11434` |
+| `OLLAMA_MODEL` | ✅ | `nemotron-3-nano:30b-cloud` | Chat completion model | `llama2:7b-chat` |
+| `OLLAMA_EMBEDDING_MODEL` | ✅ | `nomic-embed-text` | Text embedding model | `all-minilm:l6-v2` |
+| **💾 Storage** |
+| `CHROMA_PERSIST_DIRECTORY` | ✅ | `./chroma_db` | Vector database path | `/data/chromadb` |
+| `DATABASE_URL` | ✅ | `sqlite+aiosqlite:///./hras.db` | Main database connection | `postgresql+asyncpg://user:pass@host/db` |
+| **🌐 Network** |
+| `CORS_ORIGINS` | ❌ | `["http://localhost:3000"]` | Allowed frontend origins | `["https://hras.yourorg.com"]` |
+| `HOST` | ❌ | `0.0.0.0` | Server bind address | `127.0.0.1` |
+| `PORT` | ❌ | `8000` | Server port | `8080` |
+| **📊 Logging & Debug** |
+| `LOG_LEVEL` | ❌ | `INFO` | Logging verbosity | `DEBUG`, `WARNING`, `ERROR` |
+| `DEBUG` | ❌ | `false` | Enable debug mode | `true` |
+| **⚡ Performance** |
+| `WORKERS` | ❌ | `1` | Uvicorn worker processes | `4` |
+| `MAX_CONCURRENT_REQUESTS` | ❌ | `100` | Request concurrency limit | `50` |
+
+### Environment-Specific Examples
+
+#### 🏠 **Development (.env)**
+```bash
+# Fast startup, verbose logging, local services
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=nemotron-3-nano:30b-cloud
+CHROMA_PERSIST_DIRECTORY=./chroma_db
+DATABASE_URL=sqlite+aiosqlite:///./hras.db
+LOG_LEVEL=DEBUG
+DEBUG=true
 ```
-# API Configuration
+
+#### 🏢 **Production (.env)**  
+```bash
+# Secure, optimized, external services
+OLLAMA_BASE_URL=http://ollama-service:11434
+OLLAMA_MODEL=nemotron-3-nano:30b-cloud  
+CHROMA_PERSIST_DIRECTORY=/data/chromadb
+DATABASE_URL=postgresql+asyncpg://hras_user:secure_password@postgres:5432/hras_db
+CORS_ORIGINS=["https://hras.yourorg.com"]
+LOG_LEVEL=WARNING
+WORKERS=4
+```
+
+#### 🧪 **Testing (.env.test)**
+```bash
+# Isolated, predictable, fast
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=nemotron-3-nano:30b-cloud
+CHROMA_PERSIST_DIRECTORY=./test_chroma_db
+DATABASE_URL=sqlite+aiosqlite:///./test.db
+LOG_LEVEL=ERROR
+```
+
+---
+
+## 🌐 Frontend Configuration (`frontend/.env.local`)
+
+### Essential Settings
+
+```bash
+# 🔗 API Connection
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
-# Feature Configuration
-NEXT_PUBLIC_ENABLE_FEATURE_A=true
-NEXT_PUBLIC_FEATURE_B_ENDPOINT=https://api.example.com
-
-# Analytics Configuration
-NEXT_PUBLIC_ANALYTICS_ID=your-analytics-id
+# 🎛️ Feature Toggles
+NEXT_PUBLIC_ENABLE_DEBUG=false
+NEXT_PUBLIC_ANALYTICS_ID=
 ```
 
-### 3. Kubernetes Configuration
+### Complete Variable Reference
 
-The system uses Kubernetes ConfigMaps for environment-specific configuration:
+| Variable | Required | Default | Description | Example |
+|----------|----------|---------|-------------|---------|
+| **🔗 API** |
+| `NEXT_PUBLIC_API_URL` | ✅ | `http://localhost:8000` | Backend API endpoint | `https://api.hras.yourorg.com` |
+| **🎛️ Features** |
+| `NEXT_PUBLIC_ENABLE_DEBUG` | ❌ | `false` | Show debug information | `true` |
+| `NEXT_PUBLIC_ANALYTICS_ID` | ❌ | `` | Analytics tracking ID | `G-XXXXXXXXXX` |
+| `NEXT_PUBLIC_VERSION` | ❌ | `0.2.0` | App version display | `v0.2.0-dev` |
+| **🎨 UI** |
+| `NEXT_PUBLIC_THEME` | ❌ | `light` | Default theme | `dark`, `auto` |
+| `NEXT_PUBLIC_BRAND_NAME` | ❌ | `HRAS` | Application name | `Your Org HRAS` |
 
-#### Base Configuration (k8s/base/)
-- Contains default configurations that apply to all environments
-- Includes placeholder values for:
-  - Image names
-  - Default resource limits
-  - Basic network configuration
+### Environment-Specific Examples
 
-#### Development Configuration (k8s/dev/)
-- Overrides for development environment
-- Includes:
-  - Local database connections
-  - Development-specific feature flags
-  - Debug logging configuration
-  - Hot reload settings
+#### 🏠 **Development (.env.local)**
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_ENABLE_DEBUG=true
+NEXT_PUBLIC_THEME=auto
+```
 
-#### Production Configuration (k8s/prod/)
-- Production-specific overrides
-- Includes:
-  - Production database connections
-  - SSL/TLS configuration
-  - Rate limiting settings
-  - Cache expiration policies
-  - Monitoring and alerting configuration
+#### 🏢 **Production (.env.local)**
+```bash
+NEXT_PUBLIC_API_URL=https://api.hras.yourorg.com
+NEXT_PUBLIC_ANALYTICS_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_THEME=light
+NEXT_PUBLIC_BRAND_NAME="YourOrg Human Rights Advisory"
+```
 
-## Configuration Best Practices
+---
 
-### 1. Development Best Practices
+## ☸️ Kubernetes Configuration
 
-1. **Use .env Files:** Keep sensitive configuration in .env files
-2. **Never Commit Secrets:** Add .env files to .gitignore
-3. **Use Sample Files:** Commit .env.example for reference
-4. **Validate Configuration:** Use validation scripts to check required variables
-5. **Environment Isolation:** Use separate configurations for different environments
+### Configuration Pattern
 
-### 2. Production Best Practices
+HRAS uses **Kustomize overlays** following Ardan Labs patterns:
 
-1. **Secrets Management:** Use secure secrets management solutions
-2. **Configuration Validation:** Implement runtime validation
-3. **Configuration Auditing:** Regularly review configuration settings
-4. **Immutable Configuration:** Treat configuration as immutable in production
-5. **Version Control:** Track configuration changes alongside code changes
+```
+k8s/
+├── base/           # Common configuration
+│   ├── backend/    # Base backend manifests
+│   └── frontend/   # Base frontend manifests
+└── dev/            # Environment-specific overlays
+    ├── backend/    # Dev backend patches
+    └── frontend/   # Dev frontend patches
+```
 
-### 3. Configuration Validation
+### Dev Environment ConfigMap
 
-Implement runtime validation for required configuration:
+**`k8s/dev/backend/dev-backend-configmap.yaml`**
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: hras-system
+data:
+  # Ollama configuration
+  ollama_base_url: "http://host.docker.internal:11434"  # macOS/Windows
+  # ollama_base_url: "http://172.17.0.1:11434"         # Linux alternative
+  ollama_model: "nemotron-3-nano:30b-cloud"
+  ollama_embedding_model: "nomic-embed-text"
+  
+  # Storage configuration  
+  chroma_persist_directory: "/app/chroma_db"
+  database_url: "sqlite+aiosqlite:///./hras.db"
+  
+  # Network configuration
+  cors_origins: '["http://localhost:3000"]'
+  host: "0.0.0.0"
+  port: "8000"
+  
+  # Logging
+  log_level: "INFO"
+  debug: "false"
+```
+
+### Production ConfigMap Template
+
+**`k8s/prod/backend/prod-backend-configmap.yaml`**
+
+```yaml
+apiVersion: v1
+kind: ConfigMap  
+metadata:
+  name: backend-config
+  namespace: hras-system
+data:
+  # Production Ollama service
+  ollama_base_url: "http://ollama-service.hras-system:11434"
+  ollama_model: "nemotron-3-nano:30b-cloud"
+  ollama_embedding_model: "nomic-embed-text"
+  
+  # Production storage
+  chroma_persist_directory: "/data/chromadb"
+  database_url: "postgresql+asyncpg://hras_user:${DB_PASSWORD}@postgres:5432/hras_db"
+  
+  # Production network
+  cors_origins: '["https://hras.yourorg.com"]'
+  
+  # Production logging
+  log_level: "WARNING"
+  workers: "4"
+```
+
+---
+
+## 🐳 Docker Configuration
+
+### Docker Compose Environment
+
+**`docker-compose.yml`** (with `.env` file):
+
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-nemotron-3-nano:30b-cloud}
+      - CHROMA_PERSIST_DIRECTORY=/app/chroma_db
+    volumes:
+      - ./backend/chroma_db:/app/chroma_db
+
+  frontend:
+    build: ./frontend  
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${API_URL:-http://localhost:8000}
+```
+
+**`.env` for Docker Compose**:
+
+```bash
+# Shared configuration for docker-compose
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+OLLAMA_MODEL=nemotron-3-nano:30b-cloud
+API_URL=http://localhost:8000
+```
+
+---
+
+## 🔧 Configuration Validation
+
+### Automatic Validation
+
+HRAS includes built-in configuration validation using **Pydantic Settings**:
 
 ```python
-from pydantic import BaseSettings, Field
+# backend/src/app/core/config.py
+from pydantic import BaseSettings, validator
 
 class Settings(BaseSettings):
-    OLLAMA_BASE_URL: str = Field(default="http://localhost:11434")
-    OLLAMA_MODEL: str = Field(default="nemotron-3-nano:30b-cloud")
-    OLLAMA_EMBEDDING_MODEL: str = Field(default="nomic-embed-text")
-    CHROMA_PERSIST_DIRECTORY: str = Field(default="./chroma_db")
-    DATABASE_URL: str = Field(default="sqlite+aiosqlite:///./hras.db")
-    CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000"])
+    app_name: str = "HRAS"
+    app_version: str = "0.2.0"
     
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "nemotron-3-nano:30b-cloud"
+    
+    @validator('ollama_base_url')
+    def validate_ollama_url(cls, v):
+        if not v.startswith(('http://', 'https://')):
+            raise ValueError('Ollama URL must start with http:// or https://')
+        return v
+
     class Config:
         env_file = ".env"
-        env_file_encoding = "utf-8"
-
-    def get_cors_origins(self) -> List[str]:
-        """Convert comma-separated string to list."""
-        return self.CORS_ORIGINS if isinstance(self.CORS_ORIGINS, list) else \
-               [origin.strip() for origin in self.CORS_ORIGINS.split(',')]
-        
-settings = Settings()
+        case_sensitive = False
 ```
 
-### 4. Configuration Examples
+### Manual Validation Script
 
-#### Example: Loading Configuration in Python Backend
+**`scripts/validate-config.sh`**:
 
-```python
-# settings.py
-from pydantic import BaseSettings
+```bash
+#!/bin/bash
 
-class Settings(BaseSettings):
-    OLLAMA_BASE_URL: str
-    OLLAMA_MODEL: str
-    DATABASE_URL: str
-    
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+echo "🔧 HRAS Configuration Validation"
+echo "================================"
 
-settings = Settings()
+# Check backend configuration
+echo "Backend configuration:"
+cd backend
+python -c "
+from src.app.core.config import settings
+print(f'✅ Ollama URL: {settings.ollama_base_url}')
+print(f'✅ Model: {settings.ollama_model}')  
+print(f'✅ ChromaDB: {settings.chroma_persist_directory}')
+"
+
+# Test Ollama connectivity
+echo -n "Ollama connectivity: "
+curl -s http://localhost:11434/api/tags > /dev/null && echo "✅ OK" || echo "❌ FAIL"
+
+# Check ChromaDB directory
+echo -n "ChromaDB directory: "
+[ -d "./chroma_db" ] && echo "✅ OK" || echo "⚠️  Will be created"
+
+echo "Configuration validation complete!"
 ```
 
-#### Example: Using Configuration in Services
+---
 
-```python
-# services/ingestion_service.py
-from .config import settings
+## 🔄 Configuration Management
 
-def get_chroma_path() -> str:
-    """Get the ChromaDB path from configuration."""
-    return settings.CHROMA_PERSIST_DIRECTORY
+### Development Workflow
 
-def get_ollama_base_url() -> str:
-    """Get the Ollama base URL from configuration."""
-    return settings.OLLAMA_BASE_URL
+1. **Copy Templates**:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.local.example frontend/.env.local
+   ```
+
+2. **Edit for Your Environment**:
+   ```bash
+   # Edit backend configuration
+   vi backend/.env
+   
+   # Edit frontend configuration  
+   vi frontend/.env.local
+   ```
+
+3. **Validate Configuration**:
+   ```bash
+   ./scripts/validate-config.sh
+   ```
+
+4. **Test Configuration**:
+   ```bash
+   make dev
+   curl http://localhost:8000/health
+   ```
+
+### Production Deployment
+
+1. **Secure Secrets Management**:
+   ```bash
+   # Use external secret management (not .env files)
+   kubectl create secret generic hras-secrets \
+     --from-literal=database-password=secure_password \
+     --from-literal=ollama-api-key=api_key
+   ```
+
+2. **Environment-Specific ConfigMaps**:
+   ```bash
+   kubectl apply -k k8s/prod/backend/
+   kubectl apply -k k8s/prod/frontend/
+   ```
+
+3. **Configuration Drift Detection**:
+   ```bash
+   # Compare actual vs expected config
+   kubectl get configmap backend-config -o yaml
+   ```
+
+### Configuration Updates
+
+#### Zero-Downtime Updates
+
+```bash
+# Update ConfigMap
+kubectl patch configmap backend-config \
+  --patch '{"data":{"log_level":"DEBUG"}}'
+
+# Rolling restart to pick up changes
+kubectl rollout restart deployment/backend
+kubectl rollout status deployment/backend
 ```
 
-#### Example: Configuration in Docker
+#### Configuration Versioning
 
-```dockerfile
-# Dockerfile
-ENV OLLAMA_BASE_URL=http://host.docker.internal:11434
-ENV OLLAMA_MODEL=nemotron-3-nano:30b-cloud
-ENV CHROMA_PERSIST_DIRECTORY=/app/chroma_db
+```bash
+# Tag configuration changes
+git add k8s/prod/backend/prod-backend-configmap.yaml
+git commit -m "config: increase logging level for debugging"
+git tag config-v1.2.0
 ```
 
-## Environment-Specific Configuration
+---
 
-### 1. Development Configuration
+## 🛡️ Security Best Practices
 
-- **Features:** Hot reload, debug logging, verbose output
-- **Database:** SQLite (default)
-- **Vector Store:** Local directory storage
-- **External Services:** Local mocks or dev instances
-- **Configuration Sources:**
-  - `.env` files
-  - Local environment variables
-  - Development ConfigMaps
+### Secrets Management
 
-### 2. Testing Configuration
+❌ **Never Do This**:
+```bash
+# DON'T commit secrets to git
+echo "DATABASE_PASSWORD=secret123" >> .env
+git add .env  # ❌ DANGEROUS
+```
 
-- **Isolation:** Completely isolated environment
-- **Databases:** In-memory or test databases
-- **External Services:** Mocked or test instances
-- **Configuration Sources:**
-  - Test-specific .env files
-  - Test environment variables
-  - Test ConfigMaps
+✅ **Do This Instead**:
+```bash
+# Use environment-specific secret management
+export DATABASE_PASSWORD="secret123"
 
-### 3. Production Configuration
+# Or use Kubernetes secrets
+kubectl create secret generic db-secret \
+  --from-literal=password=secret123
+```
 
-- **Features:** SSL termination, rate limiting, caching
-- **Database:** Production-grade storage (e.g., PostgreSQL)
-- **Vector Store:** Persistent, replicated storage
-- **External Services:** Production-ready integrations
-- **Configuration Sources:**
-  - Secrets Manager
-  - Production ConfigMaps
-  - Environment variables from orchestration platform
+### Configuration Security Checklist
 
-## Configuration Migration Guide
+- [ ] **No secrets in git**: Use `.gitignore` for `.env` files  
+- [ ] **Environment isolation**: Separate configs per environment
+- [ ] **Principle of least privilege**: Minimal required permissions
+- [ ] **Regular rotation**: Update passwords and API keys regularly
+- [ ] **Audit logging**: Track configuration changes  
+- [ ] **Encryption at rest**: Secure secret storage systems
 
-### 1. Migrating from Hardcoded to Environment-Based Configuration
+### Environment Variable Security
 
-1. **Identify Hardcoded Values:** Search for literal values in code
-2. **Create Environment Variable:** Map to corresponding environment variable
-3. **Update Configuration Loader:** Ensure environment variables are loaded
-4. **Test Migration:** Verify functionality with new configuration
-5. **Document Changes:** Update documentation with migration instructions
+```bash
+# ✅ Good - using environment variables
+export OLLAMA_API_KEY="sk-..."
+./start-server.sh
 
-### 2. Version Control Strategy
+# ❌ Bad - hardcoded in files
+echo 'OLLAMA_API_KEY="sk-..."' > .env
+```
 
-- **Configuration Versioning:** Track configuration changes alongside code
-- **Migration Scripts:** Create scripts for configuration migrations
-- **Backward Compatibility:** Maintain support for legacy configuration formats
-- **Deprecation Policy:** Clearly communicate deprecation timelines
+---
 
-## Configuration Documentation Standards
+## 🔍 Troubleshooting Configuration Issues
 
-1. **Clear Descriptions:** Each configuration option should have a clear description
-2. **Default Values:** Document default values for all options
-3. **Required vs Optional:** Clearly indicate required configuration
-4. **Examples:** Provide example values for common use cases
-5. **Dependencies:** Document relationships between configuration options
-6. **Validation Rules:** Describe any validation or formatting requirements
-7. **Security Notes:** Indicate security considerations for sensitive settings
-8. **Migration Guidance:** Provide guidance for upgrading configuration formats
+### Common Configuration Problems
+
+#### 🚫 **"Ollama service unavailable"**
+
+**Check**: 
+```bash
+echo $OLLAMA_BASE_URL
+curl $OLLAMA_BASE_URL/api/tags
+```
+
+**Fix**:
+```bash
+# Update URL to correct Ollama server
+export OLLAMA_BASE_URL="http://localhost:11434"
+```
+
+#### 🚫 **"ChromaDB permission denied"**
+
+**Check**:
+```bash
+ls -la $CHROMA_PERSIST_DIRECTORY
+```
+
+**Fix**:
+```bash
+# Create directory with correct permissions
+mkdir -p ./chroma_db
+chmod 755 ./chroma_db
+```
+
+#### 🚫 **"CORS origin not allowed"**
+
+**Check**:
+```bash
+echo $CORS_ORIGINS
+```
+
+**Fix**:
+```bash
+# Add your frontend URL to CORS origins
+export CORS_ORIGINS='["http://localhost:3000","https://your-frontend.com"]'
+```
+
+### Configuration Debugging
+
+#### Enable Debug Mode
+
+```bash
+# Backend debug logging
+export LOG_LEVEL=DEBUG
+export DEBUG=true
+
+# Frontend debug info  
+export NEXT_PUBLIC_ENABLE_DEBUG=true
+```
+
+#### Configuration Inspection
+
+```bash
+# View effective configuration
+cd backend
+python -c "
+from src.app.core.config import settings
+import json
+print(json.dumps(settings.dict(), indent=2, default=str))
+"
+```
+
+---
+
+## 📚 Configuration Examples
+
+### Scenario-Based Configuration
+
+#### 🏠 **Local Development with External Ollama**
+```bash
+# backend/.env
+OLLAMA_BASE_URL=http://192.168.1.100:11434
+OLLAMA_MODEL=llama2:7b-chat
+CHROMA_PERSIST_DIRECTORY=./chroma_db
+LOG_LEVEL=DEBUG
+```
+
+#### ☁️ **Cloud Deployment with Managed Services**
+```bash
+# Production environment variables
+OLLAMA_BASE_URL=https://ollama.cloud-provider.com
+OLLAMA_MODEL=nemotron-3-nano:30b-cloud
+DATABASE_URL=postgresql://user:pass@managed-postgres:5432/hras
+CHROMA_PERSIST_DIRECTORY=/data/chromadb
+CORS_ORIGINS=["https://hras.yourorg.com"]
+LOG_LEVEL=WARNING
+```
+
+#### 🧪 **CI/CD Pipeline Testing**
+```bash
+# .env.ci
+OLLAMA_BASE_URL=http://test-ollama:11434
+OLLAMA_MODEL=llama2:7b-chat
+DATABASE_URL=sqlite+aiosqlite:///./test.db
+CHROMA_PERSIST_DIRECTORY=./test_chroma
+LOG_LEVEL=ERROR
+```
+
+This configuration reference provides everything you need to deploy and customize HRAS for your specific environment and requirements.

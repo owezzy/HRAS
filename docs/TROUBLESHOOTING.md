@@ -1,364 +1,531 @@
-# HRAS - Troubleshooting Guide
-
-This document provides comprehensive troubleshooting guidance for the HRAS (Human Rights Advisory System).
-
-## Troubleshooting Methodology
-
-### 1. Diagnostic Approach
-
-1. **Identify Symptoms:** Clearly describe the issue experienced
-2. **Gather Information:** Collect error messages, logs, and usage context
-3. **Check Basic Functionality:** Verify system connectivity and dependencies
-4. **Apply Systematic Tests:** Isolate components to identify root cause
-5. **Implement Solutions:** Apply fixes and verify resolution
-6. **Document Findings:** Record troubleshooting steps and outcomes
-
-### 2. Troubleshooting Tools
-
-- **System Logs:** Check application logs for error details
-- **Health Checks:** Use `/health` endpoint to verify service status
-- **Verbose Mode:** Enable detailed logging for debugging
-- **Debug Console:** Access development tools for deeper inspection
-
-## Common Issues and Solutions
-
-### 1. System Not Responding
-
-#### Symptoms:
-- No response when submitting queries
-- Application appears frozen or unresponsive
-- White screen or loading indefinitely
-
-#### Root Causes:
-- Network connectivity issues
-- Backend service not running
-- Frontend build failure
-- Database connection problems
-
-#### Diagnostic Steps:
-1. Check network connection
-2. Verify backend server status: `curl http://localhost:8000/health`
-3. Check frontend status: Open browser dev tools (F12) and check console
-4. Check database connectivity
-5. Review application logs for errors
-
-#### Solutions:
-- Restart backend service: `make backend-dev`
-- Restart frontend service: `make frontend-dev`
-- Clear browser cache and reload
-- Ensure all required services are running
-
-### 2. Slow Response Times
-
-#### Symptoms:
-- Queries take unusually long to process
-- Response generation is delayed
-- System appears sluggish
-
-#### Root Causes:
-- Heavy computational load
-- Large vector database queries
-- Network latency
-- Resource constraints
-
-#### Diagnostic Steps:
-1. Check system metrics (CPU, memory, disk I/O)
-2. Monitor backend service performance
-3. Review query processing logs
-4. Check vector search performance
-5. Test with simpler queries
-
-#### Solutions:
-- Optimize query parameters
-- Increase resource allocation if needed
-- Clear unused data from vector store
-- Consider pagination for large result sets
-- Enable caching for frequent queries
-
-### 3. Error Responses
-
-#### Symptoms:
-- Error messages returned instead of responses
-- "Internal Server Error" or "Bad Request" messages
-- Application crashes or restarts
-
-#### Root Causes:
-- Invalid input data
-- Missing dependencies
-- Configuration errors
-- Permission issues
-- Database corruption
-
-#### Diagnostic Steps:
-1. Identify specific error message
-2. Check application logs for stack trace
-3. Review input validation
-4. Verify configuration files
-5. Test with sample inputs
-
-#### Common Error Solutions:
-- **400 Bad Request:** Validate input format and content
-- **500 Internal Server Error:** Check for unhandled exceptions
-- **Database Connection Errors:** Verify database URL and credentials
-- **Ollama API Errors:** Check model availability and access
-
-### 4. Data Ingestion Issues
-
-#### Symptoms:
-- Data ingestion fails silently or with errors
-- Vector store appears empty or incomplete
-- Progress tracking shows errors
-
-#### Root Causes:
-- UHRI API rate limiting
-- Network connectivity to data sources
-- Malformed document content
-- Storage permission issues
-- Memory constraints during processing
-
-#### Diagnostic Steps:
-1. Check ingestion logs for details
-2. Verify network connectivity to UHRI sources
-3. Test with smaller data subsets
-4. Check storage permissions
-5. Monitor memory usage during ingestion
-
-#### Solutions:
-- Implement retry mechanism with exponential backoff
-- Use sample data for testing
-- Increase memory allocation if needed
-- Handle API rate limits gracefully
-- Validate document format before processing
-
-### 5. Docker and Kubernetes Issues
-
-#### Symptoms:
-- Deployment fails with various errors
-- Services don't start properly
-- Pods crash or remain in pending state
-
-#### Root Causes:
-- Image build failures
-- Configuration errors
-- Resource constraints
-- Network policies blocking communication
-- Volume mount issues
-
-#### Diagnostic Steps:
-1. Check Docker/Kubernetes logs
-2. Verify image build process
-3. Test configuration templates
-4. Check resource limits and requests
-5. Validate network connectivity between services
-
-#### Common Solutions:
-- Build images manually: `docker build -t hras-frontend .`
-- Test configuration files locally
-- Increase resource limits in deployment manifests
-- Check service dependencies and network policies
-- Verify volume permissions and paths
-
-## Advanced Troubleshooting Techniques
-
-### 1. Log Analysis
-
-The system implements structured logging with the following key components:
-
-- **Log Levels:** DEBUG, INFO, WARNING, ERROR, CRITICAL
-- **Context Attributes:** Include request ID, user ID, operation type
-- **Structured Format:** JSON logs for easy parsing and analysis
-
-#### Common Log Analysis Patterns:
-
-1. **Error Pattern Recognition:**
-   ```bash
-   grep -i "error" logs/app.log | tail -20
-   grep -i "database" logs/app.log | grep -i "connection"
-   ```
-
-2. **Performance Pattern Analysis:**
-   ```bash
-   grep -i "latency" logs/app.log | awk '{print $2,$3}' | sort -n
-   grep -i "response" logs/app.log | tail -10
-   ```
-
-3. **Security Pattern Detection:**
-   ```bash
-   grep -i "auth" logs/app.log | grep -i "failure"
-   grep -i "permission" logs/app.log
-   ```
-
-### 2. Performance Monitoring
-
-The system includes performance monitoring capabilities:
-
-1. **Response Time Tracking:**
-   - End-to-end query processing time
-   - Retrieval component latency
-   - Generation component processing time
-
-2. **Resource Utilization:**
-   - CPU and memory usage per service
-   - Disk I/O for vector store operations
-   - Network throughput between components
-
-3. **Query Analytics:**
-   - Query frequency by type
-   - Success/failure rates
-   - Popular query patterns
-   - Source citation frequency
-
-## User Support Guide
-
-### 1. When to Contact Support
-
-Contact support if you experience:
-
-- Persistent system errors
-- Data inconsistency issues
-- Security concerns
-- Feature requests or bugs
-- Performance degradation not resolved by standard troubleshooting
-
-### 2. Support Information
-
-- **Email:** support@hras.example.com
-- **Required Information:**
-  - Description of the issue
-  - Steps to reproduce
-  - Screenshots or error messages
-  - System information (browser, OS)
-  - Time and date of occurrence
-  - Any recent changes to your environment
-
-### 3. Knowledge Base
-
-The knowledge base contains:
-- FAQ section
-- Step-by-step guides
-- Video tutorials
-- Community forums
-- Developer documentation
-
-## Preventive Maintenance
-
-### 1. Regular Maintenance Tasks
-
-1. **System Updates:**
-   - Keep dependencies updated
-   - Apply security patches promptly
-   - Monitor for breaking changes
-
-2. **Database Maintenance:**
-   - Perform regular backups
-   - Optimize vector store indexes
-   - Monitor database health
-   - Implement retention policies
-
-3. **Security Audits:**
-   - Review access controls
-   - Scan for vulnerabilities
-   - Update encryption protocols
-   - Monitor for suspicious activity
-
-4. **Performance Optimization:**
-   - Analyze usage patterns
-   - Tune resource allocation
-   - Optimize query performance
-   - Clean up unused data
-
-### 2. Monitoring Checklist
-
-- [ ] System health status
-- [ ] Resource utilization metrics
-- [ ] Database connection status
-- [ ] API endpoint availability
-- [ ] Error rate monitoring
-- [ ] Backup job success
-- [ ] Security scan results
-
-## System Recovery Procedures
-
-### 1. Backup and Restore
-
-1. **Database Backup:**
-   ```bash
-   # Backup SQLite database
-   cp has_ras.db has_ras.backup.db
-   
-   # Or use pg_dump for PostgreSQL
-   pg_dump -U username db_name > backup.sql
-   ```
-
-2. **Vector Store Backup:**
-   ```bash
-   # Copy ChromaDB directory
-   cp -r chroma_db/ chroma_db_backup/
-   
-   # Or use ChromaDB export functionality
-   python -c "from chromadb.utils import export; export('chroma_db', 'backup_chroma')"
-   ```
-
-3. **Configuration Backup:**
-   ```bash
-   # Backup environment files
-   cp backend/.env backend/.env.backup
-   cp frontend/.env.local frontend/.env.local.backup
-   
-   # Backup Kubernetes configs
-   kubectl config view > k8s-config-backup.yaml
-   ```
-
-### 2. Recovery Steps
-
-1. **Restore Database:**
-   ```bash
-   cp has_ras.backup.db has_ras.db
-   ```
-
-2. **Restore Vector Store:**
-   ```bash
-   cp -r chroma_db_backup/ chroma_db/
-   ```
-
-3. **Restore Configuration:**
-   ```bash
-   cp backend/.env.backup backend/.env
-   cp frontend/.env.local.backup frontend/.env.local
-   ```
-
-4. **Restart Services:**
-   ```bash
-   make dev  # Restart all services
-   ```
-
-### 2. Disaster Recovery
-
-#### Recovery Time Objective (RTO): 2 hours
-#### Recovery Point Objective (RPO): 15 minutes
-
-1. **Emergency Procedures:**
-   - Activate backup systems
-   - Redirect traffic to failover instances
-   - Notify stakeholders of incident
-
-2. **Data Restoration:**
-   - Restore from most recent backup
-   - Verify data integrity
-   - Resume normal operations
-
-3. **Post-Incident Review:**
-   - Document incident timeline
-   - Identify root cause
-   - Implement preventive measures
-   - Update incident response plan
-
-## Best Practices for Users
-
-1. **Regular Backups:** Perform regular backups of critical data
-2. **Monitoring:** Check system status regularly
-3. **Updates:** Keep software up to date with security patches
-4. **Documentation:** Keep records of configuration changes
-5. **Testing:** Test recovery procedures periodically
-6. **Documentation:** Maintain clear documentation of recovery procedures
-7. **Communication:** Establish clear communication channels during incidents
+# 🔍 HRAS Troubleshooting Guide
+
+*Quick fixes for common issues - get back up and running fast*
+
+---
+
+## 🚨 Emergency Quick Fixes
+
+**System completely down?** Try these in order:
+
+1. `make dev` - Restart everything
+2. `curl http://localhost:8000/health` - Check if backend is responding
+3. Check browser console (F12) for frontend errors
+4. `make clean && make install` - Clean restart
+5. Check if Ollama is running: `ollama serve`
+
+---
+
+## 🎯 Problem Categories
+
+### 🔥 **Critical Issues** (System Broken)
+- [HRAS won't start](#system-wont-start)
+- [Getting error messages instead of answers](#error-responses)
+- [Docker/Kubernetes deployment failing](#docker-kubernetes-issues)
+
+### ⚡ **Performance Issues** (System Slow)
+- [Responses take forever](#slow-response-times)
+- [High CPU/memory usage](#resource-usage-problems)
+- [Data ingestion stuck](#data-ingestion-issues)
+
+### 🤔 **Usage Issues** (System Confusing)  
+- [Answers don't make sense](#irrelevant-responses)
+- [Missing source citations](#missing-sources)
+- [Conversation context lost](#conversation-problems)
+
+---
+
+## 🔥 Critical Issues
+
+### System Won't Start
+
+#### **Symptoms:**
+- `make dev` fails with errors
+- Nothing loads at http://localhost:3000 or http://localhost:8000
+- Services crash immediately on startup
+
+#### **Quick Diagnosis:**
+```bash
+# Check what's running
+lsof -i :3000  # Frontend port
+lsof -i :8000  # Backend port  
+lsof -i :11434 # Ollama port
+
+# Check service health
+curl http://localhost:8000/health
+curl http://localhost:11434/api/tags
+```
+
+#### **Common Fixes:**
+
+**🔧 Port Conflicts**
+```bash
+# Kill processes using required ports
+sudo lsof -ti:3000 | xargs kill -9
+sudo lsof -ti:8000 | xargs kill -9
+sudo lsof -ti:11434 | xargs kill -9
+
+# Then restart
+make dev
+```
+
+**🔧 Missing Dependencies**
+```bash
+# Reinstall everything
+make clean
+make install
+
+# Or individually
+cd frontend && npm install
+cd backend && uv sync
+```
+
+**🔧 Ollama Not Running**
+```bash
+# Start Ollama service
+ollama serve
+
+# Pull required models
+ollama pull nomic-embed-text
+ollama pull nemotron-3-nano:30b-cloud
+```
+
+**🔧 Environment Variables**
+```bash
+# Copy example files
+cp backend/.env.example backend/.env
+cp frontend/.env.local.example frontend/.env.local
+
+# Edit .env files with correct values
+```
+
+---
+
+### Error Responses
+
+#### **Symptoms:**
+- Getting `{"detail": "Error message"}` instead of AI responses
+- 500 Internal Server Error
+- 400 Bad Request errors
+
+#### **Diagnostic Steps:**
+```bash
+# Check backend logs
+cd backend && uv run uvicorn src.app.main:app --reload --log-level debug
+
+# Test API directly  
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "test"}'
+
+# Check Ollama connectivity
+curl http://localhost:11434/api/tags
+```
+
+#### **Error-Specific Fixes:**
+
+**🔧 "Ollama service unavailable"**
+```bash
+# Restart Ollama
+ollama serve
+
+# Test model availability
+ollama list
+ollama pull nemotron-3-nano:30b-cloud
+```
+
+**🔧 "ChromaDB connection failed"**
+```bash
+# Check ChromaDB directory
+ls -la backend/chroma_db/
+rm -rf backend/chroma_db/  # Delete if corrupted
+make ingest  # Rebuild database
+```
+
+**🔧 "Field required: message"**
+```bash
+# Request format issue - check JSON structure
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Your question here"}'  # Correct format
+```
+
+---
+
+### Docker/Kubernetes Issues
+
+#### **Symptoms:**
+- `make kind-deploy` fails
+- Pods stuck in "Pending" or "CrashLoopBackOff"
+- Images not building
+
+#### **Quick Diagnosis:**
+```bash
+# Check Kind cluster
+kind get clusters
+kubectl get pods -n hras-system
+
+# Check image builds
+docker images | grep hras
+make docker-build
+
+# Check pod logs
+kubectl logs -n hras-system -l app=backend
+```
+
+#### **Common Fixes:**
+
+**🔧 Kind Cluster Issues**
+```bash
+# Recreate cluster
+make kind-delete
+make kind-create
+make kind-load
+make kind-deploy
+```
+
+**🔧 Image Build Problems**
+```bash
+# Clean rebuild
+docker system prune -f
+make docker-build
+make kind-load
+```
+
+**🔧 Pod Startup Issues**
+```bash
+# Check resource limits
+kubectl describe pod -n hras-system [pod-name]
+
+# Check ConfigMaps
+kubectl get configmap -n hras-system
+
+# Check ingestion job
+kubectl get jobs -n hras-system
+```
+
+---
+
+## ⚡ Performance Issues
+
+### Slow Response Times
+
+#### **Symptoms:**
+- Queries take > 10 seconds to respond
+- System feels sluggish
+- Browser shows loading indefinitely
+
+#### **Performance Diagnosis:**
+```bash
+# Check system resources
+top -p $(pgrep -f "uvicorn\|node")
+
+# Test response time
+time curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "quick test"}'
+
+# Check ChromaDB size
+du -sh backend/chroma_db/
+```
+
+#### **Performance Fixes:**
+
+**🔧 Optimize Vector Database**
+```bash
+# Clear and rebuild with sample data (faster)
+make ingest-clear use_sample=true
+
+# Check database stats
+make db-stats
+```
+
+**🔧 Reduce Query Complexity**
+- Ask shorter, more specific questions
+- Avoid very broad queries like "tell me everything about human rights"
+- Break complex questions into smaller parts
+
+**🔧 System Resource Optimization**
+```bash
+# Close unnecessary applications
+# Ensure sufficient RAM (8GB+ recommended)
+# Check available disk space
+df -h
+
+# Monitor resource usage during queries
+htop
+```
+
+---
+
+### Resource Usage Problems
+
+#### **Symptoms:**
+- High CPU usage (>90%)
+- Memory usage growing continuously  
+- Disk space filling up
+
+#### **Resource Monitoring:**
+```bash
+# Monitor real-time usage
+htop
+watch -n 1 'free -m'
+watch -n 1 'df -h'
+
+# Check Docker resource usage
+docker stats
+```
+
+#### **Resource Fixes:**
+
+**🔧 Memory Leaks**
+```bash
+# Restart services periodically
+make dev  # Restarts with fresh memory
+
+# Limit ChromaDB memory usage
+# Edit backend/.env
+CHROMA_PERSIST_DIRECTORY=./chroma_db
+```
+
+**🔧 Disk Space Issues**
+```bash
+# Clean Docker artifacts
+docker system prune -f
+docker volume prune -f
+
+# Clean build artifacts
+make clean
+rm -rf frontend/.next
+rm -rf backend/.pytest_cache
+```
+
+---
+
+### Data Ingestion Issues
+
+#### **Symptoms:**
+- `make ingest` hangs or fails
+- ChromaDB shows 0 documents after ingestion
+- Ingestion progress never completes
+
+#### **Ingestion Diagnosis:**
+```bash
+# Check ingestion status
+make db-stats
+
+# Test with sample data
+curl -X POST "http://localhost:8000/api/v1/admin/ingest?use_sample=true"
+
+# Check backend logs during ingestion
+cd backend && uv run uvicorn src.app.main:app --reload --log-level debug
+```
+
+#### **Ingestion Fixes:**
+
+**🔧 Clear and Restart Ingestion**
+```bash
+# Complete reset
+rm -rf backend/chroma_db/
+make ingest-clear
+```
+
+**🔧 Network Timeout Issues**
+```bash
+# Use sample data for development
+make ingest use_sample=true
+
+# Check internet connectivity for full ingestion
+ping 8.8.8.8
+```
+
+**🔧 Memory Issues During Ingestion**
+```bash
+# Reduce batch size (if configurable)
+# Ensure 8GB+ RAM available during ingestion
+# Close other applications
+```
+
+---
+
+## 🤔 Usage Issues
+
+### Irrelevant Responses
+
+#### **Symptoms:**
+- AI gives generic answers unrelated to your question
+- Responses don't cite UN documents
+- Answers seem to ignore context
+
+#### **Quality Diagnosis:**
+```bash
+# Check if data was ingested properly
+make db-stats
+
+# Test with known good question
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What human rights recommendations exist for Kenya?"}'
+```
+
+#### **Quality Fixes:**
+
+**🔧 Improve Question Phrasing**
+- Be specific: "Kenya UPR 2023 recommendations" vs "tell me about Kenya"
+- Use UN terminology: "Universal Periodic Review" vs "human rights review"
+- Include context: "civil and political rights" vs "rights"
+
+**🔧 Verify Data Ingestion**
+```bash
+# Re-ingest with sample data
+make ingest-clear use_sample=true
+
+# Check document count
+make db-stats  # Should show > 0 documents
+```
+
+---
+
+### Missing Sources
+
+#### **Symptoms:**
+- Responses don't include source citations
+- "sources" array is empty
+- No document references in answers
+
+#### **Sources Diagnosis:**
+```bash
+# Test a query and check response structure
+curl -s -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "test"}' | jq '.sources'
+```
+
+#### **Sources Fix:**
+```bash
+# Ensure documents were ingested with metadata
+make ingest-clear
+make ingest
+
+# Verify ChromaDB contains documents with metadata
+make db-stats
+```
+
+---
+
+### Conversation Problems
+
+#### **Symptoms:**
+- Follow-up questions don't understand context
+- System treats each question as new conversation
+- Conversation ID not working
+
+#### **Conversation Diagnosis:**
+```bash
+# Test conversation flow
+# Step 1: Start conversation
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What about Kenya?"}' > response1.json
+
+# Step 2: Get conversation_id from response
+CONV_ID=$(jq -r '.conversation_id' response1.json)
+
+# Step 3: Continue conversation  
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d "{\"message\": \"Tell me more about that\", \"conversation_id\": \"$CONV_ID\"}"
+```
+
+#### **Conversation Fix:**
+- Ensure you're passing `conversation_id` from previous responses
+- Check that conversation_id is a valid UUID format
+- Conversations expire after ~24 hours (start fresh if needed)
+
+---
+
+## 🛠️ Advanced Troubleshooting Tools
+
+### Log Analysis
+```bash
+# Backend detailed logs
+cd backend && PYTHONPATH=. uv run uvicorn src.app.main:app --reload --log-level debug
+
+# Frontend build logs
+cd frontend && npm run dev
+
+# Docker container logs
+docker logs hras-backend
+docker logs hras-frontend
+```
+
+### Health Check Scripts
+```bash
+# Create health check script
+cat > health_check.sh << 'EOF'
+#!/bin/bash
+echo "🏥 HRAS Health Check"
+echo "===================="
+
+echo -n "Backend Health: "
+curl -s http://localhost:8000/health > /dev/null && echo "✅ OK" || echo "❌ FAIL"
+
+echo -n "Ollama Health: "
+curl -s http://localhost:11434/api/tags > /dev/null && echo "✅ OK" || echo "❌ FAIL" 
+
+echo -n "Frontend Health: "
+curl -s http://localhost:3000 > /dev/null && echo "✅ OK" || echo "❌ FAIL"
+
+echo -n "ChromaDB Health: "
+make db-stats > /dev/null 2>&1 && echo "✅ OK" || echo "❌ FAIL"
+EOF
+
+chmod +x health_check.sh
+./health_check.sh
+```
+
+### Performance Monitoring
+```bash
+# Monitor API response times
+while true; do
+  echo "$(date): $(time curl -s -o /dev/null -w '%{time_total}' -X POST http://localhost:8000/api/v1/chat -H 'Content-Type: application/json' -d '{\"message\": \"test\"}')s"
+  sleep 5
+done
+```
+
+---
+
+## 📞 Getting Help
+
+### 🆘 **When to Escalate**
+Contact support for:
+- Issues not resolved by this guide
+- Suspected security problems
+- Data corruption or loss
+- Performance degradation despite following fixes
+
+### 📧 **Support Information**
+- **Email**: [Your support email]
+- **Include**: Error messages, system info, steps to reproduce
+- **Logs**: Attach relevant log files
+- **Environment**: OS, browser, HRAS version (0.2.0)
+
+### 📚 **Additional Resources**
+- [Development Guide](DEVELOPMENT.md) - For code-related issues
+- [Configuration Reference](CONFIGURATION.md) - For setup problems
+- [Architecture Guide](ARCHITECTURE.md) - To understand system behavior
+
+---
+
+## ✅ Prevention Checklist
+
+Daily maintenance to prevent issues:
+
+- [ ] Check system health: `./health_check.sh`
+- [ ] Monitor disk space: `df -h`
+- [ ] Verify Ollama models: `ollama list`
+- [ ] Test basic query: Quick API test
+- [ ] Check logs for errors: Review application logs
+- [ ] Backup ChromaDB: `cp -r backend/chroma_db/ backup/`
+
+**Remember**: Most issues can be resolved by restarting services with `make dev`. When in doubt, restart first!
