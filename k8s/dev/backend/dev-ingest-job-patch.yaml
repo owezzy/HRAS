@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest-job
+  namespace: hras-system
+
+spec:
+  template:
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      
+      containers:
+        - name: ingest
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
