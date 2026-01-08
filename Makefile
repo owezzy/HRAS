@@ -1,6 +1,6 @@
-.PHONY: help dev prod build clean install lint test frontend-dev backend-dev frontend-build backend-build ingest ingest-clear db-stats \
-	docker-build docker-build-backend docker-build-frontend \
-	kind-create kind-delete kind-load kind-deploy kind-deploy-backend kind-deploy-frontend kind-status kind-logs kind-logs-backend kind-logs-frontend kind-clean
+.PHONY: help dev prod build clean clean-cache install lint test frontend-dev backend-dev frontend-build backend-build ingest ingest-clear db-stats \
+	docker-build docker-build-backend docker-build-frontend docker-build-fast docker-build-backend-fast docker-build-frontend-fast \
+	kind-create kind-delete kind-load kind-deploy kind-dev-up kind-deploy-backend kind-deploy-frontend kind-status kind-logs kind-logs-backend kind-logs-frontend kind-clean
 
 # Default target
 help:
@@ -41,18 +41,21 @@ help:
 	@echo ""
 	@echo "Utilities:"
 	@echo "  clean            Clean build artifacts"
+	@echo "  clean-cache      Clean all caches (Docker, npm, uv, build artifacts)"
 	@echo "  format           Format code in both frontend and backend"
 	@echo ""
 	@echo "Docker:"
 	@echo "  docker-build          Build all Docker images"
 	@echo "  docker-build-backend  Build backend Docker image"
 	@echo "  docker-build-frontend Build frontend Docker image"
+	@echo "  docker-build-fast     Build all images with optimizations (faster builds)"
 	@echo ""
 	@echo "Kind (Local Kubernetes):"
 	@echo "  kind-create          Create Kind cluster"
 	@echo "  kind-delete          Delete Kind cluster"
 	@echo "  kind-load            Build and load images into Kind"
 	@echo "  kind-deploy          Deploy backend and frontend (includes auto-ingestion)"
+	@echo "  kind-dev-up          Complete setup: create cluster, build, deploy (one-command)"
 	@echo "  kind-deploy-backend  Deploy backend only"
 	@echo "  kind-deploy-frontend Deploy frontend only"
 	@echo "  kind-status          Show pods and services"
@@ -155,6 +158,17 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	@echo "Clean complete."
 
+clean-cache:
+	@echo "Cleaning all caches (Docker, npm, uv, build artifacts)..."
+	@make clean
+	@echo "Cleaning Docker build cache..."
+	docker builder prune -f 2>/dev/null || true
+	@echo "Cleaning npm cache..."
+	cd frontend && npm cache clean --force 2>/dev/null || true
+	@echo "Cleaning uv cache..."
+	cd backend && uv cache clean 2>/dev/null || true
+	@echo "Cache cleanup complete."
+
 format: frontend-format backend-format
 	@echo "Formatting complete."
 
@@ -193,13 +207,32 @@ IMAGE_TAG ?= latest
 docker-build: docker-build-backend docker-build-frontend
 	@echo "All Docker images built."
 
+docker-build-fast: docker-build-backend-fast docker-build-frontend-fast
+	@echo "All Docker images built with optimizations."
+
 docker-build-backend:
 	@echo "Building backend Docker image..."
 	docker build -t $(DOCKER_REGISTRY)/hras-backend:$(IMAGE_TAG) ./backend
 
+docker-build-backend-fast:
+	@echo "Building backend Docker image with optimizations..."
+	DOCKER_BUILDKIT=1 docker build \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
+		--cache-from $(DOCKER_REGISTRY)/hras-backend:$(IMAGE_TAG) \
+		-t $(DOCKER_REGISTRY)/hras-backend:$(IMAGE_TAG) \
+		./backend
+
 docker-build-frontend:
 	@echo "Building frontend Docker image..."
 	docker build -t $(DOCKER_REGISTRY)/hras-frontend:$(IMAGE_TAG) ./frontend
+
+docker-build-frontend-fast:
+	@echo "Building frontend Docker image with optimizations..."
+	DOCKER_BUILDKIT=1 docker build \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
+		--cache-from $(DOCKER_REGISTRY)/hras-frontend:$(IMAGE_TAG) \
+		-t $(DOCKER_REGISTRY)/hras-frontend:$(IMAGE_TAG) \
+		./frontend
 
 # =============================================================================
 # Kind (Local Kubernetes)
@@ -225,6 +258,18 @@ kind-load: docker-build
 	kind load docker-image $(DOCKER_REGISTRY)/hras-backend:$(IMAGE_TAG) --name $(KIND_CLUSTER_NAME)
 	kind load docker-image $(DOCKER_REGISTRY)/hras-frontend:$(IMAGE_TAG) --name $(KIND_CLUSTER_NAME)
 	@echo "Images loaded into Kind cluster."
+
+kind-dev-up: kind-create kind-load kind-deploy
+	@echo ""
+	@echo "🚀 HRAS Development Environment Ready!"
+	@echo ""
+	@echo "Frontend: http://localhost:3000"
+	@echo "Backend:  http://localhost:8000"
+	@echo "Health:   http://localhost:8000/health"
+	@echo ""
+	@echo "📊 Check status: make kind-status"
+	@echo "📝 View logs:    make kind-logs"
+	@echo "🧹 Clean up:    make kind-clean && make kind-delete"
 
 kind-deploy-backend:
 	@echo "Deploying backend to Kind cluster..."
