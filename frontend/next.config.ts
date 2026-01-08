@@ -4,6 +4,7 @@ const isTurbopack = process.env.TURBOPACK === '1';
 
 // Conditionally add webpack configuration only when NOT using turbopack
 const nextConfig: NextConfig = {
+	output: 'standalone',
 	reactStrictMode: false,
 	eslint: {
 		// Only enable ESLint in development

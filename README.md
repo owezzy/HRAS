@@ -121,6 +121,75 @@ make ingest-clear
 
 See [docs/API.md](docs/API.md) for detailed API documentation.
 
+## Docker & Kubernetes Deployment
+
+### Building Docker Images
+
+```bash
+# Build backend image
+docker build -t hras-backend:latest ./backend
+
+# Build frontend image
+docker build -t hras-frontend:latest ./frontend
+```
+
+### Kubernetes Deployment
+
+The `k8s/` directory contains Kubernetes manifests using Kustomize.
+
+**Prerequisites:**
+- Kubernetes cluster (minikube, kind, or cloud provider)
+- kubectl configured
+- Nginx Ingress Controller installed
+- cert-manager (optional, for TLS)
+- Ollama running externally (accessible from cluster)
+
+**Deploy:**
+
+```bash
+# Create namespace and deploy all resources
+kubectl apply -k k8s/
+
+# Check deployment status
+kubectl get pods -n hras
+kubectl get services -n hras
+kubectl get ingress -n hras
+```
+
+**Configuration:**
+
+1. Update `k8s/backend-configmap.yaml` with your Ollama endpoint:
+   ```yaml
+   OLLAMA_BASE_URL: "http://your-ollama-host:11434"
+   ```
+
+2. Update `k8s/ingress.yaml` with your domain:
+   ```yaml
+   - host: your-domain.com
+   ```
+
+3. For production, create secrets for sensitive data:
+   ```bash
+   kubectl create secret generic hras-secrets \
+     --from-literal=database-url=your-db-url \
+     -n hras
+   ```
+
+**Manifest Overview:**
+
+| File | Description |
+|------|-------------|
+| `namespace.yaml` | HRAS namespace |
+| `backend-configmap.yaml` | Backend environment variables |
+| `backend-deployment.yaml` | Backend pods with PVC for ChromaDB |
+| `backend-service.yaml` | Backend ClusterIP service (port 8000) |
+| `frontend-deployment.yaml` | Frontend pods |
+| `frontend-service.yaml` | Frontend ClusterIP service (port 3000) |
+| `ingress.yaml` | Nginx ingress with TLS support |
+| `kustomization.yaml` | Kustomize configuration |
+
+**Note:** Ollama is expected to run outside the cluster (on GPU nodes or as a managed service). Update `OLLAMA_BASE_URL` in the configmap to point to your Ollama instance.
+
 ## Project Structure
 
 ```
