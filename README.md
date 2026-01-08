@@ -126,28 +126,77 @@ See [docs/API.md](docs/API.md) for detailed API documentation.
 ### Building Docker Images
 
 ```bash
-# Build backend image
-docker build -t hras-backend:latest ./backend
+# Build all images
+make docker-build
 
-# Build frontend image
-docker build -t hras-frontend:latest ./frontend
+# Or build individually:
+make docker-build-backend   # Build backend image
+make docker-build-frontend  # Build frontend image
 ```
 
-### Kubernetes Deployment
+### Local Development with Kind
 
-The `k8s/` directory contains Kubernetes manifests using Kustomize.
+[Kind](https://kind.sigs.k8s.io/) (Kubernetes IN Docker) lets you run a local Kubernetes cluster for development.
 
 **Prerequisites:**
-- Kubernetes cluster (minikube, kind, or cloud provider)
-- kubectl configured
-- Nginx Ingress Controller installed
-- cert-manager (optional, for TLS)
-- Ollama running externally (accessible from cluster)
+- Docker running
+- [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) installed
+- kubectl installed
+- Ollama running on host machine
 
-**Deploy:**
+**Quick Start:**
 
 ```bash
-# Create namespace and deploy all resources
+# Create Kind cluster with ingress support
+make kind-create
+
+# Build images and load into cluster
+make kind-load
+
+# Deploy HRAS
+make kind-deploy
+
+# Check status
+make kind-status
+```
+
+**Access the app:**
+- Frontend: http://localhost
+- API: http://localhost/api
+- Health check: http://localhost/health
+
+**Useful Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `make kind-create` | Create Kind cluster with ingress |
+| `make kind-delete` | Delete Kind cluster |
+| `make kind-load` | Build and load images into cluster |
+| `make kind-deploy` | Deploy HRAS to cluster |
+| `make kind-status` | Show pods, services, ingress status |
+| `make kind-logs` | Tail logs from all HRAS pods |
+| `make kind-logs-backend` | Tail backend logs only |
+| `make kind-logs-frontend` | Tail frontend logs only |
+| `make kind-clean` | Remove HRAS resources from cluster |
+
+**Ollama Configuration:**
+
+For Kind to access Ollama running on your host machine, update `k8s/backend-configmap.yaml`:
+
+```yaml
+# On macOS/Windows (Docker Desktop):
+OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+
+# On Linux:
+OLLAMA_BASE_URL: "http://172.17.0.1:11434"
+```
+
+### Production Kubernetes Deployment
+
+For production clusters (GKE, EKS, AKS, etc.):
+
+```bash
+# Deploy using Kustomize
 kubectl apply -k k8s/
 
 # Check deployment status
@@ -158,17 +207,10 @@ kubectl get ingress -n hras
 
 **Configuration:**
 
-1. Update `k8s/backend-configmap.yaml` with your Ollama endpoint:
-   ```yaml
-   OLLAMA_BASE_URL: "http://your-ollama-host:11434"
-   ```
-
-2. Update `k8s/ingress.yaml` with your domain:
-   ```yaml
-   - host: your-domain.com
-   ```
-
-3. For production, create secrets for sensitive data:
+1. Update `k8s/backend-configmap.yaml` with your Ollama endpoint
+2. Update `k8s/ingress.yaml` with your domain
+3. Update image names in deployments if using a container registry
+4. Create secrets for sensitive data:
    ```bash
    kubectl create secret generic hras-secrets \
      --from-literal=database-url=your-db-url \
@@ -180,6 +222,7 @@ kubectl get ingress -n hras
 | File | Description |
 |------|-------------|
 | `namespace.yaml` | HRAS namespace |
+| `kind-config.yaml` | Kind cluster config with ingress ports |
 | `backend-configmap.yaml` | Backend environment variables |
 | `backend-deployment.yaml` | Backend pods with PVC for ChromaDB |
 | `backend-service.yaml` | Backend ClusterIP service (port 8000) |
@@ -187,8 +230,6 @@ kubectl get ingress -n hras
 | `frontend-service.yaml` | Frontend ClusterIP service (port 3000) |
 | `ingress.yaml` | Nginx ingress with TLS support |
 | `kustomization.yaml` | Kustomize configuration |
-
-**Note:** Ollama is expected to run outside the cluster (on GPU nodes or as a managed service). Update `OLLAMA_BASE_URL` in the configmap to point to your Ollama instance.
 
 ## Project Structure
 

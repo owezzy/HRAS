@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/your-org/hras-backend:latest
-          imagePullPolicy: Always
+          image: localhost/hras-backend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
               protocol: TCP
