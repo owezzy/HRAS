@@ -4,19 +4,19 @@ Each agent is a specialized node in the LangGraph workflow.
 """
 
 from langchain_core.messages import AIMessage, HumanMessage
-from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 
 from agents.state import AgentState, Source
 from src.app.core.config import get_settings
 from tools.agent_tools import compare_countries, get_country_recommendations, search_recommendations
 
 
-def get_llm() -> ChatOpenAI:
+def get_llm() -> ChatOllama:
     """Get the configured LLM instance."""
     settings = get_settings()
-    return ChatOpenAI(
-        api_key=settings.openai_api_key,
-        model=settings.openai_model,
+    return ChatOllama(
+        base_url=settings.ollama_base_url,
+        model=settings.ollama_model,
         temperature=0.1,
     )
 
