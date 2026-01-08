@@ -1,15 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Include base HRAS resources
 resources:
   - ../../base
-  # Nginx Ingress Controller for Kind
   - https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 
-# Patches for Kind-specific configuration
+labels:
+  - pairs:
+      app.kubernetes.io/environment: kind
+    includeSelectors: false
+    includeTemplates: true
+
 patches:
-  # Update backend configmap for host.docker.internal
   - patch: |-
       - op: replace
         path: /data/OLLAMA_BASE_URL
@@ -17,3 +19,4 @@ patches:
     target:
       kind: ConfigMap
       name: hras-backend-config
+      namespace: hras
