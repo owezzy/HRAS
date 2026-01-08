@@ -2,11 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base/frontend/
-  - ./dev-frontend-configmap.yaml
 patches:
   - path: ./dev-frontend-patch-deploy.yaml
   - path: ./dev-frontend-patch-service.yaml
 images:
   - name: frontend-image
     newName: localhost/hras-frontend
-    newTag: "0.0.1"
+    newTag: "latest"

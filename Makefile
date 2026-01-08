@@ -52,7 +52,7 @@ help:
 	@echo "  kind-create          Create Kind cluster"
 	@echo "  kind-delete          Delete Kind cluster"
 	@echo "  kind-load            Build and load images into Kind"
-	@echo "  kind-deploy          Deploy backend and frontend"
+	@echo "  kind-deploy          Deploy backend and frontend (includes auto-ingestion)"
 	@echo "  kind-deploy-backend  Deploy backend only"
 	@echo "  kind-deploy-frontend Deploy frontend only"
 	@echo "  kind-status          Show pods and services"
@@ -247,6 +247,9 @@ kind-deploy: kind-deploy-backend kind-deploy-frontend
 	@echo "HRAS deployed."
 	@echo "Frontend: http://localhost:3000"
 	@echo "Backend:  http://localhost:8000"
+	@echo ""
+	@echo "Note: Data ingestion job runs automatically on first deployment."
+	@echo "Check ingestion status: kubectl get jobs -n hras-system"
 
 kind-status:
 	@echo "=== HRAS Pods ==="
@@ -254,6 +257,9 @@ kind-status:
 	@echo ""
 	@echo "=== HRAS Services ==="
 	kubectl get services -n hras-system
+	@echo ""
+	@echo "=== Ingestion Jobs ==="
+	kubectl get jobs -n hras-system
 
 kind-logs:
 	@echo "Tailing logs from HRAS pods (Ctrl+C to stop)..."

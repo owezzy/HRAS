@@ -6,7 +6,11 @@ resources:
 patches:
   - path: ./dev-backend-patch-deploy.yaml
   - path: ./dev-backend-patch-service.yaml
+  - path: ./dev-ingest-job-patch.yaml
 images:
   - name: backend-image
     newName: localhost/hras-backend
-    newTag: "0.0.1"
+    newTag: "latest"
+  - name: ingest-image
+    newName: localhost/hras-backend
+    newTag: "latest"

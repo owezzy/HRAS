@@ -149,7 +149,7 @@ make docker-build-frontend  # Build frontend image
 ```bash
 make kind-create    # Create Kind cluster
 make kind-load      # Build and load images
-make kind-deploy    # Deploy backend and frontend
+make kind-deploy    # Deploy backend and frontend (includes automatic data ingestion)
 make kind-status    # Check status
 ```
 
@@ -158,6 +158,9 @@ make kind-status    # Check status
 - Backend API: http://localhost:8000
 - Health check: http://localhost:8000/health
 
+**Data Ingestion:**
+Sample UHRI data is automatically ingested on first deployment via a Kubernetes Job. Check ingestion status with `make kind-status`.
+
 **Useful Commands:**
 
 | Command | Description |
@@ -165,7 +168,7 @@ make kind-status    # Check status
 | `make kind-create` | Create Kind cluster |
 | `make kind-delete` | Delete Kind cluster |
 | `make kind-load` | Build and load images |
-| `make kind-deploy` | Deploy backend and frontend |
+| `make kind-deploy` | Deploy backend and frontend (auto-ingestion included) |
 | `make kind-deploy-backend` | Deploy backend only |
 | `make kind-deploy-frontend` | Deploy frontend only |
 | `make kind-status` | Show pods and services |
