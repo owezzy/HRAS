@@ -147,13 +147,13 @@ make docker-build-frontend  # Build frontend image
 **Quick Start:**
 
 ```bash
-# Create Kind cluster with ingress support
+# Create Kind cluster
 make kind-create
 
 # Build images and load into cluster
 make kind-load
 
-# Deploy HRAS
+# Deploy HRAS (includes Nginx Ingress Controller via Kustomize)
 make kind-deploy
 
 # Check status
@@ -169,10 +169,10 @@ make kind-status
 
 | Command | Description |
 |---------|-------------|
-| `make kind-create` | Create Kind cluster with ingress |
+| `make kind-create` | Create Kind cluster |
 | `make kind-delete` | Delete Kind cluster |
 | `make kind-load` | Build and load images into cluster |
-| `make kind-deploy` | Deploy HRAS to cluster |
+| `make kind-deploy` | Deploy HRAS + Nginx Ingress to cluster |
 | `make kind-status` | Show pods, services, ingress status |
 | `make kind-logs` | Tail logs from all HRAS pods |
 | `make kind-logs-backend` | Tail backend logs only |
@@ -181,14 +181,13 @@ make kind-status
 
 **Ollama Configuration:**
 
-For Kind to access Ollama running on your host machine, update `k8s/backend-configmap.yaml`:
+The Kind overlay automatically configures Ollama to use `host.docker.internal:11434` (works on macOS/Windows).
+
+For Linux, create a patch file or update `k8s/overlays/kind/kustomization.yaml`:
 
 ```yaml
-# On macOS/Windows (Docker Desktop):
-OLLAMA_BASE_URL: "http://host.docker.internal:11434"
-
-# On Linux:
-OLLAMA_BASE_URL: "http://172.17.0.1:11434"
+# Change this line for Linux:
+value: "http://172.17.0.1:11434"
 ```
 
 ### Production Kubernetes Deployment
@@ -196,8 +195,8 @@ OLLAMA_BASE_URL: "http://172.17.0.1:11434"
 For production clusters (GKE, EKS, AKS, etc.):
 
 ```bash
-# Deploy using Kustomize
-kubectl apply -k k8s/
+# Deploy base manifests (without Kind-specific ingress)
+kubectl apply -k k8s/base
 
 # Check deployment status
 kubectl get pods -n hras
@@ -207,8 +206,8 @@ kubectl get ingress -n hras
 
 **Configuration:**
 
-1. Update `k8s/backend-configmap.yaml` with your Ollama endpoint
-2. Update `k8s/ingress.yaml` with your domain
+1. Update `k8s/base/backend-configmap.yaml` with your Ollama endpoint
+2. Update `k8s/base/ingress.yaml` with your domain
 3. Update image names in deployments if using a container registry
 4. Create secrets for sensitive data:
    ```bash
@@ -217,19 +216,21 @@ kubectl get ingress -n hras
      -n hras
    ```
 
-**Manifest Overview:**
+**Directory Structure:**
 
-| File | Description |
-|------|-------------|
-| `namespace.yaml` | HRAS namespace |
-| `kind-config.yaml` | Kind cluster config with ingress ports |
-| `backend-configmap.yaml` | Backend environment variables |
-| `backend-deployment.yaml` | Backend pods with PVC for ChromaDB |
-| `backend-service.yaml` | Backend ClusterIP service (port 8000) |
-| `frontend-deployment.yaml` | Frontend pods |
-| `frontend-service.yaml` | Frontend ClusterIP service (port 3000) |
-| `ingress.yaml` | Nginx ingress with TLS support |
-| `kustomization.yaml` | Kustomize configuration |
+```
+k8s/
+├── base/                    # Base manifests for any cluster
+│   ├── kustomization.yaml
+│   ├── namespace.yaml
+│   ├── backend-*.yaml
+│   ├── frontend-*.yaml
+│   └── ingress.yaml
+├── overlays/
+│   └── kind/                # Kind-specific overlay
+│       └── kustomization.yaml  # Includes Nginx Ingress + host.docker.internal patch
+└── kind-config.yaml         # Kind cluster config (port mappings)
+```
 
 ## Project Structure
 

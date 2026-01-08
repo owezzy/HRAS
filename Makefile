@@ -204,18 +204,11 @@ docker-build-frontend:
 KIND_CLUSTER_NAME ?= hras
 
 kind-create:
-	@echo "Creating Kind cluster '$(KIND_CLUSTER_NAME)' with ingress support..."
+	@echo "Creating Kind cluster '$(KIND_CLUSTER_NAME)'..."
 	@if kind get clusters | grep -q "^$(KIND_CLUSTER_NAME)$$"; then \
 		echo "Cluster '$(KIND_CLUSTER_NAME)' already exists."; \
 	else \
 		kind create cluster --name $(KIND_CLUSTER_NAME) --config=k8s/kind-config.yaml; \
-		echo "Installing Nginx Ingress Controller..."; \
-		kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml; \
-		echo "Waiting for Ingress Controller to be ready..."; \
-		kubectl wait --namespace ingress-nginx \
-			--for=condition=ready pod \
-			--selector=app.kubernetes.io/component=controller \
-			--timeout=120s; \
 	fi
 	@echo "Kind cluster '$(KIND_CLUSTER_NAME)' is ready."
 
@@ -230,9 +223,14 @@ kind-load: docker-build
 	@echo "Images loaded into Kind cluster."
 
 kind-deploy:
-	@echo "Deploying HRAS to Kind cluster..."
-	kubectl apply -k k8s/
-	@echo "Waiting for deployments to be ready..."
+	@echo "Deploying HRAS to Kind cluster (includes Nginx Ingress Controller)..."
+	kubectl apply -k k8s/overlays/kind
+	@echo "Waiting for Ingress Controller to be ready..."
+	kubectl wait --namespace ingress-nginx \
+		--for=condition=ready pod \
+		--selector=app.kubernetes.io/component=controller \
+		--timeout=180s || true
+	@echo "Waiting for HRAS deployments to be ready..."
 	kubectl wait --namespace hras \
 		--for=condition=available deployment/hras-backend \
 		--timeout=120s || true
@@ -269,4 +267,4 @@ kind-logs-frontend:
 
 kind-clean:
 	@echo "Removing HRAS resources from cluster..."
-	kubectl delete -k k8s/ --ignore-not-found
+	kubectl delete -k k8s/overlays/kind --ignore-not-found
