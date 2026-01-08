@@ -1,25 +1,41 @@
-# HRAS API Documentation
+# HRAS - API Reference Documentation
 
-Base URL: `http://localhost:8000`
+This document provides comprehensive API reference for the HRAS (Human Rights Advisory System) backend services.
 
-## Endpoints
+## Base URL
 
-### Health
+```
+http://localhost:8000
+```
 
-#### GET /
-Root endpoint.
+## API Versioning
 
-**Response:**
+All endpoints are versioned under `/api/v1/` to support future iterations.
+
+## Authentication
+
+The API is currently designed for internal use and does not require authentication. However, the following considerations apply:
+
+- All endpoints are rate-limited to prevent abuse
+- Input validation ensures data integrity
+- Output sanitization prevents injection attacks
+
+## API Endpoints
+
+### 1. Health Endpoints
+
+#### GET `/` - Root Endpoint
+Returns a welcome message.
+
 ```json
 {
   "message": "Welcome to HRAS - Human Rights Advisory System"
 }
 ```
 
-#### GET /health
+#### GET `/health` - Health Check
 Health check endpoint.
 
-**Response:**
 ```json
 {
   "status": "healthy",
@@ -28,16 +44,9 @@ Health check endpoint.
 }
 ```
 
-**Example:**
-```bash
-curl http://localhost:8000/health
-```
+### 2. Chat Interface
 
----
-
-### Chat
-
-#### POST /api/v1/chat
+#### POST `/api/v1/chat` - Send Message
 Send a message and receive an AI-generated response with relevant sources.
 
 **Request Body:**
@@ -48,6 +57,7 @@ Send a message and receive an AI-generated response with relevant sources.
 }
 ```
 
+**Parameters:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `message` | string | Yes | User message (1-4000 chars) |
@@ -76,18 +86,12 @@ Send a message and receive an AI-generated response with relevant sources.
 }
 ```
 
-**Example:**
-```bash
-curl -X POST http://localhost:8000/api/v1/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What are the key human rights concerns in Kenya?"}'
-```
+#### POST `/api/v1/chat/suggestions` - Get Suggestions
+Get suggested questions based on user query.
 
----
+### 3. Admin Endpoints
 
-### Admin
-
-#### POST /api/v1/admin/ingest
+#### POST `/api/v1/admin/ingest` - Ingest Data
 Ingest UHRI data into the vector store.
 
 **Query Parameters:**
@@ -118,7 +122,7 @@ curl -X POST "http://localhost:8000/api/v1/admin/ingest?clear_existing=true"
 curl -X POST "http://localhost:8000/api/v1/admin/ingest?use_sample=false"
 ```
 
-#### GET /api/v1/admin/stats
+#### GET `/api/v1/admin/stats` - Get Statistics
 Get vector store statistics.
 
 **Response:**
@@ -134,12 +138,9 @@ Get vector store statistics.
 curl http://localhost:8000/api/v1/admin/stats
 ```
 
----
-
-## Error Responses
+### 4. Error Responses
 
 All endpoints return errors in this format:
-
 ```json
 {
   "detail": "Error message describing what went wrong"
@@ -153,14 +154,62 @@ All endpoints return errors in this format:
 | 400 | Bad Request (invalid input) |
 | 500 | Internal Server Error |
 
----
+## API Examples
 
-## Rate Limits
+### 1. Basic Chat Request
 
-No rate limits are currently implemented. The API is intended for internal use.
+```bash
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What are the key human rights concerns in Kenya?"}'
+```
 
----
+### 2. Continue Conversation
 
-## Authentication
+```bash
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Tell me more about the recommendations",
+    "conversation_id": "550e8400-e29b-41d4-a716-446655440000"
+  }'
+```
 
-No authentication is currently required. The API is intended for local development and internal deployment.
+### 3. Ingest Sample Data
+
+```bash
+curl -X POST http://localhost:8000/api/v1/admin/ingest
+```
+
+## API Testing
+
+### 1. Using HTTPie
+
+```bash
+# Install HTTPie: pip install httpie
+http POST http://localhost:8000/api/v1/chat message="What are human rights?"
+```
+
+### 2. Using Python Requests
+
+```python
+import requests
+
+url = "http://localhost:8000/api/v1/chat"
+headers = {"Content-Type": "application/json"}
+data = {"message": "What are human rights?", "conversation_id": "test-id"}
+
+response = requests.post(url, json=data, headers=headers)
+print(response.json())
+```
+
+## API Roadmap
+
+### Planned Enhancements:
+1. **Authentication System:** JWT-based authentication for production use
+2. **Rate Limiting:** Configurable rate limiting per endpoint
+3. **WebSockets:** Real-time streaming of response generation
+4. **Webhook Support:** Callback notifications for async operations
+5. **API Versioning Strategy:** Support for multiple API versions
+6. **OpenAPI Specification:** Formal OpenAPI 3.0 specification
+7. **API Documentation Portal:** Interactive Swagger UI documentation
