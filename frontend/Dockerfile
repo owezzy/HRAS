@@ -4,11 +4,13 @@ FROM node:22-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-# Copy package files
+# Copy package files and source (needed for postinstall script)
 COPY package*.json ./
+COPY src/ ./src/
 
 # Install dependencies with npm ci for faster, more reliable builds
-RUN npm ci --only=production --ignore-scripts && npm cache clean --force
+# Use --legacy-peer-deps to resolve dependency conflicts
+RUN npm ci --only=production --ignore-scripts --legacy-peer-deps && npm cache clean --force
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -17,7 +19,7 @@ WORKDIR /app
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy source code
+# Copy source code completely
 COPY . .
 
 # Build arguments

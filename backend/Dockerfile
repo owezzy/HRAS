@@ -1,10 +1,5 @@
 FROM python:3.13-slim AS base
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
@@ -14,7 +9,9 @@ FROM base AS deps
 WORKDIR /app
 
 # Copy dependency files first for better layer caching
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml ./
+COPY uv.lock* ./
+COPY README.md ./
 
 # Install dependencies with uv caching
 ENV UV_CACHE_DIR=/opt/uv-cache
@@ -32,8 +29,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 # Copy virtual environment from deps stage
 COPY --from=deps /app/.venv /app/.venv
 
-# Copy dependency files
-COPY pyproject.toml uv.lock* README.md ./
+# Copy only required dependency files
+COPY pyproject.toml ./
 
 # Copy application source code
 COPY src/ ./src/

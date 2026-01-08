@@ -6,26 +6,15 @@ const nextConfig: NextConfig = {
 	output: 'standalone',
 	reactStrictMode: false,
 	
-	// Build optimizations
-	swcMinify: true,
-	
 	// Enable experimental features for faster builds
 	experimental: {
-		// Enable SWC compiler optimizations
-		optimizeCss: true,
-		
-		// Faster development builds
-		turbo: {
-			rules: {
-				// Optimize CSS processing
-				'*.module.css': {
-					loaders: ['css-loader'],
-					options: {
-						modules: true,
-					},
-				},
-			},
-		},
+		// Disable CSS optimization temporarily to fix build
+		// optimizeCss: true,
+	},
+	
+	// Turbopack configuration (stable)
+	turbopack: {
+		rules: {}
 	},
 
 	eslint: {
@@ -36,10 +25,6 @@ const nextConfig: NextConfig = {
 		// Dangerously allow production builds to successfully complete even if
 		// your project has type errors.
 		// ignoreBuildErrors: true
-	},
-	
-	turbopack: {
-		rules: {}
 	},
 	
 	// Webpack optimizations for non-Turbopack builds
