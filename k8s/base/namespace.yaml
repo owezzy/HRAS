@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: hras
-  labels:
-    app.kubernetes.io/name: hras
-    app.kubernetes.io/part-of: hras

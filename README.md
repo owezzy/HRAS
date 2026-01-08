@@ -147,23 +147,16 @@ make docker-build-frontend  # Build frontend image
 **Quick Start:**
 
 ```bash
-# Create Kind cluster
-make kind-create
-
-# Build images and load into cluster
-make kind-load
-
-# Deploy HRAS (includes Nginx Ingress Controller via Kustomize)
-make kind-deploy
-
-# Check status
-make kind-status
+make kind-create    # Create Kind cluster
+make kind-load      # Build and load images
+make kind-deploy    # Deploy backend and frontend
+make kind-status    # Check status
 ```
 
 **Access the app:**
-- Frontend: http://localhost
-- API: http://localhost/api
-- Health check: http://localhost/health
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- Health check: http://localhost:8000/health
 
 **Useful Commands:**
 
@@ -171,66 +164,60 @@ make kind-status
 |---------|-------------|
 | `make kind-create` | Create Kind cluster |
 | `make kind-delete` | Delete Kind cluster |
-| `make kind-load` | Build and load images into cluster |
-| `make kind-deploy` | Deploy HRAS + Nginx Ingress to cluster |
-| `make kind-status` | Show pods, services, ingress status |
-| `make kind-logs` | Tail logs from all HRAS pods |
-| `make kind-logs-backend` | Tail backend logs only |
-| `make kind-logs-frontend` | Tail frontend logs only |
-| `make kind-clean` | Remove HRAS resources from cluster |
+| `make kind-load` | Build and load images |
+| `make kind-deploy` | Deploy backend and frontend |
+| `make kind-deploy-backend` | Deploy backend only |
+| `make kind-deploy-frontend` | Deploy frontend only |
+| `make kind-status` | Show pods and services |
+| `make kind-logs` | Tail all logs |
+| `make kind-logs-backend` | Tail backend logs |
+| `make kind-logs-frontend` | Tail frontend logs |
+| `make kind-clean` | Remove HRAS from cluster |
 
 **Ollama Configuration:**
 
-The Kind overlay automatically configures Ollama to use `host.docker.internal:11434` (works on macOS/Windows).
+The dev overlay configures Ollama to use `host.docker.internal:11434` (macOS/Windows).
 
-For Linux, create a patch file or update `k8s/overlays/kind/kustomization.yaml`:
+For Linux, update `k8s/dev/backend/dev-backend-configmap.yaml`:
 
 ```yaml
-# Change this line for Linux:
-value: "http://172.17.0.1:11434"
+ollama_base_url: "http://172.17.0.1:11434"
 ```
 
 ### Production Kubernetes Deployment
 
-For production clusters (GKE, EKS, AKS, etc.):
+For production, create a `k8s/prod/` overlay similar to `k8s/dev/` with production-specific patches.
 
-```bash
-# Deploy base manifests (without Kind-specific ingress)
-kubectl apply -k k8s/base
-
-# Check deployment status
-kubectl get pods -n hras
-kubectl get services -n hras
-kubectl get ingress -n hras
-```
-
-**Configuration:**
-
-1. Update `k8s/base/backend-configmap.yaml` with your Ollama endpoint
-2. Update `k8s/base/ingress.yaml` with your domain
-3. Update image names in deployments if using a container registry
-4. Create secrets for sensitive data:
-   ```bash
-   kubectl create secret generic hras-secrets \
-     --from-literal=database-url=your-db-url \
-     -n hras
-   ```
-
-**Directory Structure:**
+**Directory Structure (Ardan Labs pattern):**
 
 ```
 k8s/
-├── base/                    # Base manifests for any cluster
-│   ├── kustomization.yaml
-│   ├── namespace.yaml
-│   ├── backend-*.yaml
-│   ├── frontend-*.yaml
-│   └── ingress.yaml
-├── overlays/
-│   └── kind/                # Kind-specific overlay
-│       └── kustomization.yaml  # Includes Nginx Ingress + host.docker.internal patch
-└── kind-config.yaml         # Kind cluster config (port mappings)
+├── base/
+│   ├── backend/
+│   │   ├── kustomization.yaml
+│   │   └── base-backend.yaml      # Deployment, Service, PVC
+│   └── frontend/
+│       ├── kustomization.yaml
+│       └── base-frontend.yaml     # Deployment, Service
+└── dev/
+    ├── kind-config.yaml           # Kind cluster port mappings
+    ├── backend/
+    │   ├── kustomization.yaml     # References base, applies patches
+    │   ├── dev-backend-configmap.yaml
+    │   ├── dev-backend-patch-deploy.yaml
+    │   └── dev-backend-patch-service.yaml
+    └── frontend/
+        ├── kustomization.yaml
+        ├── dev-frontend-patch-deploy.yaml
+        └── dev-frontend-patch-service.yaml
 ```
+
+**Key patterns:**
+- Base manifests use placeholder images (`backend-image`, `frontend-image`)
+- Overlays use `images:` transformer to swap actual image names
+- Patches are separate files for deploy/service modifications
+- ConfigMaps are environment-specific (in overlay, not base)
+- hostNetwork: true for direct port access (no ingress needed for dev)
 
 ## Project Structure
 

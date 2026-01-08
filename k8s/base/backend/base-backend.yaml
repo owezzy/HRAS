@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hras-system
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: hras-system
+
+spec:
+  selector:
+    matchLabels:
+      app: backend
+
+  template:
+    metadata:
+      labels:
+        app: backend
+
+    spec:
+      terminationGracePeriodSeconds: 60
+
+      containers:
+        - name: backend
+          image: backend-image
+
+          ports:
+            - name: api
+              containerPort: 8000
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 2
+
+          env:
+            - name: OLLAMA_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ollama_base_url
+                  optional: true
+            - name: OLLAMA_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ollama_model
+                  optional: true
+            - name: OLLAMA_EMBEDDING_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ollama_embedding_model
+                  optional: true
+            - name: CHROMA_PERSIST_DIRECTORY
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: chroma_persist_directory
+                  optional: true
+
+          volumeMounts:
+            - name: data
+              mountPath: /data
+
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: backend-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backend-data
+  namespace: hras-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: hras-system
+
+spec:
+  selector:
+    app: backend

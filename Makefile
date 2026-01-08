@@ -1,6 +1,6 @@
 .PHONY: help dev prod build clean install lint test frontend-dev backend-dev frontend-build backend-build ingest ingest-clear db-stats \
 	docker-build docker-build-backend docker-build-frontend \
-	kind-create kind-delete kind-load kind-deploy kind-status kind-logs kind-clean
+	kind-create kind-delete kind-load kind-deploy kind-deploy-backend kind-deploy-frontend kind-status kind-logs kind-logs-backend kind-logs-frontend kind-clean
 
 # Default target
 help:
@@ -49,13 +49,17 @@ help:
 	@echo "  docker-build-frontend Build frontend Docker image"
 	@echo ""
 	@echo "Kind (Local Kubernetes):"
-	@echo "  kind-create       Create Kind cluster with ingress support"
-	@echo "  kind-delete       Delete Kind cluster"
-	@echo "  kind-load         Load Docker images into Kind cluster"
-	@echo "  kind-deploy       Deploy HRAS to Kind cluster"
-	@echo "  kind-status       Show status of HRAS pods and services"
-	@echo "  kind-logs         Tail logs from HRAS pods"
-	@echo "  kind-clean        Remove HRAS resources from cluster"
+	@echo "  kind-create          Create Kind cluster"
+	@echo "  kind-delete          Delete Kind cluster"
+	@echo "  kind-load            Build and load images into Kind"
+	@echo "  kind-deploy          Deploy backend and frontend"
+	@echo "  kind-deploy-backend  Deploy backend only"
+	@echo "  kind-deploy-frontend Deploy frontend only"
+	@echo "  kind-status          Show pods and services"
+	@echo "  kind-logs            Tail all logs"
+	@echo "  kind-logs-backend    Tail backend logs"
+	@echo "  kind-logs-frontend   Tail frontend logs"
+	@echo "  kind-clean           Remove HRAS from cluster"
 
 # =============================================================================
 # Development
@@ -208,7 +212,7 @@ kind-create:
 	@if kind get clusters | grep -q "^$(KIND_CLUSTER_NAME)$$"; then \
 		echo "Cluster '$(KIND_CLUSTER_NAME)' already exists."; \
 	else \
-		kind create cluster --name $(KIND_CLUSTER_NAME) --config=k8s/kind-config.yaml; \
+		kind create cluster --name $(KIND_CLUSTER_NAME) --config=k8s/dev/kind-config.yaml; \
 	fi
 	@echo "Kind cluster '$(KIND_CLUSTER_NAME)' is ready."
 
@@ -222,49 +226,49 @@ kind-load: docker-build
 	kind load docker-image $(DOCKER_REGISTRY)/hras-frontend:$(IMAGE_TAG) --name $(KIND_CLUSTER_NAME)
 	@echo "Images loaded into Kind cluster."
 
-kind-deploy:
-	@echo "Deploying HRAS to Kind cluster (includes Nginx Ingress Controller)..."
-	kubectl apply -k k8s/overlays/kind
-	@echo "Waiting for Ingress Controller to be ready..."
-	kubectl wait --namespace ingress-nginx \
-		--for=condition=ready pod \
-		--selector=app.kubernetes.io/component=controller \
-		--timeout=180s || true
-	@echo "Waiting for HRAS deployments to be ready..."
-	kubectl wait --namespace hras \
-		--for=condition=available deployment/hras-backend \
+kind-deploy-backend:
+	@echo "Deploying backend to Kind cluster..."
+	kubectl apply -k k8s/dev/backend
+	@echo "Waiting for backend deployment..."
+	kubectl wait --namespace hras-system \
+		--for=condition=available deployment/backend \
 		--timeout=120s || true
-	kubectl wait --namespace hras \
-		--for=condition=available deployment/hras-frontend \
+
+kind-deploy-frontend:
+	@echo "Deploying frontend to Kind cluster..."
+	kubectl apply -k k8s/dev/frontend
+	@echo "Waiting for frontend deployment..."
+	kubectl wait --namespace hras-system \
+		--for=condition=available deployment/frontend \
 		--timeout=120s || true
+
+kind-deploy: kind-deploy-backend kind-deploy-frontend
 	@echo ""
-	@echo "HRAS deployed. Access at: http://localhost"
-	@echo "API available at: http://localhost/api"
-	@echo ""
-	@echo "Note: Add '127.0.0.1 hras.example.com' to /etc/hosts if using the ingress hostname."
+	@echo "HRAS deployed."
+	@echo "Frontend: http://localhost:3000"
+	@echo "Backend:  http://localhost:8000"
 
 kind-status:
 	@echo "=== HRAS Pods ==="
-	kubectl get pods -n hras -o wide
+	kubectl get pods -n hras-system -o wide
 	@echo ""
 	@echo "=== HRAS Services ==="
-	kubectl get services -n hras
-	@echo ""
-	@echo "=== HRAS Ingress ==="
-	kubectl get ingress -n hras
+	kubectl get services -n hras-system
 
 kind-logs:
 	@echo "Tailing logs from HRAS pods (Ctrl+C to stop)..."
-	kubectl logs -n hras -l app.kubernetes.io/part-of=hras -f --prefix --max-log-requests=10
+	kubectl logs -n hras-system -l app=backend -f --prefix --max-log-requests=10 &
+	kubectl logs -n hras-system -l app=frontend -f --prefix --max-log-requests=10
 
 kind-logs-backend:
 	@echo "Tailing backend logs..."
-	kubectl logs -n hras -l app.kubernetes.io/name=hras-backend -f
+	kubectl logs -n hras-system -l app=backend -f
 
 kind-logs-frontend:
 	@echo "Tailing frontend logs..."
-	kubectl logs -n hras -l app.kubernetes.io/name=hras-frontend -f
+	kubectl logs -n hras-system -l app=frontend -f
 
 kind-clean:
 	@echo "Removing HRAS resources from cluster..."
-	kubectl delete -k k8s/overlays/kind --ignore-not-found
+	kubectl delete -k k8s/dev/backend --ignore-not-found
+	kubectl delete -k k8s/dev/frontend --ignore-not-found
