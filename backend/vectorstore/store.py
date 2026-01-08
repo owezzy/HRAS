@@ -1,0 +1,161 @@
+"""ChromaDB vector store for UHRI documents.
+
+Provides embedding storage and retrieval for human rights recommendations.
+"""
+
+import chromadb
+from chromadb.config import Settings as ChromaSettings
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
+from langchain_ollama import OllamaEmbeddings
+
+from src.app.core.config import get_settings
+
+
+def get_embeddings() -> Embeddings:
+    """Get Ollama embeddings."""
+    settings = get_settings()
+    return OllamaEmbeddings(
+        base_url=settings.ollama_base_url,
+        model=settings.ollama_embedding_model,
+    )
+
+
+class VectorStoreManager:
+    """Manages the ChromaDB vector store for UHRI documents."""
+
+    COLLECTION_NAME = "uhri_recommendations"
+
+    def __init__(
+        self,
+        embeddings: Embeddings | None = None,
+        persist_directory: str | None = None,
+    ) -> None:
+        """Initialize the vector store manager.
+
+        Args:
+            embeddings: Embedding model to use. Defaults to OpenAI embeddings.
+            persist_directory: Directory to persist ChromaDB. Defaults to config value.
+        """
+        settings = get_settings()
+        self.persist_directory = persist_directory or settings.chroma_persist_directory
+
+        self.embeddings = embeddings or get_embeddings()
+
+        # Initialize ChromaDB client
+        self._chroma_client = chromadb.PersistentClient(
+            path=self.persist_directory,
+            settings=ChromaSettings(anonymized_telemetry=False),
+        )
+
+        self._vectorstore: Chroma | None = None
+
+    @property
+    def vectorstore(self) -> Chroma:
+        """Get or create the Chroma vector store."""
+        if self._vectorstore is None:
+            self._vectorstore = Chroma(
+                client=self._chroma_client,
+                collection_name=self.COLLECTION_NAME,
+                embedding_function=self.embeddings,
+            )
+        return self._vectorstore
+
+    def add_documents(self, documents: list[Document]) -> list[str]:
+        """Add documents to the vector store.
+
+        Args:
+            documents: List of LangChain Documents to add.
+
+        Returns:
+            List of document IDs.
+        """
+        return self.vectorstore.add_documents(documents)
+
+    def similarity_search(
+        self,
+        query: str,
+        k: int = 5,
+        filter: dict | None = None,
+    ) -> list[Document]:
+        """Search for similar documents.
+
+        Args:
+            query: Search query text.
+            k: Number of results to return.
+            filter: Optional metadata filter (e.g., {"country": "Kenya"}).
+
+        Returns:
+            List of matching Documents.
+        """
+        return self.vectorstore.similarity_search(query, k=k, filter=filter)
+
+    def similarity_search_with_score(
+        self,
+        query: str,
+        k: int = 5,
+        filter: dict | None = None,
+    ) -> list[tuple[Document, float]]:
+        """Search for similar documents with relevance scores.
+
+        Args:
+            query: Search query text.
+            k: Number of results to return.
+            filter: Optional metadata filter.
+
+        Returns:
+            List of (Document, score) tuples.
+        """
+        return self.vectorstore.similarity_search_with_score(query, k=k, filter=filter)
+
+    def as_retriever(self, search_kwargs: dict | None = None):
+        """Get a retriever interface for the vector store.
+
+        Args:
+            search_kwargs: Optional search parameters (k, filter, etc.).
+
+        Returns:
+            LangChain Retriever object.
+        """
+        kwargs = search_kwargs or {"k": 5}
+        return self.vectorstore.as_retriever(search_kwargs=kwargs)
+
+    def get_collection_stats(self) -> dict:
+        """Get statistics about the vector store collection.
+
+        Returns:
+            Dictionary with collection statistics.
+        """
+        collection = self._chroma_client.get_or_create_collection(self.COLLECTION_NAME)
+        return {
+            "name": self.COLLECTION_NAME,
+            "count": collection.count(),
+        }
+
+    def clear_collection(self) -> None:
+        """Clear all documents from the collection."""
+        try:
+            self._chroma_client.delete_collection(self.COLLECTION_NAME)
+            self._vectorstore = None
+        except ValueError:
+            # Collection doesn't exist
+            pass
+
+
+# Global instance for dependency injection
+_vector_store_manager: VectorStoreManager | None = None
+
+
+def get_vector_store() -> VectorStoreManager:
+    """Get the global vector store manager instance."""
+    global _vector_store_manager
+    if _vector_store_manager is None:
+        _vector_store_manager = VectorStoreManager()
+    return _vector_store_manager
+
+
+def reset_vector_store() -> None:
+    """Reset the global vector store manager (for testing)."""
+    global _vector_store_manager
+    _vector_store_manager = None
