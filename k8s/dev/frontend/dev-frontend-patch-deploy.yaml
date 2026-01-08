@@ -17,6 +17,7 @@ spec:
 
       containers:
         - name: frontend
+          imagePullPolicy: Never
           resources:
             requests:
               cpu: "100m"

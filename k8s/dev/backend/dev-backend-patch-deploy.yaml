@@ -17,6 +17,7 @@ spec:
 
       containers:
         - name: backend
+          imagePullPolicy: Never
           resources:
             requests:
               cpu: "100m"
