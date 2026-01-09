@@ -61,7 +61,7 @@ function NavbarMobileLayout2(props: NavbarMobileLayout2Props) {
 					<img
 						className="w-full max-w-16"
 						src="/assets/images/logo/logo.svg"
-						alt="footer logo"
+						alt="HRAS Logo"
 					/>
 				</div>
 			</StyledContent>

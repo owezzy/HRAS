@@ -13,7 +13,7 @@ function FuseSplashScreen() {
 				<img
 					width="128"
 					src="/assets/images/logo/logo.svg"
-					alt="logo"
+					alt="HRAS Logo"
 				/>
 			</div>
 			<Box

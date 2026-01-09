@@ -33,15 +33,15 @@ function Logo(props: LogoProps) {
 				<img
 					className="logo-icon h-6 w-6"
 					src="/assets/images/logo/logo.svg"
-					alt="logo"
+					alt="HRAS Logo"
 				/>
 				<div className="logo-text flex flex-auto flex-col gap-0.5">
-					<Typography className="tracking-light text-lg leading-none font-semibold">FUSE</Typography>
+					<Typography className="tracking-light text-lg leading-none font-semibold">HRAS</Typography>
 					<Typography
-						className="tracking-light text-[12px] leading-none font-semibold"
+						className="tracking-light text-[11px] leading-none font-medium"
 						color="text.secondary"
 					>
-						React
+						Human Rights Advisory
 					</Typography>
 				</div>
 			</div>
