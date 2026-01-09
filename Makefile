@@ -63,7 +63,7 @@ help:
 	@echo "  kind-logs            Tail all logs"
 	@echo "  kind-logs-backend    Tail backend logs"
 	@echo "  kind-logs-frontend   Tail frontend logs"
-	@echo "  kind-clean           Remove HRAS from cluster"
+	@echo "  kind-clean           Remove HRAS from cluster and delete Kind cluster"
 
 # =============================================================================
 # Development
@@ -303,7 +303,7 @@ kind-dev-up:
 	@echo ""
 	@echo "📊 Check status: make kind-status"
 	@echo "📝 View logs:    make kind-logs"
-	@echo "🧹 Clean up:    make kind-clean && make kind-delete"
+	@echo "🧹 Clean up:    make kind-clean"
 
 kind-deploy-backend:
 	@echo "Deploying backend to Kind cluster..."
@@ -354,6 +354,8 @@ kind-logs-frontend:
 	kubectl logs -n hras-system -l app=frontend -f
 
 kind-clean:
-	@echo "Removing HRAS resources from cluster..."
-	kubectl delete -k k8s/dev/backend --ignore-not-found
-	kubectl delete -k k8s/dev/frontend --ignore-not-found
+	@echo "Removing HRAS resources and deleting Kind cluster..."
+	kubectl delete -k k8s/dev/backend --ignore-not-found || true
+	kubectl delete -k k8s/dev/frontend --ignore-not-found || true
+	kind delete cluster --name $(KIND_CLUSTER_NAME)
+	@echo "Kind cluster '$(KIND_CLUSTER_NAME)' deleted."
