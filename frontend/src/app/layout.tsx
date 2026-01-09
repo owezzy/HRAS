@@ -12,12 +12,13 @@ import App from './App';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata = await generateMetadata({
-	title: 'Fuse React - NextJS',
-	description: 'Fuse React - NextJS by FuseTech',
-	cardImage: '/card.png',
+	title: 'HRAS - Human Rights Advisory System',
+	description:
+		'AI-powered advisory system for UN human rights officers. RAG pipeline over UHRI documents with intelligent multi-agent orchestration.',
+	cardImage: '/assets/icons/512x512.png',
 	robots: 'follow, index',
 	favicon: '/favicon.ico',
-	url: 'https://react-material.fusetheme.com'
+	url: 'https://hras.un.org'
 });
 
 export default async function RootLayout({
@@ -37,7 +38,7 @@ export default async function RootLayout({
 				/>
 				<meta
 					name="theme-color"
-					content="#000000"
+					content="#009EDB"
 				/>
 				<base href="/" />
 				{/*

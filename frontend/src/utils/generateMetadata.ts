@@ -12,10 +12,10 @@ async function generateMetadata(meta: {
 		title: meta.title,
 		description: meta.description,
 		referrer: 'origin-when-cross-origin',
-		keywords: ['FuseTech', 'fdk', 'fdk react', 'saas'],
-		authors: [{ name: 'Vercel', url: 'https://vercel.com/' }],
-		creator: 'FuseTech',
-		publisher: 'FuseTech',
+		keywords: ['HRAS', 'Human Rights', 'UN', 'Advisory System', 'UHRI', 'AI', 'RAG'],
+		authors: [{ name: 'HRAS Development Team' }],
+		creator: 'HRAS',
+		publisher: 'United Nations Human Rights',
 		robots: meta.robots,
 		icons: { icon: meta.favicon },
 		metadataBase: new URL(meta.url),
@@ -25,12 +25,12 @@ async function generateMetadata(meta: {
 			description: meta.description,
 			images: [meta.cardImage],
 			type: 'website',
-			siteName: meta.title
+			siteName: 'HRAS - Human Rights Advisory System'
 		},
 		twitter: {
 			card: 'summary_large_image',
-			site: '@FuseTech',
-			creator: '@FuseTech',
+			site: '@UNHumanRights',
+			creator: '@UNHumanRights',
 			title: meta.title,
 			description: meta.description,
 			images: [meta.cardImage]
