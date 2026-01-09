@@ -19,16 +19,36 @@ spec:
     metadata:
       labels:
         app: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
 
     spec:
+      serviceAccountName: backend-sa
       terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
 
       containers:
         - name: backend
           image: backend-image
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
 
           ports:
             - name: api
+              containerPort: 8000
+            - name: metrics
               containerPort: 8000
 
           readinessProbe:
@@ -105,7 +125,20 @@ kind: Service
 metadata:
   name: backend-service
   namespace: hras-system
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
 
 spec:
   selector:
     app: backend
+  ports:
+    - name: api
+      port: 80
+      targetPort: api
+      protocol: TCP
+    - name: metrics
+      port: 8000
+      targetPort: metrics
+      protocol: TCP

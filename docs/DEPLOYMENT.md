@@ -216,6 +216,59 @@ make kind-status
 kubectl get pods -A
 ```
 
+### Prometheus Monitoring Stack
+
+The project includes a complete Prometheus monitoring stack for production observability.
+
+**Components:**
+- Prometheus server (v2.47.0) - Metrics collection and alerting
+- Grafana (v10.2.0) - Visualization and dashboards
+- AlertManager (v0.26.0) - Alert routing and notifications
+
+**Deploy Monitoring Stack:**
+```bash
+# Deploy to Kind cluster
+kustomize build k8s/dev/monitoring | kubectl apply -f -
+
+# Access services (after Kind port mappings)
+# Prometheus: http://localhost:9090
+# Grafana: http://localhost:3001 (admin/CHANGE_ME_IN_PRODUCTION)
+# AlertManager: http://localhost:9093
+```
+
+**Pre-configured Alerts:**
+| Alert | Condition | Severity |
+|-------|-----------|----------|
+| HighErrorRate | Error rate > 0.1/s for 5m | warning |
+| SlowRAGQueries | p95 latency > 30s | warning |
+| HighModelLatency | p95 inference > 60s | warning |
+| LowVectorStoreDocuments | < 10 documents | critical |
+| HighHTTPErrorRate | 5xx rate > 5% | critical |
+
+**Backend Metrics Endpoint:**
+```bash
+curl http://localhost:8000/metrics
+```
+
+### Production Security Configuration
+
+Security features implemented for production deployments:
+
+**Docker Security:**
+- Non-root users: `appuser` (UID 1000) for backend, `nextjs` (UID 1001) for frontend
+- Proper file ownership and minimal permissions
+
+**Kubernetes Security:**
+- ServiceAccounts with RBAC (least privilege)
+- Pod Security Context (runAsNonRoot, capabilities drop ALL)
+- seccompProfile: RuntimeDefault
+
+**RBAC Configuration:**
+```bash
+# View RBAC resources
+kubectl get serviceaccounts,roles,rolebindings -n hras-system
+```
+
 ## Security Considerations
 
 ### 1. Environment Security

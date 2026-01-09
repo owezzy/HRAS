@@ -1,57 +1,35 @@
-FROM node:22-alpine AS base
+FROM node:22-alpine
 
-# Install dependencies only when needed
-FROM base AS deps
 WORKDIR /app
 
-# Copy package files and source (needed for postinstall script)
-COPY package*.json ./
-COPY src/ ./src/
-
-# Install dependencies with npm ci for faster, more reliable builds
-# Use --legacy-peer-deps to resolve dependency conflicts
-RUN npm ci --only=production --ignore-scripts --legacy-peer-deps && npm cache clean --force
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-
-# Copy source code completely
+# Copy everything
 COPY . .
 
-# Build arguments
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# Install dependencies
+RUN npm ci --legacy-peer-deps
 
-# Build application with optimizations
+# Build application
 ENV NODE_ENV=production
 RUN npm run build
 
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
+# Create non-root user for security (UID 1001 for K8s compatibility)
+RUN addgroup -g 1001 -S nextjs && \
+    adduser -S -u 1001 -G nextjs nextjs
 
-ENV NODE_ENV=production
+# Set ownership of /app and .next directories to non-root user
+RUN chown -R nextjs:nextjs /app
 
-# Create nextjs user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create .npm cache directory with proper ownership
+RUN mkdir -p /home/nextjs/.npm && chown -R nextjs:nextjs /home/nextjs
 
-# Copy static files
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Set HOME environment variable for the user
+ENV HOME=/home/nextjs
 
-# Copy built application
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
+# Switch to non-root user
 USER nextjs
 
 EXPOSE 3000
-
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
