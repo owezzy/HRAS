@@ -7,7 +7,7 @@ function SignInPageTitle() {
 			<img
 				className="w-12"
 				src="/assets/images/logo/logo.svg"
-				alt="logo"
+				alt="HRAS Logo"
 			/>
 
 			<Typography className="mt-8 text-4xl leading-[1.25] font-extrabold tracking-tight">Sign in</Typography>
