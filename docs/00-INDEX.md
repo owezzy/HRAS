@@ -19,6 +19,7 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation! This AI-po
 | Document | What's Inside | Best For |
 |----------|---------------|----------|
 | [📦 **Deployment**](DEPLOYMENT.md) | Local, Docker, Kubernetes deployment | Getting HRAS running |
+| [📊 **Monitoring**](DEPLOYMENT.md#prometheus-monitoring-stack) | Prometheus, Grafana, alerts | Setting up observability |
 | [🔍 **Troubleshooting**](TROUBLESHOOTING.md) | Common issues, debugging, recovery | Solving problems quickly |
 | [🔌 **API Reference**](API.md) | REST endpoints, examples, testing | Integration and automation |
 
