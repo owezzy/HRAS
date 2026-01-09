@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - ./base-backend.yaml
   - ./base-ingest-job.yaml
+  - ./backend-rbac.yaml
