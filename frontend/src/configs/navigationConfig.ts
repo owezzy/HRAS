@@ -14,11 +14,11 @@ i18n.addResourceBundle('ar', 'navigation', ar);
 const navigationConfig: FuseNavItemType[] = [
 	{
 		id: 'example-component',
-		title: 'Example',
-		translate: 'EXAMPLE',
+		title: 'Chat',
+		translate: 'CHAT',
 		type: 'item',
 		icon: 'lucide:star',
-		url: 'example'
+		url: 'chat'
 	}
 ];
 

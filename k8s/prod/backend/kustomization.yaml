@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Reference base backend manifests
+resources:
+  - ../../base/backend
+
+# Production-specific ConfigMap
+configMapGenerator:
+  - name: app-config
+    files:
+      - config.yaml=prod-backend-config.yaml
+
+# Production patches
+patchesStrategicMerge:
+  - prod-backend-patch-deploy.yaml
+  - prod-backend-patch-service.yaml
+
+# Production images with registry
+images:
+  - name: backend-image
+    newName: your-registry.com/hras-backend
+    newTag: v0.2.0
+
+# Production namespace
+namespace: hras-production
+
+# Common labels for production
+commonLabels:
+  environment: production
+  version: v0.2.0

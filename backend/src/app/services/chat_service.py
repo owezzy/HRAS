@@ -3,13 +3,28 @@
 Handles conversation logic, multi-agent invocation, and response formatting.
 """
 
+import time
 from uuid import UUID, uuid4
 
 from agents.graph import run_agent_workflow
 from chains.rag_chain import RAGChain, get_rag_chain
+from src.app.core.logging import ai_logger, get_logger
+from src.app.core.metrics import (
+    AGENT_EXECUTION_DURATION_SECONDS,
+    AGENT_EXECUTIONS_TOTAL,
+    CHAT_SESSIONS_ACTIVE,
+    DOCUMENT_CHUNKS_TOTAL,
+    DOCUMENT_INGESTION_TOTAL,
+    ERRORS_TOTAL,
+    RAG_QUERIES_TOTAL,
+    RAG_QUERY_DURATION_SECONDS,
+    VECTORSTORE_DOCUMENTS,
+)
 from src.app.schemas.chat import ChatMessage, ChatRequest, ChatResponse
 from vectorstore.document_loader import UHRIDocumentLoader
 from vectorstore.store import VectorStoreManager, get_vector_store
+
+logger = get_logger(__name__)
 
 
 class ChatService:
@@ -46,6 +61,11 @@ class ChatService:
         """
         # Get or create conversation
         conversation_id = request.conversation_id or uuid4()
+        is_new_session = conversation_id not in self._conversations
+
+        if is_new_session:
+            CHAT_SESSIONS_ACTIVE.inc()
+            logger.info("chat_session_started", conversation_id=str(conversation_id))
 
         # Check if vector store has documents
         stats = self.vector_store.get_collection_stats()
@@ -64,10 +84,36 @@ class ChatService:
             )
 
         # Use multi-agent system or fallback to simple RAG
-        if self.use_multi_agent:
-            result = await self._process_with_agents(request.message)
-        else:
-            result = await self.rag_chain.invoke_with_sources(request.message)
+        start_time = time.perf_counter()
+        try:
+            if self.use_multi_agent:
+                result = await self._process_with_agents(request.message)
+            else:
+                result = await self.rag_chain.invoke_with_sources(request.message)
+
+            duration = time.perf_counter() - start_time
+            RAG_QUERIES_TOTAL.labels(status="success").inc()
+            RAG_QUERY_DURATION_SECONDS.observe(duration)
+
+            ai_logger.log_inference(
+                model="rag_pipeline",
+                latency_ms=duration * 1000,
+                success=True,
+            )
+        except Exception as e:
+            duration = time.perf_counter() - start_time
+            RAG_QUERIES_TOTAL.labels(status="error").inc()
+            RAG_QUERY_DURATION_SECONDS.observe(duration)
+            ERRORS_TOTAL.labels(error_type="rag_query", component="chat_service").inc()
+
+            ai_logger.log_inference(
+                model="rag_pipeline",
+                latency_ms=duration * 1000,
+                success=False,
+                error=str(e),
+            )
+            logger.error("rag_query_failed", error=str(e), duration_s=duration)
+            raise
 
         # Create response message
         response_message = ChatMessage(
@@ -99,15 +145,40 @@ class ChatService:
         Returns:
             Dictionary with answer and sources.
         """
+        start_time = time.perf_counter()
         try:
             result = await run_agent_workflow(message)
+
+            duration = time.perf_counter() - start_time
+            AGENT_EXECUTIONS_TOTAL.labels(agent_name="multi_agent", status="success").inc()
+            AGENT_EXECUTION_DURATION_SECONDS.labels(agent_name="multi_agent").observe(duration)
+
+            ai_logger.log_agent_execution(
+                agent_name="multi_agent",
+                execution_time_ms=duration * 1000,
+                steps_count=1,
+                success=True,
+            )
+
             return {
                 "answer": result.get("answer", "I couldn't generate a response. Please try again."),
                 "sources": result.get("sources", []),
             }
         except Exception as e:
-            # Fallback to simple RAG on error
-            print(f"Multi-agent error, falling back to RAG: {e}")
+            duration = time.perf_counter() - start_time
+            AGENT_EXECUTIONS_TOTAL.labels(agent_name="multi_agent", status="error").inc()
+            AGENT_EXECUTION_DURATION_SECONDS.labels(agent_name="multi_agent").observe(duration)
+            ERRORS_TOTAL.labels(error_type="agent_execution", component="chat_service").inc()
+
+            ai_logger.log_agent_execution(
+                agent_name="multi_agent",
+                execution_time_ms=duration * 1000,
+                steps_count=0,
+                success=False,
+                error=str(e),
+            )
+            logger.warning("multi_agent_fallback_to_rag", error=str(e))
+
             return await self.rag_chain.invoke_with_sources(message)
 
     def get_conversation_history(self, conversation_id: UUID) -> list[ChatMessage]:
@@ -148,23 +219,41 @@ class DataIngestionService:
         Returns:
             Dictionary with ingestion statistics.
         """
-        if clear_existing:
-            self.vector_store.clear_collection()
+        start_time = time.perf_counter()
+        try:
+            if clear_existing:
+                self.vector_store.clear_collection()
 
-        # Load documents
-        documents = await self.loader.load()
+            documents = await self.loader.load()
 
-        # Add to vector store
-        doc_ids = self.vector_store.add_documents(documents)
+            doc_ids = self.vector_store.add_documents(documents)
 
-        # Get updated stats
-        stats = self.vector_store.get_collection_stats()
+            stats = self.vector_store.get_collection_stats()
 
-        return {
-            "documents_added": len(doc_ids),
-            "total_documents": stats["count"],
-            "collection": stats["name"],
-        }
+            duration = time.perf_counter() - start_time
+            DOCUMENT_INGESTION_TOTAL.labels(status="success").inc()
+            DOCUMENT_CHUNKS_TOTAL.inc(len(doc_ids))
+            VECTORSTORE_DOCUMENTS.set(stats["count"])
+
+            logger.info(
+                "document_ingestion_complete",
+                documents_added=len(doc_ids),
+                total_documents=stats["count"],
+                duration_s=duration,
+            )
+
+            return {
+                "documents_added": len(doc_ids),
+                "total_documents": stats["count"],
+                "collection": stats["name"],
+            }
+        except Exception as e:
+            duration = time.perf_counter() - start_time
+            DOCUMENT_INGESTION_TOTAL.labels(status="error").inc()
+            ERRORS_TOTAL.labels(error_type="document_ingestion", component="data_ingestion_service").inc()
+
+            logger.error("document_ingestion_failed", error=str(e), duration_s=duration)
+            raise
 
     async def get_stats(self) -> dict:
         """Get current vector store statistics.

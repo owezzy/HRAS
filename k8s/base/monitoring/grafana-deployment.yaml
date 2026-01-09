@@ -1,0 +1,488 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+        editable: false
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: grafana
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'HRAS Dashboards'
+        orgId: 1
+        folder: 'HRAS'
+        type: file
+        disableDeletion: true
+        editable: false
+        options:
+          path: /var/lib/grafana/dashboards
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: grafana
+data:
+  hras-overview.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": false,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.5 },
+                  { "color": "red", "value": 1 }
+                ]
+              },
+              "unit": "reqps"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "id": 1,
+          "options": {},
+          "targets": [
+            {
+              "expr": "sum(rate(hras_http_requests_total[5m]))",
+              "legendFormat": "Total Requests/s",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(rate(hras_http_requests_total{status_code=~\"5..\"}[5m]))",
+              "legendFormat": "5xx Errors/s",
+              "refId": "B"
+            }
+          ],
+          "title": "HTTP Request Rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "s"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "id": 2,
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(hras_http_request_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "p50",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(hras_http_request_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "p95",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(hras_http_request_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "p99",
+              "refId": "C"
+            }
+          ],
+          "title": "HTTP Request Latency",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "s"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "id": 3,
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(hras_rag_query_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "p50",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(hras_rag_query_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "p95",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(hras_rag_query_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "p99",
+              "refId": "C"
+            }
+          ],
+          "title": "RAG Query Performance",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "s"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "id": 4,
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(hras_model_inference_duration_seconds_bucket[5m])) by (le, model))",
+              "legendFormat": "{{model}} p50",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(hras_model_inference_duration_seconds_bucket[5m])) by (le, model))",
+              "legendFormat": "{{model}} p95",
+              "refId": "B"
+            }
+          ],
+          "title": "Model Inference Latency",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "s"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+          "id": 5,
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(hras_agent_execution_duration_seconds_bucket[5m])) by (le, agent_name))",
+              "legendFormat": "{{agent_name}} p50",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(hras_agent_execution_duration_seconds_bucket[5m])) by (le, agent_name))",
+              "legendFormat": "{{agent_name}} p95",
+              "refId": "B"
+            }
+          ],
+          "title": "Agent Execution Duration",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "id": 6,
+          "targets": [
+            {
+              "expr": "sum(rate(hras_errors_total[5m])) by (error_type, component)",
+              "legendFormat": "{{component}}: {{error_type}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Error Rate by Component",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "yellow", "value": 10 },
+                  { "color": "green", "value": 100 }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 24 },
+          "id": 7,
+          "targets": [
+            {
+              "expr": "hras_vectorstore_documents",
+              "legendFormat": "Documents",
+              "refId": "A"
+            }
+          ],
+          "title": "Vector Store Documents",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 24 },
+          "id": 8,
+          "targets": [
+            {
+              "expr": "hras_chat_sessions_active",
+              "legendFormat": "Active Sessions",
+              "refId": "A"
+            }
+          ],
+          "title": "Active Chat Sessions",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 24 },
+          "id": 9,
+          "targets": [
+            {
+              "expr": "hras_active_requests",
+              "legendFormat": "Active Requests",
+              "refId": "A"
+            }
+          ],
+          "title": "Active Requests",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 100 },
+                  { "color": "red", "value": 500 }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 24 },
+          "id": 10,
+          "targets": [
+            {
+              "expr": "sum(increase(hras_errors_total[1h]))",
+              "legendFormat": "Errors (1h)",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Errors (Last Hour)",
+          "type": "stat"
+        }
+      ],
+      "refresh": "10s",
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["hras", "backend", "ai-ml"],
+      "templating": { "list": [] },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "HRAS Overview",
+      "uid": "hras-overview",
+      "version": 1
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/component: grafana
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: grafana
+        app.kubernetes.io/component: grafana
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
+
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.2.0
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "CHANGE_ME_IN_PRODUCTION"
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: "Viewer"
+
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: dashboards-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
+            - name: storage
+              mountPath: /var/lib/grafana
+
+      volumes:
+        - name: datasources
+          configMap:
+            name: grafana-datasources
+        - name: dashboards-provider
+          configMap:
+            name: grafana-dashboards-provider
+        - name: dashboards
+          configMap:
+            name: grafana-dashboards
+        - name: storage
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: grafana
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: grafana

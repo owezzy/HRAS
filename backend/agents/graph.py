@@ -3,6 +3,8 @@
 Implements the supervisor pattern with routing to specialized agents.
 """
 
+import time
+
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
@@ -10,6 +12,15 @@ from langgraph.graph import END, StateGraph
 from agents.nodes import advisory_agent, compare_agent, research_agent
 from agents.state import AgentState
 from src.app.core.config import get_settings
+from src.app.core.logging import ai_logger, get_logger
+from src.app.core.metrics import (
+    AGENT_EXECUTION_DURATION_SECONDS,
+    AGENT_EXECUTIONS_TOTAL,
+    AGENT_STEPS_TOTAL,
+    ERRORS_TOTAL,
+)
+
+logger = get_logger(__name__)
 
 SUPERVISOR_SYSTEM_PROMPT = """You are a supervisor agent that routes human rights queries to specialized agents.
 
@@ -187,17 +198,57 @@ async def run_agent_workflow(question: str) -> dict:
         Dictionary with response and sources.
     """
     graph = get_agent_graph()
-
-    # Initialize state
     initial_state = AgentState(question=question)
 
-    # Run the graph
-    final_state = await graph.ainvoke(initial_state)
+    start_time = time.perf_counter()
+    steps_count = 0
 
-    # Format response
-    return {
-        "answer": final_state.get("final_response", ""),
-        "sources": [s.model_dump() for s in final_state.get("sources", [])],
-        "query_type": final_state.get("query_type", "general"),
-        "research_summary": final_state.get("research_summary", ""),
-    }
+    try:
+        final_state = await graph.ainvoke(initial_state)
+
+        steps_count = _count_workflow_steps(final_state)
+        agent_name = final_state.get("query_type", "workflow")
+        duration = time.perf_counter() - start_time
+
+        AGENT_EXECUTIONS_TOTAL.labels(agent_name=agent_name, status="success").inc()
+        AGENT_EXECUTION_DURATION_SECONDS.labels(agent_name=agent_name).observe(duration)
+        AGENT_STEPS_TOTAL.labels(agent_name=agent_name, step_type="completed").inc(steps_count)
+
+        ai_logger.log_agent_execution(
+            agent_name=agent_name,
+            execution_time_ms=duration * 1000,
+            steps_count=steps_count,
+            success=True,
+        )
+
+        return {
+            "answer": final_state.get("final_response", ""),
+            "sources": [s.model_dump() for s in final_state.get("sources", [])],
+            "query_type": final_state.get("query_type", "general"),
+            "research_summary": final_state.get("research_summary", ""),
+        }
+    except Exception as e:
+        duration = time.perf_counter() - start_time
+
+        AGENT_EXECUTIONS_TOTAL.labels(agent_name="workflow", status="error").inc()
+        AGENT_EXECUTION_DURATION_SECONDS.labels(agent_name="workflow").observe(duration)
+        ERRORS_TOTAL.labels(error_type="agent_workflow", component="agents.graph").inc()
+
+        ai_logger.log_agent_execution(
+            agent_name="workflow",
+            execution_time_ms=duration * 1000,
+            steps_count=steps_count,
+            success=False,
+            error=str(e),
+        )
+        logger.error("agent_workflow_failed", error=str(e), duration_s=duration)
+        raise
+
+
+def _count_workflow_steps(state: dict) -> int:
+    steps = 1
+    if state.get("research_summary"):
+        steps += 1
+    if state.get("final_response"):
+        steps += 1
+    return steps

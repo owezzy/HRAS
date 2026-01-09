@@ -1,35 +1,35 @@
-FROM node:22-alpine AS builder
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install --force --ignore-scripts
-
+# Copy everything
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# Install dependencies
+RUN npm ci --legacy-peer-deps
 
+# Build application
+ENV NODE_ENV=production
 RUN npm run build
 
-FROM node:22-alpine AS runner
+# Create non-root user for security (UID 1001 for K8s compatibility)
+RUN addgroup -g 1001 -S nextjs && \
+    adduser -S -u 1001 -G nextjs nextjs
 
-WORKDIR /app
+# Set ownership of /app and .next directories to non-root user
+RUN chown -R nextjs:nextjs /app
 
-ENV NODE_ENV=production
+# Create .npm cache directory with proper ownership
+RUN mkdir -p /home/nextjs/.npm && chown -R nextjs:nextjs /home/nextjs
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Set HOME environment variable for the user
+ENV HOME=/home/nextjs
 
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
+# Switch to non-root user
 USER nextjs
 
 EXPOSE 3000
-
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

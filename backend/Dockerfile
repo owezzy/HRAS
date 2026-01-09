@@ -1,23 +1,61 @@
-FROM python:3.13-slim
+FROM python:3.13-slim AS base
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Dependencies stage - optimize for caching
+FROM base AS deps
+
+WORKDIR /app
+
+# Copy dependency files first for better layer caching
+COPY pyproject.toml ./
+COPY README.md ./
+COPY uv.lock* ./
+
+# Install dependencies with uv caching
+ENV UV_CACHE_DIR=/opt/uv-cache
+RUN --mount=type=cache,target=/opt/uv-cache \
+    uv sync --frozen --no-dev
+
+# Production stage
+FROM python:3.13-slim AS runner
 
 WORKDIR /app
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# Copy dependency files
-COPY pyproject.toml uv.lock* README.md ./
+# Create non-root user for security (UID 1000 for K8s compatibility)
+RUN groupadd -g 1000 appuser && \
+    useradd -m -u 1000 -g appuser appuser
 
-# Install dependencies
-RUN uv sync --frozen --no-dev
+# Create /data directory for ChromaDB persistence with proper ownership
+RUN mkdir -p /data && chown -R appuser:appuser /data
 
-# Copy source code
+# Copy virtual environment from deps stage
+COPY --from=deps /app/.venv /app/.venv
+
+# Copy only required dependency files
+COPY pyproject.toml ./
+COPY README.md ./
+
+# Copy application source code
 COPY src/ ./src/
 COPY agents/ ./agents/
 COPY chains/ ./chains/
 COPY tools/ ./tools/
 COPY vectorstore/ ./vectorstore/
 COPY prompts/ ./prompts/
+
+# Set ownership of /app to non-root user
+RUN chown -R appuser:appuser /app
+
+# Set HOME environment variable for the user
+ENV HOME=/home/appuser
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000
