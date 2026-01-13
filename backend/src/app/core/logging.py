@@ -16,25 +16,25 @@ user_id_ctx: ContextVar[str | None] = ContextVar("user_id", default=None)
 
 
 def add_request_context(
-    logger: logging.Logger,
-    method_name: str,
+    _logger: logging.Logger,
+    _method_name: str,
     event_dict: dict[str, Any],
 ) -> dict[str, Any]:
     """Add request context to log entries."""
     request_id = request_id_ctx.get()
     user_id = user_id_ctx.get()
-    
+
     if request_id:
         event_dict["request_id"] = request_id
     if user_id:
         event_dict["user_id"] = user_id
-    
+
     return event_dict
 
 
 def add_app_context(
-    logger: logging.Logger,
-    method_name: str,
+    _logger: logging.Logger,
+    _method_name: str,
     event_dict: dict[str, Any],
 ) -> dict[str, Any]:
     """Add application context to log entries."""
@@ -48,9 +48,9 @@ def add_app_context(
 def setup_logging() -> None:
     """Configure structured logging for the application."""
     settings = get_settings()
-    
+
     log_level = logging.DEBUG if settings.debug else logging.INFO
-    
+
     shared_processors: list[Processor] = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_logger_name,
@@ -62,7 +62,7 @@ def setup_logging() -> None:
         add_request_context,
         add_app_context,
     ]
-    
+
     if settings.debug:
         processors: list[Processor] = [
             *shared_processors,
@@ -74,7 +74,7 @@ def setup_logging() -> None:
             structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
         ]
-    
+
     structlog.configure(
         processors=processors,
         wrapper_class=structlog.stdlib.BoundLogger,
@@ -82,13 +82,13 @@ def setup_logging() -> None:
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
-    
+
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
         level=log_level,
     )
-    
+
     for logger_name in ["uvicorn", "uvicorn.access", "uvicorn.error"]:
         logging.getLogger(logger_name).handlers = []
         logging.getLogger(logger_name).propagate = True
@@ -106,10 +106,10 @@ def generate_request_id() -> str:
 
 class SecurityLogger:
     """Security-focused logger for audit trails."""
-    
+
     def __init__(self) -> None:
         self.logger = get_logger("security")
-    
+
     def log_auth_attempt(
         self,
         success: bool,
@@ -126,7 +126,7 @@ class SecurityLogger:
             reason=reason,
             event_type="security.auth",
         )
-    
+
     def log_data_access(
         self,
         resource_type: str,
@@ -143,7 +143,7 @@ class SecurityLogger:
             user_id=user_id,
             event_type="security.data_access",
         )
-    
+
     def log_sensitive_operation(
         self,
         operation: str,
@@ -160,10 +160,10 @@ class SecurityLogger:
 
 class AILogger:
     """AI/ML-focused logger for RAG pipeline monitoring."""
-    
+
     def __init__(self) -> None:
         self.logger = get_logger("ai")
-    
+
     def log_inference(
         self,
         model: str,
@@ -182,7 +182,7 @@ class AILogger:
             error=error,
             event_type="ai.inference",
         )
-    
+
     def log_retrieval(
         self,
         query: str,
@@ -199,7 +199,7 @@ class AILogger:
             avg_relevance=sum(relevance_scores) / len(relevance_scores) if relevance_scores else None,
             event_type="ai.retrieval",
         )
-    
+
     def log_agent_execution(
         self,
         agent_name: str,
@@ -220,5 +220,4 @@ class AILogger:
         )
 
 
-security_logger = SecurityLogger()
 ai_logger = AILogger()

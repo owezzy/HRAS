@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     # UHRI API
     uhri_api_url: str = "https://uhri.ohchr.org/api"
 
+    # Feature Flags - gradual rollout of new features
+    use_postgres: bool = False
+    use_async_tools: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:

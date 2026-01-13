@@ -116,6 +116,30 @@ CHAT_SESSIONS_ACTIVE = Gauge(
     "Number of active chat sessions",
 )
 
+# Database operation metrics
+DB_OPERATIONS_TOTAL = Counter(
+    "hras_db_operations_total",
+    "Total database operations",
+    ["operation", "table", "status"],
+)
+
+DB_OPERATION_DURATION_SECONDS = Histogram(
+    "hras_db_operation_duration_seconds",
+    "Database operation duration in seconds",
+    ["operation", "table"],
+    buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0),
+)
+
+CONVERSATIONS_TOTAL = Gauge(
+    "hras_conversations_total",
+    "Total number of conversations in database",
+)
+
+MESSAGES_TOTAL = Gauge(
+    "hras_messages_total",
+    "Total number of messages in database",
+)
+
 ERRORS_TOTAL = Counter(
     "hras_errors_total",
     "Total errors by type",
@@ -124,8 +148,10 @@ ERRORS_TOTAL = Counter(
 
 
 def init_app_info(version: str, environment: str) -> None:
-    APP_INFO.info({
-        "version": version,
-        "environment": environment,
-        "service": "hras-backend",
-    })
+    APP_INFO.info(
+        {
+            "version": version,
+            "environment": environment,
+            "service": "hras-backend",
+        }
+    )
