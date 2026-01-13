@@ -10,7 +10,7 @@ patchesStrategicMerge:
 
 images:
   - name: frontend-image
-    newName: your-registry.com/hras-frontend  
+    newName: your-registry.com/hras-frontend
     newTag: v0.2.0
 
 namespace: hras-production

@@ -1,4 +1,5 @@
 .PHONY: help dev prod build clean clean-cache install lint test frontend-dev backend-dev frontend-build backend-build ingest ingest-clear db-stats \
+	db-up db-down db-migrate db-upgrade db-downgrade db-revision db-history \
 	docker-build docker-build-backend docker-build-frontend docker-build-fast docker-build-backend-fast docker-build-frontend-fast \
 	kind-create kind-delete kind-load kind-load-fast kind-deploy kind-dev-up kind-deploy-backend kind-deploy-frontend kind-status kind-logs kind-logs-backend kind-logs-frontend kind-clean
 
@@ -38,6 +39,14 @@ help:
 	@echo "  ingest           Ingest UHRI data into vector store"
 	@echo "  ingest-clear     Clear and re-ingest UHRI data"
 	@echo "  db-stats         Show vector store statistics"
+	@echo ""
+	@echo "Database:"
+	@echo "  db-up            Start PostgreSQL container"
+	@echo "  db-down          Stop PostgreSQL container"
+	@echo "  db-migrate       Create new Alembic migration"
+	@echo "  db-upgrade       Run migrations to head"
+	@echo "  db-downgrade     Rollback last migration"
+	@echo "  db-history       Show migration history"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  clean            Clean build artifacts"
@@ -197,6 +206,36 @@ ingest-clear:
 db-stats:
 	@echo "Fetching vector store statistics..."
 	curl -s http://localhost:8000/api/v1/admin/stats | python3 -m json.tool
+
+# =============================================================================
+# Database Management
+# =============================================================================
+
+db-up:
+	@echo "Starting PostgreSQL..."
+	docker compose up -d postgres
+	@echo "PostgreSQL is running on localhost:5433"
+
+db-down:
+	@echo "Stopping PostgreSQL..."
+	docker compose down postgres
+
+db-migrate:
+	@echo "Creating new migration..."
+	@read -p "Migration message: " msg; \
+	cd backend && uv run alembic revision --autogenerate -m "$$msg"
+
+db-upgrade:
+	@echo "Running migrations..."
+	cd backend && uv run alembic upgrade head
+
+db-downgrade:
+	@echo "Rolling back last migration..."
+	cd backend && uv run alembic downgrade -1
+
+db-history:
+	@echo "Migration history:"
+	cd backend && uv run alembic history
 
 # =============================================================================
 # Variables

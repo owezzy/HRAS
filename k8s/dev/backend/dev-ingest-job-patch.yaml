@@ -9,7 +9,7 @@ spec:
     spec:
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
-      
+
       containers:
         - name: ingest
           imagePullPolicy: Never

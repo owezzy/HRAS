@@ -27,11 +27,11 @@ spec:
               import urllib.error
               import json
               import sys
-              
+
               backend_url = "http://backend-service:8000"
-              
+
               print("Waiting for backend to be ready...")
-              
+
               # Wait for backend service to be available
               max_retries = 60  # 5 minutes max wait
               for i in range(max_retries):
@@ -46,7 +46,7 @@ spec:
               else:
                   print("❌ Backend failed to become ready after 5 minutes")
                   sys.exit(1)
-              
+
               # Initialize collection by calling stats endpoint first
               try:
                   with urllib.request.urlopen(f"{backend_url}/api/v1/admin/stats", timeout=10) as stats_response:
@@ -55,26 +55,26 @@ spec:
               except Exception as e:
                   print(f"❌ Failed to initialize vector store: {e}")
                   sys.exit(1)
-              
+
               print("Starting data ingestion...")
-              
+
               # Run ingestion with clear_existing=true and use_sample=true
               ingest_data = json.dumps({"clear_existing": True, "use_sample": True}).encode('utf-8')
-              
+
               try:
                   req = urllib.request.Request(
                       f"{backend_url}/api/v1/admin/ingest",
                       data=ingest_data,
                       headers={'Content-Type': 'application/json'}
                   )
-                  
+
                   with urllib.request.urlopen(req, timeout=30) as response:
                       response_data = json.loads(response.read().decode('utf-8'))
-                      
+
                       if response.getcode() == 200:
                           print("✅ Ingestion completed successfully")
                           print(json.dumps(response_data, indent=2))
-                          
+
                           # Verify ingestion by checking stats
                           with urllib.request.urlopen(f"{backend_url}/api/v1/admin/stats", timeout=10) as stats_response:
                               stats_data = json.loads(stats_response.read().decode('utf-8'))
@@ -83,7 +83,7 @@ spec:
                           print(f"❌ Ingestion failed with status: {response.getcode()}")
                           print(json.dumps(response_data, indent=2))
                           sys.exit(1)
-                          
+
               except Exception as e:
                   print(f"❌ Ingestion failed with error: {e}")
                   sys.exit(1)
