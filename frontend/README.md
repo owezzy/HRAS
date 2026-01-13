@@ -25,5 +25,3 @@
 ## More
 
 - [Fuse Theme Official Website](https://fusetheme.com/)
-
-

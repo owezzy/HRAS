@@ -1,7 +1,7 @@
 /**
  * HRAS Icon Generator
  * Generates favicon and PWA icons from SVG source
- * 
+ *
  * Usage: npx tsx scripts/generate-icons.ts
  */
 
@@ -18,10 +18,10 @@ const HRAS_LOGO_SVG = `
 <svg width="512" height="512" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Shield background -->
   <path d="M16 2L4 7V15C4 22.18 9.12 28.84 16 30C22.88 28.84 28 22.18 28 15V7L16 2Z" fill="#009EDB"/>
-  
+
   <!-- Inner shield -->
   <path d="M16 4L6 8.5V15C6 21.08 10.44 26.72 16 27.92C21.56 26.72 26 21.08 26 15V8.5L16 4Z" fill="#0072BC"/>
-  
+
   <!-- Stylized H -->
   <path d="M11 10V22M21 10V22M11 16H21" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
@@ -36,12 +36,12 @@ async function generateIcons() {
 	// Generate PNG icons in all sizes
 	for (const size of ICON_SIZES) {
 		const outputPath = join(OUTPUT_DIR, `${size}x${size}.png`);
-		
+
 		await sharp(Buffer.from(HRAS_LOGO_SVG))
 			.resize(size, size)
 			.png()
 			.toFile(outputPath);
-		
+
 		console.log(`  ✅ Generated ${size}x${size}.png`);
 	}
 

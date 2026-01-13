@@ -36,7 +36,7 @@ const spacingReplacements = {};
 spacingProperties.forEach(prop => {
     // Use a regex to match numeric values
     const regex = new RegExp(`${prop}-(\\d+(?:\\.\\d+)?)$`);
-    
+
     return {
         pattern: regex,
         replace: (match, value) => {
@@ -65,7 +65,7 @@ const tailwindV4Replacements = {
     // Shadow utilities - be explicit about all variants
     'shadow': 'shadow-sm',
     'shadow-sm': 'shadow-xs',
-    
+
     // Drop shadow utilities
     'drop-shadow': 'drop-shadow-sm',
 
@@ -123,7 +123,7 @@ const tailwindV4Replacements = {
 
     'w-xl': 'w-3xl',
     'max-w-xl': 'max-w-3xl',
-    
+
     'w-2xl': 'w-4xl',
     'max-w-2xl': 'max-w-4xl',
 
@@ -230,11 +230,11 @@ function replaceClassesInFile(filePath) {
                         const updatedClasses = classes.split(/\s+/).map(singleClass => {
                             let replaced = singleClass;
                             const colonIndex = singleClass.lastIndexOf(':');
-                            
+
                             if (colonIndex !== -1) {
                                 const prefix = singleClass.substring(0, colonIndex + 1);
                                 const baseClass = singleClass.substring(colonIndex + 1);
-                                
+
                                 // First check tailwindV4Replacements
                                 if (tailwindV4Replacements[baseClass]) {
                                     replaced = `${prefix}${tailwindV4Replacements[baseClass]}`;
@@ -281,7 +281,7 @@ function replaceClassesInFile(filePath) {
                             }
                             return replaced;
                         }).join(' ');
-                        
+
                         return m.replace(classes, updatedClasses);
                     });
                 }
@@ -290,11 +290,11 @@ function replaceClassesInFile(filePath) {
                 let updatedClassString = classString.split(/\s+/).map(singleClass => {
                     let replaced = singleClass;
                     const colonIndex = singleClass.lastIndexOf(':');
-                    
+
                     if (colonIndex !== -1) {
                         const prefix = singleClass.substring(0, colonIndex + 1);
                         const baseClass = singleClass.substring(colonIndex + 1);
-                        
+
                         // First check tailwindV4Replacements
                         if (tailwindV4Replacements[baseClass]) {
                             replaced = `${prefix}${tailwindV4Replacements[baseClass]}`;

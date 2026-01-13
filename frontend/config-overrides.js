@@ -25,8 +25,8 @@ const options = {
 
 /**
  * @description Override the webpack config
- * @param {*} config 
- * @returns 
+ * @param {*} config
+ * @returns
  */
 module.exports = function override(config) {
 	config.ignoreWarnings = [{ message: /Failed to parse source map/ }];
