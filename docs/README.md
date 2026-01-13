@@ -23,7 +23,7 @@ This `docs/` folder contains all the documentation you need to understand, deplo
 ## 🚀 Quick Start
 
 1. **New to HRAS?** → Start with [00-INDEX.md](00-INDEX.md)
-2. **Want to run it?** → Jump to [DEPLOYMENT.md](DEPLOYMENT.md#local-development-setup) 
+2. **Want to run it?** → Jump to [DEPLOYMENT.md](DEPLOYMENT.md#local-development-setup)
 3. **Need to fix something?** → Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 📝 Documentation Standards

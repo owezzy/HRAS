@@ -21,14 +21,14 @@ graph TD
     G --> H[Response Generation]
     H --> I[Response with Sources]
     I --> J[Frontend Display]
-    
+
     D --> K[Admin Agent Monitoring]
     K --> L[Data Ingestion Pipeline]
     L --> M[UHRI Data Sources]
     M --> N[Document Processing]
     N --> O[Embedding Generation]
     O --> P[Vector Storage in ChromaDB]
-    
+
     style A fill:#0070f3,stroke:#0040cc
     style B fill:#34c759,stroke:#2d9b44
     style C fill:#ff9f43,stroke:#d97706
@@ -146,7 +146,7 @@ graph TD
 3. **State Machine Architecture:**
    ```python
    from langgraph import StateGraph
-   
+
    class AgentState(TypedDict):
        query: str
        retrieved_docs: List[str]
@@ -154,7 +154,7 @@ graph TD
        conversation_id: str
        sources: List[Dict[str, str]]
        is_streaming: bool
-   
+
    def create_graph() -> StateGraph:
        graph = StateGraph(AgentState)
        graph.add_node("retrieve", retrieve_node)
@@ -226,8 +226,8 @@ The system uses structured prompts that include:
 
 ```python
 PROMPT_TEMPLATE = """
-You are a UN human rights analyst. Based on the following retrieved documents, 
-provide a comprehensive response to the user's question. Include citations from 
+You are a UN human rights analyst. Based on the following retrieved documents,
+provide a comprehensive response to the user's question. Include citations from
 the sources to support your answer.
 
 Retrieved Documents:

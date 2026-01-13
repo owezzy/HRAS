@@ -64,7 +64,7 @@ Each answer includes specific references showing exactly which UN documents were
 {
   "country": "Kenya",
   "mechanism": "UPR",           ← Universal Periodic Review
-  "year": "2023", 
+  "year": "2023",
   "theme": "Civil Rights",
   "status": "Pending",
   "snippet": "The Committee recommends..."  ← Exact quote
@@ -114,7 +114,7 @@ Ask about patterns over time:
 - *"How have women's rights recommendations changed from 2020 to 2023?"*
 - *"What emerging human rights themes appear in recent reports?"*
 
-### 🌍 **Regional Comparisons** 
+### 🌍 **Regional Comparisons**
 Compare across countries or regions:
 - *"Compare refugee protection policies in Europe vs Africa"*
 - *"Which Latin American countries have similar trafficking challenges?"*
@@ -215,7 +215,7 @@ Target specific UN processes:
 
 ### 💡 **Community Resources**
 - **FAQ:** [Link to frequently asked questions]
-- **Training Materials:** [Link to training resources] 
+- **Training Materials:** [Link to training resources]
 - **User Forums:** [Link to user community]
 
 ---

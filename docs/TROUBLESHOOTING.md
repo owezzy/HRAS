@@ -28,7 +28,7 @@
 - [High CPU/memory usage](#resource-usage-problems)
 - [Data ingestion stuck](#data-ingestion-issues)
 
-### 🤔 **Usage Issues** (System Confusing)  
+### 🤔 **Usage Issues** (System Confusing)
 - [Answers don't make sense](#irrelevant-responses)
 - [Missing source citations](#missing-sources)
 - [Conversation context lost](#conversation-problems)
@@ -48,7 +48,7 @@
 ```bash
 # Check what's running
 lsof -i :3000  # Frontend port
-lsof -i :8000  # Backend port  
+lsof -i :8000  # Backend port
 lsof -i :11434 # Ollama port
 
 # Check service health
@@ -113,7 +113,7 @@ cp frontend/.env.local.example frontend/.env.local
 # Check backend logs
 cd backend && uv run uvicorn src.app.main:app --reload --log-level debug
 
-# Test API directly  
+# Test API directly
 curl -X POST http://localhost:8000/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "test"}'
@@ -262,7 +262,7 @@ htop
 
 #### **Symptoms:**
 - High CPU usage (>90%)
-- Memory usage growing continuously  
+- Memory usage growing continuously
 - Disk space filling up
 
 #### **Resource Monitoring:**
@@ -431,7 +431,7 @@ curl -X POST http://localhost:8000/api/v1/chat \
 # Step 2: Get conversation_id from response
 CONV_ID=$(jq -r '.conversation_id' response1.json)
 
-# Step 3: Continue conversation  
+# Step 3: Continue conversation
 curl -X POST http://localhost:8000/api/v1/chat \
   -H "Content-Type: application/json" \
   -d "{\"message\": \"Tell me more about that\", \"conversation_id\": \"$CONV_ID\"}"
@@ -471,7 +471,7 @@ echo -n "Backend Health: "
 curl -s http://localhost:8000/health > /dev/null && echo "✅ OK" || echo "❌ FAIL"
 
 echo -n "Ollama Health: "
-curl -s http://localhost:11434/api/tags > /dev/null && echo "✅ OK" || echo "❌ FAIL" 
+curl -s http://localhost:11434/api/tags > /dev/null && echo "✅ OK" || echo "❌ FAIL"
 
 echo -n "Frontend Health: "
 curl -s http://localhost:3000 > /dev/null && echo "✅ OK" || echo "❌ FAIL"

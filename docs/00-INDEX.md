@@ -35,7 +35,7 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation! This AI-po
 
 ### **🔧 I want to run HRAS locally**
 1. Check [Prerequisites](DEPLOYMENT.md#prerequisites)
-2. Follow [Quick Start](DEPLOYMENT.md#local-development-setup) 
+2. Follow [Quick Start](DEPLOYMENT.md#local-development-setup)
 3. Run `make dev` and visit http://localhost:3000
 
 ### **🏢 I want to deploy HRAS in production**
@@ -72,7 +72,7 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation! This AI-po
 ## 💡 Key Features
 
 - **🔍 Intelligent Document Search**: Semantic search across UN human rights documents
-- **💬 Conversational AI**: Natural language Q&A with source citations  
+- **💬 Conversational AI**: Natural language Q&A with source citations
 - **🤖 Multi-Agent System**: Specialized agents for retrieval, generation, and validation
 - **📊 Source Attribution**: Every answer includes document references and citations
 - **⚡ Fast Deployment**: One-command deployment with automatic data ingestion

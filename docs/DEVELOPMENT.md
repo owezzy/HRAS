@@ -149,7 +149,7 @@ make backend-dev   # Terminal 2 - http://localhost:8000
   class UserService:
       def __init__(self, user_repo: UserRepository):
           self.user_repo = user_repo
-  
+
       async def get_user_by_id(self, user_id: str) -> Optional[User]:
           return await self.user_repo.find_by_id(user_id)
   ```

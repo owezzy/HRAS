@@ -51,7 +51,7 @@ curl http://localhost:8000/api/v1/admin/stats
 
 **Use Cases:**
 - Monitoring scripts and health checks
-- Load balancer health probes  
+- Load balancer health probes
 - Deployment verification
 
 ---
@@ -107,7 +107,7 @@ curl http://localhost:8000/api/v1/admin/stats
       "snippet": "The Committee recommends that Kenya strengthen its legal framework to prevent torture and ensure accountability for law enforcement violations."
     },
     {
-      "country": "Kenya", 
+      "country": "Kenya",
       "mechanism": "CEDAW",
       "year": "2022",
       "theme": "Women's Rights",
@@ -156,7 +156,7 @@ console.log(data.sources.length);   // Number of supporting documents
 # Python
 import requests
 
-response = requests.post('http://localhost:8000/api/v1/chat', 
+response = requests.post('http://localhost:8000/api/v1/chat',
   json={
     "message": "How does the UN address child labor violations?",
     "conversation_id": None  # Start new conversation
@@ -212,7 +212,7 @@ curl -X POST "http://localhost:8000/api/v1/admin/ingest?use_sample=false"
 
 ---
 
-#### `GET /api/v1/admin/stats` - Get Statistics  
+#### `GET /api/v1/admin/stats` - Get Statistics
 *Check vector store status and document counts*
 
 **Response:**
@@ -264,7 +264,7 @@ All errors return this consistent structure:
   "detail": "Field required: message"
 }
 
-// 422 Validation Error - Message too long  
+// 422 Validation Error - Message too long
 {
   "detail": "Message must be between 1 and 4000 characters"
 }
@@ -295,7 +295,7 @@ http POST localhost:8000/api/v1/chat \
 
 ### Testing with Postman
 1. Create new POST request to `http://localhost:8000/api/v1/chat`
-2. Set Content-Type header to `application/json`  
+2. Set Content-Type header to `application/json`
 3. Add JSON body: `{"message": "Your question here"}`
 4. Send and examine response structure
 
@@ -316,7 +316,7 @@ wait
 
 ### 🚀 **Coming Soon**
 - **WebSocket Support**: Real-time streaming responses
-- **Batch Processing**: Multiple questions in one request  
+- **Batch Processing**: Multiple questions in one request
 - **Advanced Filtering**: Filter by country, mechanism, date range
 - **Export Formats**: PDF, CSV, JSON export of responses
 
@@ -326,7 +326,7 @@ wait
 - **Input Sanitization**: Enhanced protection against injection attacks
 - **Audit Logging**: Detailed request/response logging
 
-### 📊 **Analytics & Monitoring**  
+### 📊 **Analytics & Monitoring**
 - **Usage Metrics**: Track popular queries and response times
 - **Quality Metrics**: Response accuracy and user feedback
 - **Performance Monitoring**: Detailed latency and throughput metrics
@@ -353,12 +353,12 @@ These interfaces let you test endpoints directly from your browser and see real-
 
 ### For Integration Developers
 1. **Always check health endpoint** before making chat requests
-2. **Handle conversation IDs** properly for multi-turn conversations  
+2. **Handle conversation IDs** properly for multi-turn conversations
 3. **Implement retry logic** for 500 errors with exponential backoff
 4. **Cache responses** when appropriate to reduce API calls
 5. **Validate input** on client side before sending requests
 
-### For Frontend Developers  
+### For Frontend Developers
 1. **Show loading states** - AI responses take time to generate
 2. **Display source citations** - users need to verify information
 3. **Handle long responses** - implement proper text rendering
@@ -367,7 +367,7 @@ These interfaces let you test endpoints directly from your browser and see real-
 
 ### For Monitoring & Operations
 1. **Monitor health endpoint** for system availability
-2. **Track response times** and set alerting thresholds  
+2. **Track response times** and set alerting thresholds
 3. **Monitor error rates** and investigate 500 errors promptly
 4. **Use admin endpoints** for operational insights
 5. **Implement log aggregation** for troubleshooting

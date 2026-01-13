@@ -8,7 +8,7 @@
 
 Imagine HRAS as a smart librarian who:
 1. **Listens** to your human rights questions
-2. **Searches** through thousands of UN documents instantly  
+2. **Searches** through thousands of UN documents instantly
 3. **Analyzes** the most relevant information
 4. **Synthesizes** an evidence-based answer with proper citations
 
@@ -25,7 +25,7 @@ This happens through three main layers working together seamlessly.
 ├─────────────────────────────────────────────────────────┤
 │  Frontend: Next.js 15 + React 19 + MUI 7              │
 │  • Modern web interface                                 │
-│  • Real-time conversation display                       │  
+│  • Real-time conversation display                       │
 │  • Source citation visualization                        │
 │  • Responsive design for all devices                   │
 └─────────────────────────────────────────────────────────┘
@@ -40,7 +40,7 @@ This happens through three main layers working together seamlessly.
 │  • Business logic and validation                      │
 │  • Conversation management                             │
 └─────────────────────────────────────────────────────────┘
-                            ⬇️  
+                            ⬇️
 ┌─────────────────────────────────────────────────────────┐
 │                    🧠 INTELLIGENCE LAYER                 │
 │               (AI and data storage)                     │
@@ -72,7 +72,7 @@ graph TD
     G --> H[📝 Ollama LLM creates response]
     H --> I[📋 Response with sources]
     I --> J[🌐 Frontend displays answer]
-    
+
     style A fill:#e1f5fe
     style J fill:#e8f5e8
     style D fill:#fff3e0
@@ -92,7 +92,7 @@ graph TD
    - Searches ChromaDB for similar UN documents
    - Ranks results by relevance score
 
-3. **🧠 AI Analysis** (1-3 seconds)  
+3. **🧠 AI Analysis** (1-3 seconds)
    - LLM analyzes retrieved documents
    - Synthesizes comprehensive response
    - Generates proper source citations
@@ -113,12 +113,12 @@ HRAS uses specialized AI agents that work together like a research team:
 ```python
 def retrieve_documents(query: str) -> List[Document]:
     # Convert query to embedding
-    # Search vector database  
+    # Search vector database
     # Rank by relevance
     # Return top matches
 ```
 
-### 🧠 **Generation Agent** - "The Analyst"  
+### 🧠 **Generation Agent** - "The Analyst"
 **What it does:** Creates human-readable answers
 ```python
 def generate_response(docs: List[Document], query: str) -> Response:
@@ -185,7 +185,7 @@ UN Documents → Processing → Vector Database → User Queries
 ```
 Your Computer
 ├── Frontend (Node.js 22+)  → http://localhost:3000
-├── Backend (Python 3.12+) → http://localhost:8000  
+├── Backend (Python 3.12+) → http://localhost:8000
 ├── ChromaDB (Local)        → ./chroma_db/
 └── Ollama (Local)         → http://localhost:11434
 ```
@@ -204,7 +204,7 @@ Docker Engine
 Kubernetes Cluster (Kind/EKS/GKE)
 ├── Namespace: hras-system
 ├── Frontend Deployment    → 3 replicas
-├── Backend Deployment     → 3 replicas  
+├── Backend Deployment     → 3 replicas
 ├── Ingestion Job         → Automatic data loading
 ├── ConfigMaps            → Environment-specific config
 └── Services              → LoadBalancer/NodePort
@@ -216,7 +216,7 @@ Kubernetes Cluster (Kind/EKS/GKE)
 
 ### Security Measures
 - **Input Validation**: All user inputs sanitized and validated
-- **Rate Limiting**: Prevents abuse and ensures fair usage  
+- **Rate Limiting**: Prevents abuse and ensures fair usage
 - **Network Isolation**: Kubernetes network policies
 - **Secret Management**: Environment variables, not hardcoded values
 
@@ -239,7 +239,7 @@ Kubernetes Cluster (Kind/EKS/GKE)
 
 ### Scalability Targets
 - **Concurrent Users**: 100+ simultaneous queries
-- **Document Capacity**: 100,000+ UN documents  
+- **Document Capacity**: 100,000+ UN documents
 - **Response Throughput**: 50+ queries per second
 - **Storage Growth**: Automatic expansion based on usage
 
@@ -259,7 +259,7 @@ Kubernetes Cluster (Kind/EKS/GKE)
 - **Pydantic Integration**: Automatic request/response validation
 - **High Performance**: One of the fastest Python frameworks
 
-### Why Ollama?  
+### Why Ollama?
 - **Local Deployment**: No external API dependencies
 - **Cost Effective**: No per-request charges
 - **Privacy**: Data never leaves your infrastructure
@@ -283,7 +283,7 @@ Application Metrics:
 ├── Throughput         → Requests per second
 └── Conversation Flow  → Multi-turn success rate
 
-Infrastructure Metrics:  
+Infrastructure Metrics:
 ├── CPU Usage          → < 70% average
 ├── Memory Usage       → < 80% of available
 ├── Disk I/O           → ChromaDB performance
@@ -308,7 +308,7 @@ Business Metrics:
 
 ### Medium Term (6-12 months)
 - **Multi-language Support**: Questions and responses in multiple languages
-- **Advanced Analytics**: Query pattern analysis and recommendations  
+- **Advanced Analytics**: Query pattern analysis and recommendations
 - **Integration APIs**: Connect with external UN systems
 - **Mobile Applications**: Native iOS and Android apps
 

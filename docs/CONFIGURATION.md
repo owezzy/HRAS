@@ -33,7 +33,7 @@ OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 CHROMA_PERSIST_DIRECTORY=./chroma_db
 DATABASE_URL=sqlite+aiosqlite:///./hras.db
 
-# 🌐 Network & Security  
+# 🌐 Network & Security
 CORS_ORIGINS=["http://localhost:3000"]
 ```
 
@@ -72,11 +72,11 @@ LOG_LEVEL=DEBUG
 DEBUG=true
 ```
 
-#### 🏢 **Production (.env)**  
+#### 🏢 **Production (.env)**
 ```bash
 # Secure, optimized, external services
 OLLAMA_BASE_URL=http://ollama-service:11434
-OLLAMA_MODEL=nemotron-3-nano:30b-cloud  
+OLLAMA_MODEL=nemotron-3-nano:30b-cloud
 CHROMA_PERSIST_DIRECTORY=/data/chromadb
 DATABASE_URL=postgresql+asyncpg://hras_user:secure_password@postgres:5432/hras_db
 CORS_ORIGINS=["https://hras.yourorg.com"]
@@ -174,16 +174,16 @@ data:
   # ollama_base_url: "http://172.17.0.1:11434"         # Linux alternative
   ollama_model: "nemotron-3-nano:30b-cloud"
   ollama_embedding_model: "nomic-embed-text"
-  
-  # Storage configuration  
+
+  # Storage configuration
   chroma_persist_directory: "/app/chroma_db"
   database_url: "sqlite+aiosqlite:///./hras.db"
-  
+
   # Network configuration
   cors_origins: '["http://localhost:3000"]'
   host: "0.0.0.0"
   port: "8000"
-  
+
   # Logging
   log_level: "INFO"
   debug: "false"
@@ -195,7 +195,7 @@ data:
 
 ```yaml
 apiVersion: v1
-kind: ConfigMap  
+kind: ConfigMap
 metadata:
   name: backend-config
   namespace: hras-system
@@ -204,14 +204,14 @@ data:
   ollama_base_url: "http://ollama-service.hras-system:11434"
   ollama_model: "nemotron-3-nano:30b-cloud"
   ollama_embedding_model: "nomic-embed-text"
-  
+
   # Production storage
   chroma_persist_directory: "/data/chromadb"
   database_url: "postgresql+asyncpg://hras_user:${DB_PASSWORD}@postgres:5432/hras_db"
-  
+
   # Production network
   cors_origins: '["https://hras.yourorg.com"]'
-  
+
   # Production logging
   log_level: "WARNING"
   workers: "4"
@@ -240,7 +240,7 @@ services:
       - ./backend/chroma_db:/app/chroma_db
 
   frontend:
-    build: ./frontend  
+    build: ./frontend
     ports:
       - "3000:3000"
     environment:
@@ -271,10 +271,10 @@ from pydantic import BaseSettings, validator
 class Settings(BaseSettings):
     app_name: str = "HRAS"
     app_version: str = "0.2.0"
-    
+
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "nemotron-3-nano:30b-cloud"
-    
+
     @validator('ollama_base_url')
     def validate_ollama_url(cls, v):
         if not v.startswith(('http://', 'https://')):
@@ -302,7 +302,7 @@ cd backend
 python -c "
 from src.app.core.config import settings
 print(f'✅ Ollama URL: {settings.ollama_base_url}')
-print(f'✅ Model: {settings.ollama_model}')  
+print(f'✅ Model: {settings.ollama_model}')
 print(f'✅ ChromaDB: {settings.chroma_persist_directory}')
 "
 
@@ -333,8 +333,8 @@ echo "Configuration validation complete!"
    ```bash
    # Edit backend configuration
    vi backend/.env
-   
-   # Edit frontend configuration  
+
+   # Edit frontend configuration
    vi frontend/.env.local
    ```
 
@@ -419,11 +419,11 @@ kubectl create secret generic db-secret \
 
 ### Configuration Security Checklist
 
-- [ ] **No secrets in git**: Use `.gitignore` for `.env` files  
+- [ ] **No secrets in git**: Use `.gitignore` for `.env` files
 - [ ] **Environment isolation**: Separate configs per environment
 - [ ] **Principle of least privilege**: Minimal required permissions
 - [ ] **Regular rotation**: Update passwords and API keys regularly
-- [ ] **Audit logging**: Track configuration changes  
+- [ ] **Audit logging**: Track configuration changes
 - [ ] **Encryption at rest**: Secure secret storage systems
 
 ### Environment Variable Security
@@ -445,7 +445,7 @@ echo 'OLLAMA_API_KEY="sk-..."' > .env
 
 #### 🚫 **"Ollama service unavailable"**
 
-**Check**: 
+**Check**:
 ```bash
 echo $OLLAMA_BASE_URL
 curl $OLLAMA_BASE_URL/api/tags
@@ -493,7 +493,7 @@ export CORS_ORIGINS='["http://localhost:3000","https://your-frontend.com"]'
 export LOG_LEVEL=DEBUG
 export DEBUG=true
 
-# Frontend debug info  
+# Frontend debug info
 export NEXT_PUBLIC_ENABLE_DEBUG=true
 ```
 
