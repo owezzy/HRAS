@@ -1,7 +1,4 @@
-"""Agent tools for interacting with the UHRI data.
-
-These tools are used by agents to search, retrieve, and analyze human rights data.
-"""
+"""Agent tools for interacting with the UHRI data."""
 
 from langchain_core.tools import tool
 
@@ -52,15 +49,17 @@ def search_recommendations(
     # Format results
     formatted = []
     for doc, score in results:
-        formatted.append({
-            "content": doc.page_content,
-            "country": doc.metadata.get("country", ""),
-            "mechanism": doc.metadata.get("mechanism", ""),
-            "year": doc.metadata.get("year", ""),
-            "theme": doc.metadata.get("theme", ""),
-            "status": doc.metadata.get("status", ""),
-            "relevance_score": float(score),
-        })
+        formatted.append(
+            {
+                "content": doc.page_content,
+                "country": doc.metadata.get("country", ""),
+                "mechanism": doc.metadata.get("mechanism", ""),
+                "year": doc.metadata.get("year", ""),
+                "theme": doc.metadata.get("theme", ""),
+                "status": doc.metadata.get("status", ""),
+                "relevance_score": float(score),
+            }
+        )
 
     return formatted
 
@@ -89,13 +88,15 @@ def get_country_recommendations(country: str, limit: int = 10) -> list[dict]:
 
     formatted = []
     for doc in results:
-        formatted.append({
-            "content": doc.page_content,
-            "mechanism": doc.metadata.get("mechanism", ""),
-            "year": doc.metadata.get("year", ""),
-            "theme": doc.metadata.get("theme", ""),
-            "status": doc.metadata.get("status", ""),
-        })
+        formatted.append(
+            {
+                "content": doc.page_content,
+                "mechanism": doc.metadata.get("mechanism", ""),
+                "year": doc.metadata.get("year", ""),
+                "theme": doc.metadata.get("theme", ""),
+                "status": doc.metadata.get("status", ""),
+            }
+        )
 
     return formatted
 
@@ -127,13 +128,15 @@ def compare_countries(countries: list[str], theme: str | None = None) -> dict:
 
         comparison[country] = []
         for doc in results:
-            comparison[country].append({
-                "mechanism": doc.metadata.get("mechanism", ""),
-                "year": doc.metadata.get("year", ""),
-                "theme": doc.metadata.get("theme", ""),
-                "recommendation": doc.page_content,
-                "status": doc.metadata.get("status", ""),
-            })
+            comparison[country].append(
+                {
+                    "mechanism": doc.metadata.get("mechanism", ""),
+                    "year": doc.metadata.get("year", ""),
+                    "theme": doc.metadata.get("theme", ""),
+                    "recommendation": doc.page_content,
+                    "status": doc.metadata.get("status", ""),
+                }
+            )
 
     return comparison
 
@@ -161,32 +164,14 @@ def get_mechanism_overview(mechanism: str, limit: int = 10) -> list[dict]:
 
     formatted = []
     for doc in results:
-        formatted.append({
-            "content": doc.page_content,
-            "country": doc.metadata.get("country", ""),
-            "year": doc.metadata.get("year", ""),
-            "theme": doc.metadata.get("theme", ""),
-            "status": doc.metadata.get("status", ""),
-        })
+        formatted.append(
+            {
+                "content": doc.page_content,
+                "country": doc.metadata.get("country", ""),
+                "year": doc.metadata.get("year", ""),
+                "theme": doc.metadata.get("theme", ""),
+                "status": doc.metadata.get("status", ""),
+            }
+        )
 
     return formatted
-
-
-# Export all tools for agent use
-RESEARCH_TOOLS = [
-    search_recommendations,
-    get_country_recommendations,
-    get_mechanism_overview,
-]
-
-COMPARE_TOOLS = [
-    compare_countries,
-    search_recommendations,
-]
-
-ALL_TOOLS = [
-    search_recommendations,
-    get_country_recommendations,
-    compare_countries,
-    get_mechanism_overview,
-]

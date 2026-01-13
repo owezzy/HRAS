@@ -94,13 +94,3 @@ class AgentState(BaseModel):
         default=None,
         description="Error message if something went wrong",
     )
-
-
-class QueryClassification(BaseModel):
-    """Result of classifying a user query."""
-
-    query_type: Literal["research", "advisory", "compare", "general"]
-    countries: list[str] = Field(default_factory=list)
-    themes: list[str] = Field(default_factory=list)
-    requires_comparison: bool = False
-    reasoning: str = ""

@@ -3,15 +3,16 @@
 Implements the supervisor pattern with routing to specialized agents.
 """
 
+import json
+import re
 import time
 
-from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
 
 from agents.nodes import advisory_agent, compare_agent, research_agent
 from agents.state import AgentState
-from src.app.core.config import get_settings
+from src.app.core.llm import get_deterministic_llm
 from src.app.core.logging import ai_logger, get_logger
 from src.app.core.metrics import (
     AGENT_EXECUTION_DURATION_SECONDS,
@@ -55,21 +56,29 @@ Respond in JSON format:
 }"""
 
 
-def get_llm() -> BaseChatModel:
-    """Get the configured Ollama LLM instance."""
-    settings = get_settings()
-    from langchain_ollama import ChatOllama
+def _extract_json_from_response(content: str | list) -> dict | None:
+    """Extract JSON object from LLM response content."""
+    if isinstance(content, list):
+        content = " ".join(str(item) for item in content)
 
-    return ChatOllama(
-        base_url=settings.ollama_base_url,
-        model=settings.ollama_model,
-        temperature=0,
-    )
+    text = str(content)
+
+    match = re.search(r"\{[^{}]*\}", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
 
 
 async def supervisor_node(state: AgentState) -> AgentState:
     """Supervisor node: classifies the query and routes to appropriate agent."""
-    llm = get_llm()
+    llm = get_deterministic_llm()
 
     prompt = f"""{SUPERVISOR_SYSTEM_PROMPT}
 
@@ -79,35 +88,20 @@ Classify this query:"""
 
     response = await llm.ainvoke([HumanMessage(content=prompt)])
 
-    # Parse the response
-    try:
-        import json
-        # Extract JSON from response
-        content = response.content
-        # Find JSON in the response
-        start = content.find("{")
-        end = content.rfind("}") + 1
-        if start != -1 and end > start:
-            json_str = content[start:end]
-            classification = json.loads(json_str)
+    classification = _extract_json_from_response(response.content)
 
-            state.query_type = classification.get("query_type", "research")
-            state.countries = classification.get("countries", [])
-            state.themes = classification.get("themes", [])
+    if classification:
+        state.query_type = classification.get("query_type", "research")
+        state.countries = classification.get("countries", [])
+        state.themes = classification.get("themes", [])
 
-            # Route based on classification
-            if classification.get("requires_comparison") or state.query_type == "compare":
-                state.next_agent = "compare"
-            elif state.query_type == "advisory":
-                state.next_agent = "advisory"
-            else:
-                state.next_agent = "research"
+        if classification.get("requires_comparison") or state.query_type == "compare":
+            state.next_agent = "compare"
+        elif state.query_type == "advisory":
+            state.next_agent = "advisory"
         else:
-            # Default to research if parsing fails
             state.next_agent = "research"
-
-    except (json.JSONDecodeError, KeyError):
-        # Default to research on parse error
+    else:
         state.next_agent = "research"
 
     return state

@@ -1,7 +1,4 @@
-"""ChromaDB vector store for UHRI documents.
-
-Provides embedding storage and retrieval for human rights recommendations.
-"""
+"""ChromaDB vector store for UHRI documents."""
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
@@ -10,6 +7,7 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_ollama import OllamaEmbeddings
 
+from src.app.core.async_utils import run_in_thread
 from src.app.core.config import get_settings
 
 
@@ -139,8 +137,33 @@ class VectorStoreManager:
             self._chroma_client.delete_collection(self.COLLECTION_NAME)
             self._vectorstore = None
         except ValueError:
-            # Collection doesn't exist
             pass
+
+    async def asimilarity_search(
+        self,
+        query: str,
+        k: int = 5,
+        filter: dict | None = None,
+    ) -> list[Document]:
+        """Async version of similarity_search using thread pool."""
+        return await run_in_thread(self.similarity_search, query, k=k, filter=filter)
+
+    async def asimilarity_search_with_score(
+        self,
+        query: str,
+        k: int = 5,
+        filter: dict | None = None,
+    ) -> list[tuple[Document, float]]:
+        """Async version of similarity_search_with_score using thread pool."""
+        return await run_in_thread(self.similarity_search_with_score, query, k=k, filter=filter)
+
+    async def aadd_documents(self, documents: list[Document]) -> list[str]:
+        """Async version of add_documents using thread pool."""
+        return await run_in_thread(self.add_documents, documents)
+
+    async def aget_collection_stats(self) -> dict:
+        """Async version of get_collection_stats using thread pool."""
+        return await run_in_thread(self.get_collection_stats)
 
 
 # Global instance for dependency injection
