@@ -1,6 +1,7 @@
 """Chat-related schemas."""
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -27,13 +28,42 @@ class ChatResponse(BaseModel):
 
     conversation_id: UUID
     message: ChatMessage
-    sources: list[dict] = Field(default_factory=list, description="Source documents used for response")
+    sources: list[dict[str, Any]] = Field(default_factory=list, description="Source documents used for response")
 
 
-class Source(BaseModel):
-    """Source document reference."""
+class SourceResponse(BaseModel):
+    country: str = ""
+    mechanism: str = ""
+    year: str = ""
+    theme: str = ""
+    status: str = ""
+    snippet: str = ""
 
+
+class MessageResponse(BaseModel):
+    id: str
+    role: str
+    content: str
+    created_at: datetime
+    sources: list[SourceResponse] = Field(default_factory=list)
+
+
+class ConversationResponse(BaseModel):
+    id: str
     title: str
-    url: str | None = None
-    snippet: str
-    metadata: dict = Field(default_factory=dict)
+    created_at: datetime
+    updated_at: datetime
+    messages: list[MessageResponse] = Field(default_factory=list)
+
+
+class ConversationListItem(BaseModel):
+    id: str
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    message_count: int = 0
+
+
+class ConversationListResponse(BaseModel):
+    conversations: list[ConversationListItem]
+    total: int

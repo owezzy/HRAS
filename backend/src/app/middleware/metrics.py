@@ -14,7 +14,6 @@ from src.app.core.metrics import (
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
-
     async def dispatch(
         self,
         request: Request,
@@ -22,59 +21,61 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         if request.url.path == "/metrics":
             return await call_next(request)
-        
+
         ACTIVE_REQUESTS.inc()
         start_time = time.perf_counter()
-        
+
         try:
             response = await call_next(request)
-            
+
             duration = time.perf_counter() - start_time
             endpoint = self._get_endpoint_label(request)
-            
+
             HTTP_REQUESTS_TOTAL.labels(
                 method=request.method,
                 endpoint=endpoint,
                 status_code=response.status_code,
             ).inc()
-            
+
             HTTP_REQUEST_DURATION_SECONDS.labels(
                 method=request.method,
                 endpoint=endpoint,
             ).observe(duration)
-            
+
             return response
-            
-        except Exception as e:
+
+        except Exception:
             duration = time.perf_counter() - start_time
             endpoint = self._get_endpoint_label(request)
-            
+
             HTTP_REQUESTS_TOTAL.labels(
                 method=request.method,
                 endpoint=endpoint,
                 status_code=500,
             ).inc()
-            
+
             HTTP_REQUEST_DURATION_SECONDS.labels(
                 method=request.method,
                 endpoint=endpoint,
             ).observe(duration)
-            
+
             raise
-            
+
         finally:
             ACTIVE_REQUESTS.dec()
-    
+
     def _get_endpoint_label(self, request: Request) -> str:
         path = request.url.path
-        
+
         if path.startswith("/api/v1/chat"):
             return "/api/v1/chat"
+        elif path.startswith("/api/v1/conversations"):
+            return "/api/v1/conversations"
         elif path.startswith("/api/v1/admin"):
             return "/api/v1/admin"
         elif path == "/health":
             return "/health"
         elif path == "/metrics":
             return "/metrics"
-        
+
         return path
