@@ -13,8 +13,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: ingest
-          image: ingest-image  # Placeholder, will be replaced by Kustomize
-          imagePullPolicy: IfNotPresent
+          image: localhost/hras-backend:latest  # Placeholder, will be replaced by Kustomize
+          imagePullPolicy: Never
           env:
             - name: BACKEND_URL
               value: "http://backend-service:8000"
