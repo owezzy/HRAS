@@ -9,5 +9,5 @@ data:
   ollama_embedding_model: "nomic-embed-text"
   chroma_persist_directory: "/data/chroma_db"
   api_url: "http://backend-service.hras-system.svc.cluster.local:8000"
-  database_url: "postgresql+asyncpg://hras:hras_dev_password@postgres.default.svc.cluster.local:5432/hras"
+  database_url: "postgresql+asyncpg://hras:hras_dev_password@postgres.hras-system.svc.cluster.local:5432/hras"
   use_postgres: "true"

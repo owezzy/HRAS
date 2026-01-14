@@ -1,7 +1,8 @@
 .PHONY: help dev prod build clean clean-cache install lint test frontend-dev backend-dev frontend-build backend-build ingest ingest-clear db-stats \
 	db-up db-down db-migrate db-upgrade db-downgrade db-revision db-history \
 	docker-build docker-build-backend docker-build-frontend docker-build-fast docker-build-backend-fast docker-build-frontend-fast \
-	kind-create kind-delete kind-load kind-load-fast kind-deploy kind-dev-up kind-deploy-backend kind-deploy-frontend kind-status kind-logs kind-logs-backend kind-logs-frontend kind-clean
+	kind-create kind-delete kind-load kind-load-fast kind-deploy kind-dev-up kind-deploy-backend kind-deploy-frontend kind-deploy-postgres kind-status kind-logs kind-logs-backend kind-logs-frontend kind-clean \
+	monitoring-deploy monitoring-undeploy monitoring-status monitoring-logs monitoring-port-forward monitoring-grafana monitoring-prometheus
 
 # Default target
 help:
@@ -64,15 +65,24 @@ help:
 	@echo "  kind-delete          Delete Kind cluster"
 	@echo "  kind-load            Build and load images using ctr import (parallel)"
 	@echo "  kind-load-fast       Build optimized images and load using ctr import"
-	@echo "  kind-deploy          Deploy backend and frontend (includes auto-ingestion)"
-	@echo "  kind-dev-up          Complete setup: create cluster, build, deploy (one-command)"
+	@echo "  kind-deploy          Deploy postgres, backend, and frontend (includes auto-ingestion)"
+	@echo "  kind-dev-up          Complete setup: cluster, images, app, and monitoring"
+	@echo "  kind-deploy-postgres Deploy PostgreSQL database"
 	@echo "  kind-deploy-backend  Deploy backend only"
 	@echo "  kind-deploy-frontend Deploy frontend only"
-	@echo "  kind-status          Show pods and services"
+	@echo "  kind-status          Show pods, services, and monitoring status"
 	@echo "  kind-logs            Tail all logs"
 	@echo "  kind-logs-backend    Tail backend logs"
 	@echo "  kind-logs-frontend   Tail frontend logs"
-	@echo "  kind-clean           Remove HRAS from cluster and delete Kind cluster"
+	@echo "  kind-clean           Remove HRAS, monitoring, and delete Kind cluster"
+	@echo ""
+	@echo "Monitoring:"
+	@echo "  monitoring-deploy    Deploy Prometheus, Grafana, Alertmanager stack"
+	@echo "  monitoring-delete    Remove monitoring stack from cluster"
+	@echo "  monitoring-status    Show monitoring pods and services"
+	@echo "  monitoring-logs      Tail monitoring component logs"
+	@echo "  monitoring-grafana   Port-forward to Grafana (http://localhost:30031)"
+	@echo "  monitoring-prometheus Port-forward to Prometheus (http://localhost:9090)"
 
 # =============================================================================
 # Development
@@ -333,16 +343,23 @@ kind-dev-up:
 	@make kind-create
 	@make kind-load-fast
 	@make kind-deploy
+	@make monitoring-deploy
 	@echo ""
 	@echo "🎉 HRAS Development Environment Ready!"
 	@echo ""
-	@echo "Frontend: http://localhost:3000"
-	@echo "Backend:  http://localhost:8000"
-	@echo "Health:   http://localhost:8000/health"
+	@echo "Application:"
+	@echo "  Frontend: http://localhost:3000"
+	@echo "  Backend:  http://localhost:8000"
+	@echo "  Health:   http://localhost:8000/health"
+	@echo ""
+	@echo "Monitoring (via NodePort):"
+	@echo "  Grafana:      http://localhost:30031 (admin/CHANGE_ME_IN_PRODUCTION)"
+	@echo "  Prometheus:   http://localhost:30090"
+	@echo "  Alertmanager: http://localhost:30093"
 	@echo ""
 	@echo "📊 Check status: make kind-status"
 	@echo "📝 View logs:    make kind-logs"
-	@echo "🧹 Clean up:    make kind-clean"
+	@echo "🧹 Clean up:     make kind-clean"
 
 kind-deploy-backend:
 	@echo "Deploying backend to Kind cluster..."
@@ -360,11 +377,22 @@ kind-deploy-frontend:
 		--for=condition=available deployment/frontend \
 		--timeout=120s || true
 
-kind-deploy: kind-deploy-backend kind-deploy-frontend
+kind-deploy-postgres:
+	@echo "Deploying PostgreSQL to Kind cluster..."
+	kubectl apply -k k8s/dev/postgres
+	@echo "Waiting for PostgreSQL to be ready..."
+	kubectl wait --namespace hras-system \
+		--for=condition=ready pod \
+		-l app=postgres \
+		--timeout=120s || true
+	@echo "PostgreSQL deployed and ready."
+
+kind-deploy: kind-deploy-postgres kind-deploy-backend kind-deploy-frontend
 	@echo ""
 	@echo "HRAS deployed to Kind cluster '$(KIND_CLUSTER_NAME)'."
-	@echo "Frontend: http://localhost:3000"
-	@echo "Backend:  http://localhost:8000"
+	@echo "Frontend:   http://localhost:3000"
+	@echo "Backend:    http://localhost:8000"
+	@echo "PostgreSQL: localhost:30432"
 	@echo ""
 	@echo "Note: Data ingestion job runs automatically on first deployment."
 	@echo "Check ingestion status: kubectl get jobs -n hras-system"
@@ -378,6 +406,12 @@ kind-status:
 	@echo ""
 	@echo "=== Ingestion Jobs ==="
 	kubectl get jobs -n hras-system
+	@echo ""
+	@echo "=== Monitoring Pods ==="
+	kubectl get pods -n monitoring -o wide 2>/dev/null || echo "(monitoring namespace not found)"
+	@echo ""
+	@echo "=== Monitoring Services ==="
+	kubectl get services -n monitoring 2>/dev/null || echo "(monitoring namespace not found)"
 
 kind-logs:
 	@echo "Tailing logs from HRAS pods (Ctrl+C to stop)..."
@@ -393,8 +427,72 @@ kind-logs-frontend:
 	kubectl logs -n hras-system -l app=frontend -f
 
 kind-clean:
-	@echo "Removing HRAS resources and deleting Kind cluster..."
-	kubectl delete -k k8s/dev/backend --ignore-not-found || true
+	@echo "Removing HRAS resources, monitoring, and deleting Kind cluster..."
+	kubectl delete -k k8s/dev/monitoring --ignore-not-found || true
 	kubectl delete -k k8s/dev/frontend --ignore-not-found || true
+	kubectl delete -k k8s/dev/backend --ignore-not-found || true
+	kubectl delete -k k8s/dev/postgres --ignore-not-found || true
 	kind delete cluster --name $(KIND_CLUSTER_NAME)
 	@echo "Kind cluster '$(KIND_CLUSTER_NAME)' deleted."
+
+# =============================================================================
+# Monitoring
+# =============================================================================
+
+monitoring-deploy:
+	@echo "Deploying monitoring stack (Prometheus, Grafana, Alertmanager)..."
+	kubectl apply -k k8s/dev/monitoring
+	@echo "Waiting for monitoring components to be ready..."
+	kubectl wait --namespace monitoring \
+		--for=condition=Available deployment/prometheus \
+		--timeout=120s || true
+	kubectl wait --namespace monitoring \
+		--for=condition=Available deployment/grafana \
+		--timeout=120s || true
+	kubectl wait --namespace monitoring \
+		--for=condition=Available deployment/alertmanager \
+		--timeout=120s || true
+	@echo "✅ Monitoring stack deployed successfully!"
+	@echo "Grafana: http://localhost:30031 (admin/CHANGE_ME_IN_PRODUCTION)"
+	@echo "Prometheus: http://localhost:30090"
+	@echo "Alertmanager: http://localhost:30093"
+
+monitoring-delete:
+	@echo "Removing monitoring stack from cluster..."
+	kubectl delete -k k8s/dev/monitoring --ignore-not-found || true
+	@echo "Monitoring stack removed."
+
+monitoring-status:
+	@echo "=== Monitoring Pods ==="
+	kubectl get pods -n monitoring -o wide
+	@echo ""
+	@echo "=== Monitoring Services ==="
+	kubectl get services -n monitoring
+
+monitoring-logs:
+	@echo "Viewing monitoring component logs (Ctrl+C to stop)..."
+	kubectl logs -n monitoring -l app.kubernetes.io/name=prometheus -f --prefix &
+	kubectl logs -n monitoring -l app.kubernetes.io/name=grafana -f --prefix &
+	kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager -f --prefix
+
+monitoring-port-forward:
+	@echo "Forwarding monitoring ports..."
+	@echo "Grafana:   http://localhost:30031"
+	@echo "Prometheus: http://localhost:30090"
+	@echo "Press Ctrl+C to stop port forwarding"
+	kubectl port-forward -n monitoring svc/grafana 30031:3000 &
+	kubectl port-forward -n monitoring svc/prometheus 30090:9090
+
+monitoring-grafana:
+	@echo "Accessing Grafana dashboard..."
+	@echo "Grafana will be available at http://localhost:30031"
+	@echo "Username: admin"
+	@echo "Password: CHANGE_ME_IN_PRODUCTION"
+	@echo "Press Ctrl+C to stop"
+	kubectl port-forward -n monitoring svc/grafana 30031:3000
+
+monitoring-prometheus:
+	@echo "Accessing Prometheus UI..."
+	@echo "Prometheus will be available at http://localhost:9090"
+	@echo "Press Ctrl+C to stop"
+	kubectl port-forward -n monitoring svc/prometheus 9090:9090
