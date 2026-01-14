@@ -1,64 +1,50 @@
-FROM python:3.13-slim AS base
-
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-
-# Dependencies stage - optimize for caching
-FROM base AS deps
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Copy dependency files first for better layer caching
-COPY pyproject.toml ./
-COPY README.md ./
-COPY uv.lock* ./
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
-# Install dependencies with uv caching
-ENV UV_CACHE_DIR=/opt/uv-cache
-RUN --mount=type=cache,target=/opt/uv-cache \
-    uv sync --frozen --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=README.md,target=README.md \
+    uv sync --frozen --no-install-project --no-dev
 
-# Production stage
-FROM python:3.13-slim AS runner
-
-WORKDIR /app
-
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-
-# Create non-root user for security (UID 1000 for K8s compatibility)
-RUN groupadd -g 1000 appuser && \
-    useradd -m -u 1000 -g appuser appuser
-
-# Create /data directory for ChromaDB persistence with proper ownership
-RUN mkdir -p /data && chown -R appuser:appuser /data
-
-# Copy virtual environment from deps stage
-COPY --from=deps /app/.venv /app/.venv
-
-# Copy only required dependency files
-COPY pyproject.toml ./
-COPY README.md ./
-
-# Copy application source code
 COPY src/ ./src/
 COPY agents/ ./agents/
 COPY chains/ ./chains/
 COPY tools/ ./tools/
 COPY vectorstore/ ./vectorstore/
 COPY prompts/ ./prompts/
+COPY pyproject.toml uv.lock README.md ./
 
-# Set ownership of /app to non-root user
-RUN chown -R appuser:appuser /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-editable
 
-# Set HOME environment variable for the user
+FROM python:3.12-slim-bookworm
+
+RUN groupadd -g 1000 appuser && \
+    useradd -m -u 1000 -g appuser appuser && \
+    mkdir -p /data && chown appuser:appuser /data
+
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+
+WORKDIR /app
+
+COPY --chown=appuser:appuser src/ ./src/
+COPY --chown=appuser:appuser agents/ ./agents/
+COPY --chown=appuser:appuser chains/ ./chains/
+COPY --chown=appuser:appuser tools/ ./tools/
+COPY --chown=appuser:appuser vectorstore/ ./vectorstore/
+COPY --chown=appuser:appuser prompts/ ./prompts/
+
+ENV PATH="/app/.venv/bin:$PATH"
 ENV HOME=/home/appuser
+ENV PYTHONPATH=/app
 
-# Switch to non-root user
 USER appuser
 
-# Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["uv", "run", "uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
