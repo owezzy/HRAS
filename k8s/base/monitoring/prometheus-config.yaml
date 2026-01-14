@@ -213,6 +213,33 @@ data:
               summary: "HTTP request latency is high"
               description: "95th percentile request latency is {{ $value | printf \"%.2f\" }}s"
 
+      - name: hras-llm-specific
+        interval: 30s
+        rules:
+          # High token usage alert
+          - alert: HighTokenUsage
+            expr: |
+              sum(rate(hras_model_tokens_total{type="input"}[5m])) > 1000
+            for: 5m
+            labels:
+              severity: warning
+              component: model
+            annotations:
+              summary: "High token usage detected"
+              description: "Input token rate is {{ $value | printf \"%.0f\" }} tokens/sec (threshold: 1000)"
+
+          # Low vector search results alert
+          - alert: LowVectorSearchResults
+            expr: |
+              histogram_quantile(0.5, sum(rate(hras_vector_search_results_bucket[5m])) by (le)) < 3
+            for: 10m
+            labels:
+              severity: warning
+              component: rag
+            annotations:
+              summary: "Vector search returning few results"
+              description: "Median search results is {{ $value | printf \"%.1f\" }} (threshold: 3)"
+
           # No active chat sessions (potential issue)
           - alert: NoActiveChatSessions
             expr: |

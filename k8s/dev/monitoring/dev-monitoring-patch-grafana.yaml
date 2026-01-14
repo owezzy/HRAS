@@ -9,5 +9,5 @@ spec:
     - name: http
       port: 3000
       targetPort: http
-      nodePort: 30030
+      nodePort: 30031
       protocol: TCP
