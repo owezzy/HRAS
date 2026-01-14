@@ -59,7 +59,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src", "prompts"]
+packages = ["src", "prompts", "vectorstore", "agents", "chains", "tools"]
 
 [tool.ruff]
 line-length = 120
@@ -83,7 +83,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src"]
+known-first-party = ["src", "prompts", "vectorstore", "agents", "chains", "tools"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
