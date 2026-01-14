@@ -5,6 +5,7 @@
  * Usage: npx tsx scripts/generate-icons.ts
  */
 
+// @ts-ignore
 import sharp from 'sharp';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
