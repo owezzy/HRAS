@@ -58,7 +58,7 @@ services:
       - certbot-data:/etc/letsencrypt
       - certbot-challenges:/var/www/certbot
       - certbot-logs:/var/log/letsencrypt
-      - ./scripts/ssl:/scripts:ro
+      - ../../scripts:/scripts:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
@@ -116,7 +116,7 @@ services:
       - certbot-data:/etc/letsencrypt
       - certbot-challenges:/var/www/certbot
       - certbot-logs:/var/log/letsencrypt
-      - ./scripts/ssl:/scripts:ro
+      - ../../scripts:/scripts:ro
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}

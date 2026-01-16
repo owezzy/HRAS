@@ -240,20 +240,20 @@ GRAFANA_ADMIN_PASSWORD=secure-grafana-password
 
 ```bash
 # Full deployment with all services
-./scripts/deployment/deploy-production.sh deploy --postgres --monitoring --ssl-init
+./zarf/scripts/deploy.sh deploy --postgres --monitoring --ssl-init
 
 # Or backend-only deployment
-./scripts/deployment/deploy-production.sh deploy-backend
+./zarf/scripts/deploy.sh deploy-backend
 ```
 
 ### 4. Verify Deployment
 
 ```bash
 # Check deployment status
-./scripts/deployment/deploy-production.sh status
+./zarf/scripts/deploy.sh status
 
 # Verify health
-./scripts/deployment/deploy-production.sh verify
+./zarf/scripts/health-check.sh
 
 # Test API endpoint
 curl https://api.hras.yourdomain.com/health
@@ -323,7 +323,7 @@ The deployment uses Let's Encrypt with Route53 DNS challenge for automatic SSL c
 #### Initial Certificate Setup
 ```bash
 # Run once during initial deployment
-./scripts/deployment/deploy-production.sh ssl-init
+./zarf/scripts/setup-ssl.sh
 ```
 
 #### Certificate Renewal
@@ -461,7 +461,7 @@ docker compose -f zarf/docker/compose/docker-compose.prod.yml down
 tar -xzf backup_20240116_120000.tar.gz -C ${DATA_PATH}/backend/
 
 # Restart services
-./scripts/deployment/deploy-production.sh deploy
+./zarf/scripts/deploy.sh deploy
 ```
 
 ## Security Considerations

@@ -664,7 +664,7 @@ prod-deploy:
 		echo "Error: .env.prod not found. Please copy .env.prod.example and configure it."; \
 		exit 1; \
 	fi
-	./scripts/deployment/deploy-production.sh deploy-backend
+	./zarf/scripts/deploy.sh deploy-backend
 
 prod-deploy-full:
 	@echo "Deploying full HRAS stack to production..."
@@ -672,18 +672,18 @@ prod-deploy-full:
 		echo "Error: .env.prod not found. Please copy .env.prod.example and configure it."; \
 		exit 1; \
 	fi
-	./scripts/deployment/deploy-production.sh deploy --postgres --monitoring --ssl-init
+	./zarf/scripts/deploy.sh deploy --postgres --monitoring --ssl-init
 
 prod-ssl-init:
 	@echo "Initializing SSL certificates..."
-	./scripts/deployment/deploy-production.sh ssl-init
+	./zarf/scripts/setup-ssl.sh
 
 prod-status:
 	@echo "Production deployment status:"
 	@docker compose -f zarf/docker/compose/docker-compose.prod.yml ps
 	@echo ""
 	@echo "Health check:"
-	@./scripts/health/health-check.sh --verbose
+	@./zarf/scripts/health-check.sh --verbose
 
 prod-logs:
 	@echo "Following production logs (Ctrl+C to stop)..."
@@ -691,7 +691,7 @@ prod-logs:
 
 prod-health:
 	@echo "Running production health checks..."
-	@./scripts/health/health-check.sh --verbose
+	@./zarf/scripts/health-check.sh --verbose
 
 prod-stop:
 	@echo "Stopping production services..."
