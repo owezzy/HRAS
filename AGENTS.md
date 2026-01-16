@@ -248,3 +248,58 @@ bugfix/auth-session-timeout
 release/v0.1.0
 hotfix/critical-fix
 ```
+
+---
+
+## AI Assistant Formatting Preferences
+
+### Tables
+
+Use ASCII box-drawing for tables (avoid markdown tables as they break in some contexts):
+
+```
+┌─────────────────────┬──────────────┬────────────────┐
+│ Column 1            │ Column 2     │ Column 3       │
+├─────────────────────┼──────────────┼────────────────┤
+│ Data                │ Data         │ Data           │
+│ More data           │ More         │ More           │
+└─────────────────────┴──────────────┴────────────────┘
+```
+
+### Lists and Comparisons
+
+Use indented blocks for comparisons:
+
+```
+Advantages:
+  - Point one
+  - Point two
+  - Point three
+
+Disadvantages:
+  - Point one
+  - Point two
+```
+
+### Code Blocks
+
+Always specify language for syntax highlighting:
+
+```python
+# Python example
+def example():
+    pass
+```
+
+```bash
+# Shell example
+echo "hello"
+```
+
+### Response Style
+
+- Be concise, no fluff
+- Use code blocks for commands and file paths
+- Structure complex information with clear headers
+- Use ASCII diagrams for architecture/flow explanations
+- Prefer bullet points over paragraphs for lists
