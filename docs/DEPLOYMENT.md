@@ -65,13 +65,13 @@ make docker-build-frontend  # Frontend image
 
 ```bash
 # Full stack with Redis, PostgreSQL, and Ollama
-docker-compose up
+docker compose -f zarf/docker/compose/docker-compose.yml up
 
 # Or run components separately:
-docker-compose up frontend
-docker-compose up backend
-docker-compose up redis
-docker-compose up postgres
+docker compose -f zarf/docker/compose/docker-compose.yml up frontend
+docker compose -f zarf/docker/compose/docker-compose.yml up backend
+docker compose -f zarf/docker/compose/docker-compose.yml up redis
+docker compose -f zarf/docker/compose/docker-compose.yml up postgres
 ```
 
 ### 3. Docker Images

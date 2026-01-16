@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/../config/deployment.env"
+source "${SCRIPT_DIR}/../docker/config/deployment.env"
 
 HEALTH_CHECK_URL="https://${DOMAIN}/health"
 METRICS_URL="https://${DOMAIN}/metrics"
@@ -73,13 +73,13 @@ check_docker_services() {
     cd /opt/hras/app
 
     local services
-    services=$(docker-compose -f docker-compose.prod.yml config --services)
+    services=$(docker-compose -f zarf/docker/compose/docker-compose.prod.yml config --services)
     local failed_services=()
 
     for service in $services; do
-        if docker-compose -f docker-compose.prod.yml ps -q "$service" >/dev/null 2>&1; then
+        if docker-compose -f zarf/docker/compose/docker-compose.prod.yml ps -q "$service" >/dev/null 2>&1; then
             local status
-            status=$(docker-compose -f docker-compose.prod.yml ps "$service" --format "table {{.Status}}" | tail -n +2)
+            status=$(docker-compose -f zarf/docker/compose/docker-compose.prod.yml ps "$service" --format "table {{.Status}}" | tail -n +2)
             if [[ "$status" =~ Up|running ]]; then
                 log_success "Service $service is running"
             else
@@ -146,11 +146,11 @@ check_database_connectivity() {
 
     cd /opt/hras/app
 
-    if docker-compose -f docker-compose.prod.yml exec -T postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" >/dev/null 2>&1; then
+    if docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" >/dev/null 2>&1; then
         log_success "Database is accessible"
 
         local connection_count
-        connection_count=$(docker-compose -f docker-compose.prod.yml exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -t -c "SELECT count(*) FROM pg_stat_activity;" | tr -d ' ')
+        connection_count=$(docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -t -c "SELECT count(*) FROM pg_stat_activity;" | tr -d ' ')
 
         log_info "Active database connections: $connection_count"
 

@@ -6,7 +6,7 @@ set -euo pipefail
 # Usage: ./setup-server.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/../config/deployment.env"
+source "${SCRIPT_DIR}/../docker/config/deployment.env"
 
 # Logging functions
 log_info() {
@@ -450,9 +450,9 @@ User=ubuntu
 Group=docker
 WorkingDirectory=/opt/hras/app
 Environment=PYTHONPATH=/opt/hras/app
-ExecStartPre=/usr/bin/docker-compose -f /opt/hras/app/docker-compose.prod.yml pull
-ExecStart=/usr/bin/docker-compose -f /opt/hras/app/docker-compose.prod.yml up
-ExecStop=/usr/bin/docker-compose -f /opt/hras/app/docker-compose.prod.yml down
+ExecStartPre=/usr/bin/docker-compose -f /opt/hras/app/zarf/docker/compose/docker-compose.prod.yml pull
+ExecStart=/usr/bin/docker-compose -f /opt/hras/app/zarf/docker/compose/docker-compose.prod.yml up
+ExecStop=/usr/bin/docker-compose -f /opt/hras/app/zarf/docker/compose/docker-compose.prod.yml down
 Restart=always
 RestartSec=10
 StandardOutput=append:/opt/hras/logs/app/hras.log
@@ -500,7 +500,7 @@ main() {
     log_info "Starting HRAS server setup..."
 
     # Check if deployment config exists
-    if [[ ! -f "${SCRIPT_DIR}/../config/deployment.env" ]]; then
+    if [[ ! -f "${SCRIPT_DIR}/../docker/config/deployment.env" ]]; then
         log_error "Deployment configuration not found. Please copy deployment.env.example to deployment.env and configure it."
         exit 1
     fi

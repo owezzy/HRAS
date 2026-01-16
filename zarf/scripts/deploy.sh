@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/../config/deployment.env"
+source "${SCRIPT_DIR}/../docker/config/deployment.env"
 
 DEPLOYMENT_LOG="/opt/hras/logs/app/deployment.log"
 BACKUP_DIR="/opt/hras/backups/$(date +%Y%m%d_%H%M%S)"
@@ -134,7 +134,7 @@ build_docker_images() {
 
     export DOCKER_BUILDKIT=1
 
-    if ! docker-compose -f docker-compose.prod.yml build --no-cache; then
+    if ! docker-compose -f zarf/docker/compose/docker-compose.prod.yml build --no-cache; then
         log_error "Failed to build Docker images"
         exit 1
     fi
@@ -150,10 +150,10 @@ perform_rolling_deployment() {
     local services=("backend" "postgres" "redis")
 
     for service in "${services[@]}"; do
-        if docker-compose -f docker-compose.prod.yml ps -q "$service" >/dev/null 2>&1; then
+        if docker-compose -f zarf/docker/compose/docker-compose.prod.yml ps -q "$service" >/dev/null 2>&1; then
             log_info "Rolling update for service: $service"
 
-            docker-compose -f docker-compose.prod.yml up -d --no-deps "$service"
+            docker-compose -f zarf/docker/compose/docker-compose.prod.yml up -d --no-deps "$service"
 
             if [[ "$service" == "backend" ]]; then
                 log_info "Waiting for backend service to be healthy..."
@@ -163,7 +163,7 @@ perform_rolling_deployment() {
             fi
         else
             log_info "Starting new service: $service"
-            docker-compose -f docker-compose.prod.yml up -d "$service"
+            docker-compose -f zarf/docker/compose/docker-compose.prod.yml up -d "$service"
         fi
     done
 
@@ -179,7 +179,7 @@ perform_blue_green_deployment() {
     local current_color
     local new_color
 
-    if docker-compose -f docker-compose.prod.yml ps -q backend-green >/dev/null 2>&1; then
+    if docker-compose -f zarf/docker/compose/docker-compose.prod.yml ps -q backend-green >/dev/null 2>&1; then
         current_color="green"
         new_color="blue"
     else
@@ -201,7 +201,7 @@ perform_blue_green_deployment() {
     update_nginx_upstream "$new_color"
 
     log_info "Stopping old environment..."
-    docker-compose -f docker-compose.prod.yml down
+    docker-compose -f zarf/docker/compose/docker-compose.prod.yml down
 
     mv "$new_compose_file" docker-compose.prod.yml
 
@@ -248,7 +248,7 @@ run_database_migrations() {
 
     cd /opt/hras/app
 
-    if ! docker-compose -f docker-compose.prod.yml exec -T backend alembic upgrade head; then
+    if ! docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T backend alembic upgrade head; then
         log_error "Database migration failed"
         exit 1
     fi
@@ -333,7 +333,7 @@ rollback_deployment() {
     log_info "Rolling back to backup: $latest_backup"
 
     cd /opt/hras/app
-    docker-compose -f docker-compose.prod.yml down
+    docker-compose -f zarf/docker/compose/docker-compose.prod.yml down
 
     if [[ -f "$latest_backup/app.tar.gz" ]]; then
         log_info "Restoring application files..."
@@ -353,7 +353,7 @@ rollback_deployment() {
     fi
 
     cd /opt/hras/app
-    docker-compose -f docker-compose.prod.yml up -d
+    docker-compose -f zarf/docker/compose/docker-compose.prod.yml up -d
 
     log_success "Rollback completed"
 }

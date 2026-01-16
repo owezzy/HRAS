@@ -241,12 +241,12 @@ db-stats:
 
 db-up:
 	@echo "Starting PostgreSQL..."
-	docker compose up -d postgres
+	docker compose -f zarf/docker/compose/docker-compose.yml up -d postgres
 	@echo "PostgreSQL is running on localhost:5433"
 
 db-down:
 	@echo "Stopping PostgreSQL..."
-	docker compose down postgres
+	docker compose -f zarf/docker/compose/docker-compose.yml down postgres
 
 db-migrate:
 	@echo "Creating new migration..."
@@ -538,8 +538,8 @@ monitoring-prometheus:
 # =============================================================================
 
 # Deployment Configuration
-DEPLOY_SCRIPTS_DIR = deploy/scripts
-DEPLOY_CONFIG_DIR = deploy/config
+DEPLOY_SCRIPTS_DIR = zarf/scripts
+DEPLOY_CONFIG_DIR = zarf/docker/config
 
 deploy-setup:
 	@echo "Setting up EC2 instance for HRAS production deployment..."
@@ -598,7 +598,7 @@ deploy-status:
 	@systemctl status hras.service nginx.service docker.service --no-pager || true
 	@echo ""
 	@echo "=== Docker Containers ==="
-	@cd /opt/hras/app && docker-compose -f docker-compose.prod.yml ps || true
+	@cd /opt/hras/app && docker compose -f zarf/docker/compose/docker-compose.prod.yml ps || true
 	@echo ""
 	@echo "=== Resource Usage ==="
 	@echo "CPU Usage: $$(top -bn1 | grep "Cpu(s)" | awk '{print $$2}' | sed 's/%us,//')%"
@@ -635,24 +635,24 @@ deploy-sync-scripts:
 		$(DEPLOY_SCRIPTS_DIR)/ $(DEPLOY_CONFIG_DIR)/ \
 		$(EC2_USER)@$(EC2_HOST):/tmp/hras-deploy/
 	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST) \
-		"sudo mkdir -p /opt/hras/deploy && sudo cp -r /tmp/hras-deploy/* /opt/hras/deploy/ && sudo chmod +x /opt/hras/deploy/scripts/*.sh"
+		"sudo mkdir -p /opt/hras/zarf && sudo cp -r /tmp/hras-deploy/* /opt/hras/zarf/ && sudo chmod +x /opt/hras/zarf/scripts/*.sh"
 
 deploy-remote-setup:
 	@echo "Running remote server setup..."
 	@make deploy-sync-scripts
 	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST) \
-		"cd /opt/hras/deploy && sudo ./scripts/setup-server.sh"
+		"cd /opt/hras/zarf && sudo ./scripts/setup-server.sh"
 
 deploy-remote-deploy:
 	@echo "Running remote deployment..."
 	@make deploy-sync-scripts
 	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST) \
-		"cd /opt/hras/deploy && sudo ./scripts/deploy.sh"
+		"cd /opt/hras/zarf && sudo ./scripts/deploy.sh"
 
 deploy-remote-health:
 	@echo "Running remote health check..."
 	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST) \
-		"cd /opt/hras/deploy && ./scripts/health-check.sh"
+		"cd /opt/hras/zarf && ./scripts/health-check.sh"
 
 # =============================================================================
 # Production Docker Compose Deployment
@@ -680,14 +680,14 @@ prod-ssl-init:
 
 prod-status:
 	@echo "Production deployment status:"
-	@docker compose -f docker-compose.prod.yml ps
+	@docker compose -f zarf/docker/compose/docker-compose.prod.yml ps
 	@echo ""
 	@echo "Health check:"
 	@./scripts/health/health-check.sh --verbose
 
 prod-logs:
 	@echo "Following production logs (Ctrl+C to stop)..."
-	@docker compose -f docker-compose.prod.yml logs -f
+	@docker compose -f zarf/docker/compose/docker-compose.prod.yml logs -f
 
 prod-health:
 	@echo "Running production health checks..."
@@ -695,20 +695,20 @@ prod-health:
 
 prod-stop:
 	@echo "Stopping production services..."
-	@docker compose -f docker-compose.prod.yml down
+	@docker compose -f zarf/docker/compose/docker-compose.prod.yml down
 
 prod-clean:
 	@echo "Cleaning production deployment..."
-	@docker compose -f docker-compose.prod.yml down -v
+	@docker compose -f zarf/docker/compose/docker-compose.prod.yml down -v
 	@docker system prune -f
 
 prod-backup:
 	@echo "Creating production backup..."
 	@timestamp=$$(date +%Y%m%d_%H%M%S); \
-	if [ -f docker-compose.prod.yml ]; then \
-		docker compose -f docker-compose.prod.yml exec backend tar -czf /app/data/backup_$$timestamp.tar.gz -C /app/data chroma_db || true; \
-		if docker compose -f docker-compose.prod.yml ps postgres | grep -q "Up"; then \
-			docker compose -f docker-compose.prod.yml exec postgres pg_dump -U $${POSTGRES_USER:-hras} $${POSTGRES_DB:-hras} > backup_$$timestamp.sql || true; \
+	if [ -f zarf/docker/compose/docker-compose.prod.yml ]; then \
+		docker compose -f zarf/docker/compose/docker-compose.prod.yml exec backend tar -czf /app/data/backup_$$timestamp.tar.gz -C /app/data chroma_db || true; \
+		if docker compose -f zarf/docker/compose/docker-compose.prod.yml ps postgres | grep -q "Up"; then \
+			docker compose -f zarf/docker/compose/docker-compose.prod.yml exec postgres pg_dump -U $${POSTGRES_USER:-hras} $${POSTGRES_DB:-hras} > backup_$$timestamp.sql || true; \
 		fi; \
 		echo "Backup created: backup_$$timestamp"; \
 	else \
@@ -717,13 +717,13 @@ prod-backup:
 
 prod-update:
 	@echo "Updating production deployment..."
-	@docker compose -f docker-compose.prod.yml pull
-	@docker compose -f docker-compose.prod.yml up -d --force-recreate
+	@docker compose -f zarf/docker/compose/docker-compose.prod.yml pull
+	@docker compose -f zarf/docker/compose/docker-compose.prod.yml up -d --force-recreate
 	@echo "Update completed"
 
 prod-monitoring:
 	@echo "Starting production monitoring stack..."
-	@docker compose -f docker-compose.prod.yml --profile monitoring up -d
+	@docker compose -f zarf/docker/compose/docker-compose.prod.yml --profile monitoring up -d
 	@echo "Monitoring stack started:"
 	@echo "  Grafana:      http://localhost:3001"
 	@echo "  Prometheus:   http://localhost:9090"

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/../config/deployment.env"
+source "${SCRIPT_DIR}/../docker/config/deployment.env"
 
 BACKUP_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="/opt/hras/backups/${BACKUP_TIMESTAMP}"
@@ -57,8 +57,8 @@ backup_database() {
 
     cd /opt/hras/app
 
-    if docker-compose -f docker-compose.prod.yml ps -q postgres >/dev/null 2>&1; then
-        docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump \
+    if docker-compose -f zarf/docker/compose/docker-compose.prod.yml ps -q postgres >/dev/null 2>&1; then
+        docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T postgres pg_dump \
             -U "${POSTGRES_USER}" \
             -d "${POSTGRES_DB}" \
             --verbose \
@@ -67,7 +67,7 @@ backup_database() {
             --compress=9 \
             | gzip > "${BACKUP_DIR}/database.dump.gz"
 
-        docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump \
+        docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T postgres pg_dump \
             -U "${POSTGRES_USER}" \
             -d "${POSTGRES_DB}" \
             --schema-only \

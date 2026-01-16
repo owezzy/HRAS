@@ -6,8 +6,16 @@ This directory contains Dockerfiles for building HRAS container images following
 
 ```
 zarf/docker/
-├── dockerfile.backend    # FastAPI backend API server
-└── README.md            # This file
+├── compose/                  # Docker Compose files
+│   ├── docker-compose.yml        # Base development compose
+│   ├── docker-compose.dev.yml    # Development with hot reload
+│   ├── docker-compose.prod.yml   # Production deployment
+│   └── docker-compose.minimal.yml # Budget t3.small deployment
+├── monitoring/              # Monitoring stack configs
+├── dockerfile.backend       # FastAPI backend API server
+├── hras.service            # Systemd service file
+├── install-service.sh      # EC2 installer script
+└── README.md               # This file
 ```
 
 ## Building Images
@@ -71,11 +79,13 @@ containers:
 ## Development vs Production
 
 ### Development
-- Use `docker-compose.dev.yml` for local development with hot reloading
+- Use `zarf/docker/compose/docker-compose.dev.yml` for local development with hot reloading
 - Mounts source code as volumes for faster iteration
 
 ### Production
-- Use pre-built images from registry
+- Use `zarf/docker/compose/docker-compose.prod.yml` for production
+- Use `zarf/docker/compose/docker-compose.minimal.yml` for budget deployments (t3.small)
+- Pre-built images from registry
 - Images are optimized for size and security
 - Non-root user execution
 - Health checks enabled

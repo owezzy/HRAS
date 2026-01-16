@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/../config/deployment.env"
+source "${SCRIPT_DIR}/../docker/config/deployment.env"
 
 log_info() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $1" | tee -a rollback.log
@@ -124,8 +124,8 @@ create_rollback_backup() {
 
     if [[ "${USE_POSTGRES:-false}" == "true" ]]; then
         cd /opt/hras/app
-        if docker-compose -f docker-compose.prod.yml ps -q postgres >/dev/null 2>&1; then
-            docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump \
+        if docker-compose -f zarf/docker/compose/docker-compose.prod.yml ps -q postgres >/dev/null 2>&1; then
+            docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T postgres pg_dump \
                 -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" | \
                 gzip > "${rollback_backup_dir}/current_database.sql.gz"
         fi
@@ -145,8 +145,8 @@ stop_services() {
 
     cd /opt/hras/app
 
-    if docker-compose -f docker-compose.prod.yml ps -q >/dev/null 2>&1; then
-        docker-compose -f docker-compose.prod.yml down
+    if docker-compose -f zarf/docker/compose/docker-compose.prod.yml ps -q >/dev/null 2>&1; then
+        docker-compose -f zarf/docker/compose/docker-compose.prod.yml down
         log_success "Docker services stopped"
     fi
 
@@ -184,22 +184,22 @@ restore_database() {
 
     cd /opt/hras/app
 
-    docker-compose -f docker-compose.prod.yml up -d postgres
+    docker-compose -f zarf/docker/compose/docker-compose.prod.yml up -d postgres
 
     sleep 30
 
     if [[ -f "${backup_dir}/database.dump.gz" ]]; then
         log_info "Restoring from custom format dump..."
         gunzip -c "${backup_dir}/database.dump.gz" | \
-        docker-compose -f docker-compose.prod.yml exec -T postgres pg_restore \
+        docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T postgres pg_restore \
             -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" --clean --if-exists
     elif [[ -f "${backup_dir}/database.sql.gz" ]]; then
         log_info "Restoring from SQL dump..."
-        docker-compose -f docker-compose.prod.yml exec -T postgres psql \
+        docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T postgres psql \
             -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
         gunzip -c "${backup_dir}/database.sql.gz" | \
-        docker-compose -f docker-compose.prod.yml exec -T postgres psql \
+        docker-compose -f zarf/docker/compose/docker-compose.prod.yml exec -T postgres psql \
             -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"
     else
         log_error "Database backup not found in ${backup_dir}"
@@ -267,7 +267,7 @@ start_services() {
 
     cd /opt/hras/app
 
-    docker-compose -f docker-compose.prod.yml up -d
+    docker-compose -f zarf/docker/compose/docker-compose.prod.yml up -d
 
     sleep 30
 

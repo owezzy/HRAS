@@ -15,7 +15,7 @@ HRAS follows a **"configuration-as-code"** philosophy - everything is controlled
 | **Backend** | `backend/.env` | Ollama URL, Models, Database |
 | **Frontend** | `frontend/.env.local` | API URL, Feature Flags |
 | **Kubernetes** | `k8s/dev/backend/dev-backend-configmap.yaml` | Environment-specific overrides |
-| **Docker** | `docker-compose.yml` + `.env` | Container orchestration |
+| **Docker** | `zarf/docker/compose/docker-compose.yml` + `.env` | Container orchestration |
 
 ---
 
@@ -223,13 +223,15 @@ data:
 
 ### Docker Compose Environment
 
-**`docker-compose.yml`** (with `.env` file):
+**`zarf/docker/compose/docker-compose.yml`** (with `.env` file):
 
 ```yaml
 version: '3.8'
 services:
   backend:
-    build: ./backend
+    build:
+      context: ../../..
+      dockerfile: zarf/docker/dockerfile.backend
     ports:
       - "8000:8000"
     environment:
@@ -239,15 +241,9 @@ services:
     volumes:
       - ./backend/chroma_db:/app/chroma_db
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=${API_URL:-http://localhost:8000}
 ```
 
-**`.env` for Docker Compose**:
+**`.env` for Docker Compose** (in project root):
 
 ```bash
 # Shared configuration for docker-compose

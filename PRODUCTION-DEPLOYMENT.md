@@ -288,7 +288,7 @@ curl https://api.hras.yourdomain.com/health
 #### PostgreSQL Database
 ```bash
 # Enable with profile
-docker compose -f docker-compose.prod.yml --profile postgres up -d postgres
+docker compose -f zarf/docker/compose/docker-compose.prod.yml --profile postgres up -d postgres
 ```
 - **Purpose**: Conversation history storage
 - **Port**: 5432 (internal)
@@ -297,7 +297,7 @@ docker compose -f docker-compose.prod.yml --profile postgres up -d postgres
 #### Redis Cache
 ```bash
 # Enable with profile
-docker compose -f docker-compose.prod.yml --profile redis up -d redis
+docker compose -f zarf/docker/compose/docker-compose.prod.yml --profile redis up -d redis
 ```
 - **Purpose**: API response caching, session storage
 - **Port**: 6379 (internal)
@@ -306,7 +306,7 @@ docker compose -f docker-compose.prod.yml --profile redis up -d redis
 #### Monitoring Stack
 ```bash
 # Enable with profile
-docker compose -f docker-compose.prod.yml --profile monitoring up -d
+docker compose -f zarf/docker/compose/docker-compose.prod.yml --profile monitoring up -d
 ```
 - **Prometheus**: Metrics collection (port 9090)
 - **Grafana**: Visualization dashboard (port 3001)
@@ -328,7 +328,7 @@ The deployment uses Let's Encrypt with Route53 DNS challenge for automatic SSL c
 
 #### Certificate Renewal
 - **Automatic**: Certbot daemon checks every 12 hours
-- **Manual**: `docker compose -f docker-compose.prod.yml exec certbot certbot renew`
+- **Manual**: `docker compose -f zarf/docker/compose/docker-compose.prod.yml exec certbot certbot renew`
 - **Notification**: Webhook alerts on renewal (configure `NOTIFICATION_WEBHOOK`)
 
 #### Security Features
@@ -439,7 +439,7 @@ Logs are collected by Promtail and sent to Loki:
 
 ```bash
 # Backup script (run daily via cron)
-docker compose -f docker-compose.prod.yml exec backend python -c "
+docker compose -f zarf/docker/compose/docker-compose.prod.yml exec backend python -c "
 import subprocess
 import datetime
 
@@ -448,14 +448,14 @@ subprocess.run(['tar', '-czf', f'/app/data/backup_{timestamp}.tar.gz', '/app/dat
 "
 
 # PostgreSQL backup (if enabled)
-docker compose -f docker-compose.prod.yml exec postgres pg_dump -U hras hras > backup_$(date +%Y%m%d).sql
+docker compose -f zarf/docker/compose/docker-compose.prod.yml exec postgres pg_dump -U hras hras > backup_$(date +%Y%m%d).sql
 ```
 
 ### Disaster Recovery
 
 ```bash
 # Stop services
-docker compose -f docker-compose.prod.yml down
+docker compose -f zarf/docker/compose/docker-compose.prod.yml down
 
 # Restore data volumes
 tar -xzf backup_20240116_120000.tar.gz -C ${DATA_PATH}/backend/
@@ -493,16 +493,16 @@ tar -xzf backup_20240116_120000.tar.gz -C ${DATA_PATH}/backend/
 openssl s_client -servername api.hras.yourdomain.com -connect api.hras.yourdomain.com:443
 
 # Force certificate renewal
-docker compose -f docker-compose.prod.yml exec certbot certbot renew --force-renewal
+docker compose -f zarf/docker/compose/docker-compose.prod.yml exec certbot certbot renew --force-renewal
 ```
 
 #### Backend Not Starting
 ```bash
 # Check logs
-docker compose -f docker-compose.prod.yml logs backend
+docker compose -f zarf/docker/compose/docker-compose.prod.yml logs backend
 
 # Check health
-docker compose -f docker-compose.prod.yml exec backend curl -f http://localhost:8000/health
+docker compose -f zarf/docker/compose/docker-compose.prod.yml exec backend curl -f http://localhost:8000/health
 ```
 
 #### High Memory Usage
@@ -511,7 +511,7 @@ docker compose -f docker-compose.prod.yml exec backend curl -f http://localhost:
 docker stats
 
 # Restart services if needed
-docker compose -f docker-compose.prod.yml restart backend
+docker compose -f zarf/docker/compose/docker-compose.prod.yml restart backend
 ```
 
 ### Log Locations
@@ -566,15 +566,15 @@ For higher traffic, consider:
 
 ```bash
 # View all services
-docker compose -f docker-compose.prod.yml ps
+docker compose -f zarf/docker/compose/docker-compose.prod.yml ps
 
 # Follow logs
-docker compose -f docker-compose.prod.yml logs -f backend
+docker compose -f zarf/docker/compose/docker-compose.prod.yml logs -f backend
 
 # Execute commands in containers
-docker compose -f docker-compose.prod.yml exec backend bash
+docker compose -f zarf/docker/compose/docker-compose.prod.yml exec backend bash
 
 # Update and restart
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d --force-recreate
+docker compose -f zarf/docker/compose/docker-compose.prod.yml pull
+docker compose -f zarf/docker/compose/docker-compose.prod.yml up -d --force-recreate
 ```

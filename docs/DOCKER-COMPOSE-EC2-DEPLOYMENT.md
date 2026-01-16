@@ -185,7 +185,7 @@ Use the lightweight configuration with SQLite and no monitoring:
 
 ```bash
 # Use minimal compose file
-export COMPOSE_FILE=docker-compose.minimal.yml
+export COMPOSE_FILE=zarf/docker/compose/docker-compose.minimal.yml
 ```
 
 **Option B: Full (t3.medium+ - 4GB+ RAM)**
@@ -194,7 +194,7 @@ Use the full production configuration with PostgreSQL and monitoring:
 
 ```bash
 # Use full compose file
-export COMPOSE_FILE=docker-compose.prod.yml
+export COMPOSE_FILE=zarf/docker/compose/docker-compose.prod.yml
 ```
 
 ---
@@ -318,9 +318,9 @@ sudo systemctl restart hras
 sudo systemctl status hras
 
 # View logs
-sudo journalctl -u hras -f              # Service logs
-docker compose logs -f backend          # Backend logs
-docker compose logs -f nginx            # Nginx logs
+sudo journalctl -u hras -f                                        # Service logs
+docker compose -f zarf/docker/compose/docker-compose.prod.yml logs -f backend   # Backend logs
+docker compose -f zarf/docker/compose/docker-compose.prod.yml logs -f nginx     # Nginx logs
 
 # Update deployment
 cd /opt/hras
@@ -328,10 +328,10 @@ git pull origin feature/backend-refactor-testing
 sudo systemctl reload hras              # Recreates containers
 
 # Manual container management
-docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml logs -f
-docker compose -f docker-compose.prod.yml down
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f zarf/docker/compose/docker-compose.prod.yml ps
+docker compose -f zarf/docker/compose/docker-compose.prod.yml logs -f
+docker compose -f zarf/docker/compose/docker-compose.prod.yml down
+docker compose -f zarf/docker/compose/docker-compose.prod.yml up -d
 ```
 
 ---
@@ -361,7 +361,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 ```bash
 # Check logs
-docker compose -f docker-compose.prod.yml logs backend
+docker compose -f zarf/docker/compose/docker-compose.prod.yml logs backend
 
 # Check resource usage
 docker stats

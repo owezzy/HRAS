@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/../config/deployment.env"
+source "${SCRIPT_DIR}/../docker/config/deployment.env"
 
 log_info() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $1" | tee -a monitoring-setup.log
@@ -425,8 +425,8 @@ Requires=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/opt/hras/app
-ExecStart=/usr/bin/docker-compose -f docker-compose.prod.yml up -d prometheus grafana node-exporter
-ExecStop=/usr/bin/docker-compose -f docker-compose.prod.yml stop prometheus grafana node-exporter
+ExecStart=/usr/bin/docker-compose -f zarf/docker/compose/docker-compose.prod.yml up -d prometheus grafana node-exporter
+ExecStop=/usr/bin/docker-compose -f zarf/docker/compose/docker-compose.prod.yml stop prometheus grafana node-exporter
 StandardOutput=append:/opt/hras/logs/app/monitoring.log
 StandardError=append:/opt/hras/logs/app/monitoring-error.log
 
@@ -445,7 +445,7 @@ verify_monitoring_setup() {
 
     cd /opt/hras/app
 
-    if docker-compose -f docker-compose.prod.yml up -d prometheus grafana node-exporter; then
+    if docker-compose -f zarf/docker/compose/docker-compose.prod.yml up -d prometheus grafana node-exporter; then
         log_success "Monitoring services started"
 
         sleep 30

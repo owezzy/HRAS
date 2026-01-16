@@ -11,10 +11,10 @@ RemainAfterExit=yes
 WorkingDirectory=/opt/hras
 EnvironmentFile=/opt/hras/.env.prod
 
-ExecStartPre=/usr/bin/docker compose -f docker-compose.prod.yml pull
-ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
-ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml down
-ExecReload=/usr/bin/docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-recreate
+ExecStartPre=/usr/bin/docker compose -f zarf/docker/compose/docker-compose.prod.yml pull
+ExecStart=/usr/bin/docker compose -f zarf/docker/compose/docker-compose.prod.yml --env-file .env.prod up -d
+ExecStop=/usr/bin/docker compose -f zarf/docker/compose/docker-compose.prod.yml down
+ExecReload=/usr/bin/docker compose -f zarf/docker/compose/docker-compose.prod.yml --env-file .env.prod up -d --force-recreate
 
 Restart=on-failure
 RestartSec=30
