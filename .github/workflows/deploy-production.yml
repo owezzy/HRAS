@@ -117,7 +117,6 @@ jobs:
 
     outputs:
       backend-image: ${{ steps.meta.outputs.backend-image }}
-      frontend-image: ${{ steps.meta.outputs.frontend-image }}
       image-tag: ${{ steps.meta.outputs.image-tag }}
 
     steps:
@@ -139,21 +138,16 @@ jobs:
         run: |
           IMAGE_TAG=${GITHUB_SHA::7}-$(date +%Y%m%d-%H%M%S)
           BACKEND_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/backend:${IMAGE_TAG}
-          FRONTEND_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/frontend:${IMAGE_TAG}
 
           echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           echo "backend-image=${BACKEND_IMAGE}" >> $GITHUB_OUTPUT
-          echo "frontend-image=${FRONTEND_IMAGE}" >> $GITHUB_OUTPUT
-
-          # Also tag as latest
           echo "backend-latest=${{ env.REGISTRY }}/${{ github.repository }}/backend:latest" >> $GITHUB_OUTPUT
-          echo "frontend-latest=${{ env.REGISTRY }}/${{ github.repository }}/frontend:latest" >> $GITHUB_OUTPUT
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: .
+          file: ./zarf/docker/dockerfile.backend
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
@@ -162,18 +156,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ steps.meta.outputs.frontend-image }}
-            ${{ steps.meta.outputs.frontend-latest }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # Note: Frontend is deployed separately on AWS Amplify
+      # No frontend image build needed for K8s deployment
 
   # =============================================================================
   # Deploy to Production
@@ -205,22 +189,18 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          # Copy deployment scripts to server
           rsync -avz \
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='.next' \
             --exclude='__pycache__' \
-            scripts/ ubuntu@${{ secrets.EC2_HOST }}:/tmp/hras-deploy/
+            zarf/scripts/ ubuntu@${{ secrets.EC2_HOST }}:/tmp/hras-deploy/
 
-          # Execute deployment
           ssh ubuntu@${{ secrets.EC2_HOST }} "
             cd /tmp/hras-deploy
             sudo chmod +x *.sh
 
-            # Set deployment environment variables
             export BACKEND_IMAGE='${{ needs.build-images.outputs.backend-image }}'
-            export FRONTEND_IMAGE='${{ needs.build-images.outputs.frontend-image }}'
             export IMAGE_TAG='${{ needs.build-images.outputs.image-tag }}'
             export DOMAIN='${{ secrets.DOMAIN }}'
             export LETSENCRYPT_EMAIL='${{ secrets.LETSENCRYPT_EMAIL }}'
@@ -228,8 +208,7 @@ jobs:
             export OLLAMA_BASE_URL='${{ secrets.OLLAMA_BASE_URL }}'
             export OLLAMA_MODEL='${{ secrets.OLLAMA_MODEL }}'
 
-            # Run deployment
-            sudo ./deploy.sh
+            sudo ./k3s-deploy.sh
           "
 
       - name: Health check
@@ -237,32 +216,24 @@ jobs:
           echo "Waiting for deployment to stabilize..."
           sleep 30
 
-          # Check backend health
           for i in {1..10}; do
             if curl -f https://${{ secrets.DOMAIN }}/api/health; then
-              echo "✅ Backend health check passed"
-              break
+              echo "Backend health check passed"
+              exit 0
             fi
-            echo "⏳ Waiting for backend... (attempt $i/10)"
+            echo "Waiting for backend... (attempt $i/10)"
             sleep 10
           done
-
-          # Check frontend
-          if curl -f https://${{ secrets.DOMAIN }}/; then
-            echo "✅ Frontend health check passed"
-          else
-            echo "❌ Frontend health check failed"
-            exit 1
-          fi
+          echo "Backend health check failed"
+          exit 1
 
       - name: Run post-deployment tests
         run: |
-          # Run smoke tests against production
           curl -X POST https://${{ secrets.DOMAIN }}/api/v1/chat \
             -H "Content-Type: application/json" \
             -d '{"message": "test deployment"}' | jq .
 
-          echo "🚀 Deployment completed successfully!"
+          echo "Deployment completed successfully!"
 
   # =============================================================================
   # Rollback on Failure
@@ -287,10 +258,10 @@ jobs:
         run: |
           ssh ubuntu@${{ secrets.EC2_HOST }} "
             cd /opt/hras
-            sudo ./rollback.sh
+            sudo ./k3s-teardown.sh --keep-data
           "
 
-          echo "🔄 Rollback completed"
+          echo "Rollback completed"
 
   # =============================================================================
   # Notification

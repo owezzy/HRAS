@@ -1,0 +1,100 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest-job
+  namespace: hras-system
+  labels:
+    app: backend
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/component: ingest-job
+spec:
+  # Only run once, don't retry on failure to avoid duplicate ingestion
+  backoffLimit: 0
+  # Clean up completed job after 1 hour to keep cluster tidy
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: ingest
+          image: localhost/hras-backend:latest
+          imagePullPolicy: Never
+          env:
+            - name: BACKEND_URL
+              value: "http://backend-service:8000"
+          command:
+            - python3
+            - -c
+            - |
+              import time
+              import urllib.request
+              import urllib.error
+              import json
+              import sys
+
+              backend_url = "http://backend-service:8000"
+
+              print("Waiting for backend to be ready...")
+
+              # Wait for backend service to be available
+              max_retries = 60  # 5 minutes max wait
+              for i in range(max_retries):
+                  try:
+                      with urllib.request.urlopen(f"{backend_url}/health", timeout=5) as response:
+                          if response.getcode() == 200:
+                              print("Backend is ready. Initializing vector store...")
+                              break
+                  except (urllib.error.URLError, urllib.error.HTTPError, Exception) as e:
+                      print(f"Backend not ready (attempt {i+1}/{max_retries}), waiting 5 seconds...")
+                      time.sleep(5)
+              else:
+                  print("Backend failed to become ready after 5 minutes")
+                  sys.exit(1)
+
+              # Initialize collection by calling stats endpoint first
+              try:
+                  with urllib.request.urlopen(f"{backend_url}/api/v1/admin/stats", timeout=10) as stats_response:
+                      stats_data = json.loads(stats_response.read().decode('utf-8'))
+                      print(f"Vector store initialized. Current documents: {stats_data['count']}")
+              except Exception as e:
+                  print(f"Failed to initialize vector store: {e}")
+                  sys.exit(1)
+
+              print("Starting data ingestion...")
+
+              # Run ingestion with clear_existing=true and use_sample=true
+              ingest_data = json.dumps({"clear_existing": True, "use_sample": True}).encode('utf-8')
+
+              try:
+                  req = urllib.request.Request(
+                      f"{backend_url}/api/v1/admin/ingest",
+                      data=ingest_data,
+                      headers={'Content-Type': 'application/json'}
+                  )
+
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      response_data = json.loads(response.read().decode('utf-8'))
+
+                      if response.getcode() == 200:
+                          print("Ingestion completed successfully")
+                          print(json.dumps(response_data, indent=2))
+
+                          # Verify ingestion by checking stats
+                          with urllib.request.urlopen(f"{backend_url}/api/v1/admin/stats", timeout=10) as stats_response:
+                              stats_data = json.loads(stats_response.read().decode('utf-8'))
+                              print(f"Documents in vector store: {stats_data['count']}")
+                      else:
+                          print(f"Ingestion failed with status: {response.getcode()}")
+                          print(json.dumps(response_data, indent=2))
+                          sys.exit(1)
+
+              except Exception as e:
+                  print(f"Ingestion failed with error: {e}")
+                  sys.exit(1)
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"

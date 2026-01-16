@@ -1,0 +1,10 @@
+# Namespace for Nginx Ingress Controller
+# This namespace isolates ingress controller resources from application workloads
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/component: controller

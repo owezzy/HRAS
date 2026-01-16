@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: hras-production
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/component: config
+    environment: production
+data:
+  # Ollama configuration - update with actual production URL
+  ollama_base_url: "http://ollama-service.hras-production.svc.cluster.local:11434"
+  ollama_model: "nemotron-3-nano:30b-cloud"
+  ollama_embedding_model: "nomic-embed-text"
+
+  # Data storage
+  chroma_persist_directory: "/data/chroma_db"
+
+  # Internal API URL
+  api_url: "http://backend-service.hras-production.svc.cluster.local:8000"
+
+  # Database connection - password from secret
+  database_host: "postgres.hras-production.svc.cluster.local"
+  database_port: "5432"
+  database_name: "hras"
+  use_postgres: "true"
+
+  # CORS - update with actual Amplify domain
+  cors_origins: '["https://PLACEHOLDER.owezzy.tech", "https://www.PLACEHOLDER.owezzy.tech"]'
+
+  # Logging
+  log_level: "INFO"
+  environment: "production"
+
+  # Application settings
+  debug: "false"
+  workers: "2"

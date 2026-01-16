@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hras-production
+  labels:
+    app.kubernetes.io/name: hras
+    app.kubernetes.io/part-of: hras
+    environment: production
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: hras-production-quota
+  namespace: hras-production
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: "3Gi"
+    limits.cpu: "3"
+    limits.memory: "4Gi"
+    persistentvolumeclaims: "5"
+    pods: "20"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: hras-production-limits
+  namespace: hras-production
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "500m"
+        memory: "512Mi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "128Mi"
+      max:
+        cpu: "2"
+        memory: "2Gi"
+      min:
+        cpu: "50m"
+        memory: "64Mi"
+    - type: PersistentVolumeClaim
+      max:
+        storage: "20Gi"
+      min:
+        storage: "1Gi"

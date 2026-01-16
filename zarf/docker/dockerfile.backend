@@ -1,0 +1,65 @@
+# Backend API Dockerfile
+# Build from repo root: docker build -f zarf/docker/dockerfile.backend -t hras-backend .
+
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+
+WORKDIR /app
+
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+
+# Install dependencies first (cached layer)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=backend/uv.lock,target=uv.lock \
+    --mount=type=bind,source=backend/pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=backend/README.md,target=README.md \
+    uv sync --frozen --no-install-project --no-dev
+
+# Copy backend source code
+COPY backend/src/ ./src/
+COPY backend/agents/ ./agents/
+COPY backend/chains/ ./chains/
+COPY backend/tools/ ./tools/
+COPY backend/vectorstore/ ./vectorstore/
+COPY backend/prompts/ ./prompts/
+COPY backend/pyproject.toml backend/uv.lock backend/README.md ./
+
+# Install the project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-editable
+
+# Production stage
+FROM python:3.12-slim-bookworm
+
+# Create non-root user for security
+RUN groupadd -g 1000 appuser && \
+    useradd -m -u 1000 -g appuser appuser && \
+    mkdir -p /data && chown appuser:appuser /data
+
+# Copy virtual environment from builder
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+
+WORKDIR /app
+
+# Copy application source
+COPY --chown=appuser:appuser backend/src/ ./src/
+COPY --chown=appuser:appuser backend/agents/ ./agents/
+COPY --chown=appuser:appuser backend/chains/ ./chains/
+COPY --chown=appuser:appuser backend/tools/ ./tools/
+COPY --chown=appuser:appuser backend/vectorstore/ ./vectorstore/
+COPY --chown=appuser:appuser backend/prompts/ ./prompts/
+
+# Environment configuration
+ENV PATH="/app/.venv/bin:$PATH"
+ENV HOME=/home/appuser
+ENV PYTHONPATH=/app
+
+USER appuser
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+CMD ["python", "-m", "uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

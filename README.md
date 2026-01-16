@@ -126,17 +126,12 @@ See [docs/API.md](docs/API.md) for detailed API documentation.
 ### Building Docker Images
 
 ```bash
-# Build all images
-make docker-build
-
-# Or build individually:
-make docker-build-backend   # Build backend image
-make docker-build-frontend  # Build frontend image
+make docker-build-backend
 ```
 
 ### Local Development with Kind
 
-[Kind](https://kind.sigs.k8s.io/) (Kubernetes IN Docker) lets you run a local Kubernetes cluster for development.
+[Kind](https://kind.sigs.k8s.io/) (Kubernetes IN Docker) provides a local Kubernetes cluster for development.
 
 **Prerequisites:**
 - Docker running
@@ -147,19 +142,16 @@ make docker-build-frontend  # Build frontend image
 **Quick Start:**
 
 ```bash
-make kind-create    # Create Kind cluster
-make kind-load      # Build and load images
-make kind-deploy    # Deploy backend and frontend (includes automatic data ingestion)
-make kind-status    # Check status
+make kind-create          # Create Kind cluster
+make kind-load            # Build and load backend image
+make kind-deploy          # Deploy backend + postgres (auto-ingests data)
+make kind-status          # Check status
 ```
 
 **Access the app:**
-- Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
 - Health check: http://localhost:8000/health
-
-**Data Ingestion:**
-Sample UHRI data is automatically ingested on first deployment via a Kubernetes Job. Check ingestion status with `make kind-status`.
+- PostgreSQL: localhost:30432
 
 **Useful Commands:**
 
@@ -167,60 +159,72 @@ Sample UHRI data is automatically ingested on first deployment via a Kubernetes 
 |---------|-------------|
 | `make kind-create` | Create Kind cluster |
 | `make kind-delete` | Delete Kind cluster |
-| `make kind-load` | Build and load images |
-| `make kind-deploy` | Deploy backend and frontend (auto-ingestion included) |
+| `make kind-load` | Build and load backend image |
+| `make kind-deploy` | Deploy backend + postgres (auto-ingestion included) |
 | `make kind-deploy-backend` | Deploy backend only |
-| `make kind-deploy-frontend` | Deploy frontend only |
+| `make kind-deploy-postgres` | Deploy PostgreSQL only |
 | `make kind-status` | Show pods and services |
 | `make kind-logs` | Tail all logs |
 | `make kind-logs-backend` | Tail backend logs |
-| `make kind-logs-frontend` | Tail frontend logs |
 | `make kind-clean` | Remove HRAS from cluster |
 
 **Ollama Configuration:**
 
 The dev overlay configures Ollama to use `host.docker.internal:11434` (macOS/Windows).
 
-For Linux, update `k8s/dev/backend/dev-backend-configmap.yaml`:
+For Linux, update `zarf/k8s/dev/backend/configmap.yaml`:
 
 ```yaml
 ollama_base_url: "http://172.17.0.1:11434"
 ```
 
-### Production Kubernetes Deployment
+### Production Deployment with K3s
 
-For production, create a `k8s/prod/` overlay similar to `k8s/dev/` with production-specific patches.
+K3s is a lightweight Kubernetes distribution ideal for production on AWS EC2.
 
-**Directory Structure (Ardan Labs pattern):**
+**Quick Start:**
 
-```
-k8s/
-├── base/
-│   ├── backend/
-│   │   ├── kustomization.yaml
-│   │   └── base-backend.yaml      # Deployment, Service, PVC
-│   └── frontend/
-│       ├── kustomization.yaml
-│       └── base-frontend.yaml     # Deployment, Service
-└── dev/
-    ├── kind-config.yaml           # Kind cluster port mappings
-    ├── backend/
-    │   ├── kustomization.yaml     # References base, applies patches
-    │   ├── dev-backend-configmap.yaml
-    │   ├── dev-backend-patch-deploy.yaml
-    │   └── dev-backend-patch-service.yaml
-    └── frontend/
-        ├── kustomization.yaml
-        ├── dev-frontend-patch-deploy.yaml
-        └── dev-frontend-patch-service.yaml
+```bash
+make k3s-setup      # Install K3s on EC2 instance (run via SSH)
+make k3s-deploy     # Deploy HRAS to K3s cluster
+make k3s-status     # Check deployment status
+make k3s-teardown   # Remove HRAS and K3s
 ```
 
-**Key patterns:**
-- Base manifests use placeholder images (`backend-image`, `frontend-image`)
+**Production K3s Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `make k3s-setup` | Install K3s with Nginx Ingress on EC2 |
+| `make k3s-deploy` | Deploy HRAS backend to K3s |
+| `make k3s-status` | Show K3s cluster status |
+| `make k3s-logs` | View backend logs |
+| `make k3s-teardown` | Remove K3s and all resources |
+
+See [docs/KUBERNETES.md](docs/KUBERNETES.md) for comprehensive deployment documentation.
+
+### Directory Structure (Ardan Labs Pattern)
+
+```
+zarf/
+├── docker/
+│   ├── dockerfile.backend     # Backend Dockerfile
+│   └── README.md              # Build documentation
+├── k8s/
+│   ├── base/                  # Base manifests (backend, postgres, monitoring, ingress)
+│   ├── dev/                   # Kind local development overlay
+│   └── prod/                  # K3s production overlay
+└── scripts/
+    ├── k3s-setup.sh           # Install K3s on EC2
+    ├── k3s-deploy.sh          # Deploy HRAS to K3s
+    └── k3s-teardown.sh        # Teardown K3s cluster
+```
+
+**Key Patterns:**
+- Base manifests use placeholder images (`backend-image`)
 - Overlays use `images:` transformer to swap actual image names
-- Patches are separate files for deploy/service modifications
 - ConfigMaps are environment-specific (in overlay, not base)
-- hostNetwork: true for direct port access (no ingress needed for dev)
+- Frontend deployed separately on AWS Amplify
 
 ## Project Structure
 

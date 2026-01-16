@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'backend/**'
+      - 'zarf/**'
       - 'deploy/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:

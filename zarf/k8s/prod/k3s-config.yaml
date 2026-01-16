@@ -1,0 +1,42 @@
+# K3s Configuration for EC2 t4g.medium Deployment
+# This file is used to configure K3s installation options
+
+# K3s installation configuration
+# Apply with: curl -sfL https://get.k3s.io | sh -s - server --config /etc/rancher/k3s/config.yaml
+
+# Cluster configuration
+cluster-init: true
+write-kubeconfig-mode: "0644"
+tls-san:
+  - "PLACEHOLDER.owezzy.tech"
+  - "localhost"
+  - "127.0.0.1"
+
+# Disable traefik (using nginx ingress instead)
+disable:
+  - traefik
+  - servicelb
+
+# Enable local-path provisioner for storage
+default-local-storage-path: /var/lib/rancher/k3s/storage
+
+# Node configuration for t4g.medium (2 vCPU, 4GB RAM)
+kubelet-arg:
+  - "max-pods=50"
+  - "eviction-hard=memory.available<256Mi,nodefs.available<5%"
+  - "eviction-soft=memory.available<512Mi,nodefs.available<10%"
+  - "eviction-soft-grace-period=memory.available=2m,nodefs.available=2m"
+  - "system-reserved=cpu=100m,memory=256Mi"
+  - "kube-reserved=cpu=100m,memory=256Mi"
+
+# Container runtime
+container-runtime-endpoint: "unix:///run/k3s/containerd/containerd.sock"
+
+# Logging
+log:
+  level: "info"
+
+# Networking
+flannel-backend: "vxlan"
+cluster-cidr: "10.42.0.0/16"
+service-cidr: "10.43.0.0/16"

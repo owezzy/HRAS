@@ -1,8 +1,164 @@
 # HRAS Production Deployment Guide
 
-This guide covers deploying the HRAS backend with Nginx reverse proxy in a production environment, specifically designed for AWS EC2 deployment with AWS Amplify frontend integration.
+This guide covers deploying the HRAS backend in production environments. The frontend is deployed separately on AWS Amplify.
 
-## Architecture Overview
+## Deployment Options
+
+| Method | Best For | Description |
+|--------|----------|-------------|
+| **K3s on EC2** | Cost-effective production | Lightweight K8s on single EC2 instance |
+| **Docker Compose** | Simple deployments | Traditional container orchestration |
+
+## K3s Production Deployment (Recommended)
+
+K3s is a lightweight, CNCF-certified Kubernetes distribution ideal for production workloads on AWS EC2.
+
+### Architecture Overview
+
+```
+Internet
+    ↓
+Route53 (DNS)
+    ↓
+EC2 Instance (t4g.medium)
+    ↓
+K3s Cluster
+    ↓
+├── Nginx Ingress Controller (SSL termination, CORS)
+├── Backend Deployment (FastAPI + LangChain)
+├── PostgreSQL StatefulSet (persistent storage)
+└── Monitoring Stack (Prometheus, Grafana)
+```
+
+### Quick Start
+
+```bash
+# 1. SSH into EC2 instance
+ssh -i your-key.pem ubuntu@your-ec2-host
+
+# 2. Clone repository
+git clone https://github.com/your-org/hras.git
+cd hras
+
+# 3. Install K3s
+./zarf/scripts/k3s-setup.sh
+
+# 4. Deploy HRAS
+./zarf/scripts/k3s-deploy.sh
+
+# 5. Verify deployment
+kubectl get pods -n hras-system
+```
+
+### Prerequisites
+
+**EC2 Instance Requirements:**
+- **Instance Type**: t4g.medium (ARM64, 2 vCPU, 4GB RAM) or better
+- **OS**: Ubuntu 22.04 LTS
+- **Storage**: 50GB+ SSD (GP3 recommended)
+- **Network**: Public subnet with Elastic IP
+
+**Security Group Rules:**
+| Port | Protocol | Source | Description |
+|------|----------|--------|-------------|
+| 22 | TCP | Your IP | SSH access |
+| 80 | TCP | 0.0.0.0/0 | HTTP (redirects to HTTPS) |
+| 443 | TCP | 0.0.0.0/0 | HTTPS |
+| 6443 | TCP | Your IP | K3s API (optional) |
+
+### K3s Installation
+
+The setup script (`zarf/scripts/k3s-setup.sh`) performs:
+
+1. **K3s Installation** with containerd runtime
+2. **kubectl Configuration** for the ubuntu user
+3. **Nginx Ingress Controller** deployment
+4. **cert-manager** for automatic SSL certificates
+5. **Firewall Configuration** (ufw)
+
+```bash
+./zarf/scripts/k3s-setup.sh
+```
+
+### HRAS Deployment
+
+The deploy script (`zarf/scripts/k3s-deploy.sh`) deploys:
+
+1. **PostgreSQL StatefulSet** with persistent volume
+2. **Backend Deployment** with production resource limits
+3. **Nginx Ingress** with SSL and CORS for Amplify frontend
+4. **Monitoring Stack** (Prometheus, Grafana, Alertmanager)
+
+```bash
+./zarf/scripts/k3s-deploy.sh
+```
+
+### CORS Configuration for Amplify
+
+The ingress is pre-configured for CORS with the Amplify frontend:
+
+```yaml
+nginx.ingress.kubernetes.io/cors-allow-origin: "https://PLACEHOLDER.owezzy.tech"
+nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+nginx.ingress.kubernetes.io/cors-allow-headers: "Accept, Content-Type, Authorization"
+nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+```
+
+Update `PLACEHOLDER.owezzy.tech` in `zarf/k8s/prod/ingress/prod-ingress-patch.yaml` with your actual Amplify domain.
+
+### SSL Certificates
+
+cert-manager automatically provisions Let's Encrypt certificates:
+
+```bash
+# Check certificate status
+kubectl get certificate -n hras-system
+kubectl describe certificate hras-tls -n hras-system
+```
+
+### Monitoring
+
+Access monitoring dashboards:
+- **Prometheus**: http://your-domain:30090
+- **Grafana**: http://your-domain:30031 (admin/CHANGE_ME_IN_PRODUCTION)
+- **Alertmanager**: http://your-domain:30093
+
+### Useful Commands
+
+```bash
+# Check pod status
+kubectl get pods -n hras-system -o wide
+
+# View backend logs
+kubectl logs -f deployment/backend -n hras-system
+
+# Check ingress
+kubectl get ingress -n hras-system
+
+# Scale backend
+kubectl scale deployment backend -n hras-system --replicas=3
+
+# Resource usage
+kubectl top pods -n hras-system
+```
+
+### Teardown
+
+```bash
+# Remove HRAS but keep data
+./zarf/scripts/k3s-teardown.sh --keep-data
+
+# Complete removal
+./zarf/scripts/k3s-teardown.sh
+```
+
+---
+
+## Docker Compose Production Deployment
+
+For simpler deployments without Kubernetes.
+
+### Architecture Overview
 
 ```
 Internet

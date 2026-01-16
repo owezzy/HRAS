@@ -1,7 +1,8 @@
 .PHONY: help dev prod build clean clean-cache install lint test frontend-dev backend-dev frontend-build backend-build ingest ingest-clear db-stats \
 	db-up db-down db-migrate db-upgrade db-downgrade db-revision db-history \
-	docker-build docker-build-backend docker-build-frontend docker-build-fast docker-build-backend-fast docker-build-frontend-fast \
-	kind-create kind-delete kind-load kind-load-fast kind-deploy kind-dev-up kind-deploy-backend kind-deploy-frontend kind-deploy-postgres kind-status kind-logs kind-logs-backend kind-logs-frontend kind-clean \
+	docker-build docker-build-backend docker-build-fast docker-build-backend-fast \
+	kind-create kind-delete kind-load kind-load-fast kind-deploy kind-dev-up kind-deploy-backend kind-deploy-postgres kind-status kind-logs kind-logs-backend kind-clean \
+	k3s-setup k3s-deploy k3s-status k3s-logs k3s-teardown \
 	monitoring-deploy monitoring-undeploy monitoring-status monitoring-logs monitoring-port-forward monitoring-grafana monitoring-prometheus \
 	deploy-setup deploy-ssl deploy-production deploy-rollback deploy-backup deploy-health-check deploy-monitoring deploy-status deploy-logs
 
@@ -56,26 +57,30 @@ help:
 	@echo "  format           Format code in both frontend and backend"
 	@echo ""
 	@echo "Docker:"
-	@echo "  docker-build          Build all Docker images"
+	@echo "  docker-build          Build backend Docker image"
 	@echo "  docker-build-backend  Build backend Docker image"
-	@echo "  docker-build-frontend Build frontend Docker image"
-	@echo "  docker-build-fast     Build all images with optimizations (faster builds)"
+	@echo "  docker-build-fast     Build backend image with optimizations (faster builds)"
 	@echo ""
-	@echo "Kind (Local Kubernetes):"
+	@echo "Kind (Local Kubernetes - Development):"
 	@echo "  kind-create          Create Kind cluster with local-path-provisioner wait"
 	@echo "  kind-delete          Delete Kind cluster"
-	@echo "  kind-load            Build and load images using ctr import (parallel)"
-	@echo "  kind-load-fast       Build optimized images and load using ctr import"
-	@echo "  kind-deploy          Deploy postgres, backend, and frontend (includes auto-ingestion)"
+	@echo "  kind-load            Build and load backend image using ctr import"
+	@echo "  kind-load-fast       Build optimized backend image and load using ctr import"
+	@echo "  kind-deploy          Deploy postgres and backend (includes auto-ingestion)"
 	@echo "  kind-dev-up          Complete setup: cluster, images, app, and monitoring"
 	@echo "  kind-deploy-postgres Deploy PostgreSQL database"
 	@echo "  kind-deploy-backend  Deploy backend only"
-	@echo "  kind-deploy-frontend Deploy frontend only"
 	@echo "  kind-status          Show pods, services, and monitoring status"
 	@echo "  kind-logs            Tail all logs"
 	@echo "  kind-logs-backend    Tail backend logs"
-	@echo "  kind-logs-frontend   Tail frontend logs"
 	@echo "  kind-clean           Remove HRAS, monitoring, and delete Kind cluster"
+	@echo ""
+	@echo "K3s (Production - EC2):"
+	@echo "  k3s-setup            Install K3s on EC2 instance"
+	@echo "  k3s-deploy           Deploy HRAS to K3s cluster"
+	@echo "  k3s-status           Show K3s cluster and pod status"
+	@echo "  k3s-logs             Tail HRAS logs in K3s"
+	@echo "  k3s-teardown         Remove K3s and all resources from EC2"
 	@echo ""
 	@echo "Monitoring:"
 	@echo "  monitoring-deploy    Deploy Prometheus, Grafana, Alertmanager stack"
@@ -272,50 +277,34 @@ IMAGE_TAG ?= latest
 KIND_CLUSTER_NAME ?= hras
 KIND_IMAGE ?= kindest/node:v1.29.0
 
-# Application Images
+# Application Images (frontend deployed via AWS Amplify)
 HRAS_BACKEND_IMAGE = $(DOCKER_REGISTRY)/hras-backend:$(IMAGE_TAG)
-HRAS_FRONTEND_IMAGE = $(DOCKER_REGISTRY)/hras-frontend:$(IMAGE_TAG)
 
 # =============================================================================
 # Docker
 # =============================================================================
 
-docker-build: docker-build-backend docker-build-frontend
-	@echo "All Docker images built."
+docker-build: docker-build-backend
+	@echo "Docker images built."
 
-docker-build-fast: docker-build-backend-fast docker-build-frontend-fast
-	@echo "All Docker images built with optimizations."
+docker-build-fast: docker-build-backend-fast
+	@echo "Docker images built with optimizations."
 
 docker-build-backend:
 	@echo "Building backend Docker image..."
-	docker build -t $(HRAS_BACKEND_IMAGE) ./backend
+	docker build -f zarf/docker/dockerfile.backend -t $(HRAS_BACKEND_IMAGE) ./backend
 
 docker-build-backend-fast:
 	@echo "Building backend Docker image with optimizations..."
 	DOCKER_BUILDKIT=1 docker build \
 		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		--cache-from $(HRAS_BACKEND_IMAGE) \
+		-f zarf/docker/dockerfile.backend \
 		-t $(HRAS_BACKEND_IMAGE) \
 		./backend
 
-docker-build-frontend:
-	@echo "Building frontend Docker image..."
-	docker build -t $(HRAS_FRONTEND_IMAGE) ./frontend
-
-docker-build-frontend-fast:
-	@echo "Building frontend Docker image with optimizations..."
-	DOCKER_BUILDKIT=1 docker build \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--cache-from $(HRAS_FRONTEND_IMAGE) \
-		-t $(HRAS_FRONTEND_IMAGE) \
-		./frontend
-
 # =============================================================================
-# Kind (Local Kubernetes)
-# =============================================================================
-
-# =============================================================================
-# Kind (Local Kubernetes)
+# Kind (Local Kubernetes - Development)
 # =============================================================================
 
 kind-create:
@@ -326,7 +315,7 @@ kind-create:
 		kind create cluster \
 			--image $(KIND_IMAGE) \
 			--name $(KIND_CLUSTER_NAME) \
-			--config k8s/dev/kind-config.yaml; \
+			--config zarf/k8s/dev/kind-config.yaml; \
 	fi
 	@echo "Waiting for local-path-provisioner to be ready..."
 	kubectl wait --timeout=120s --namespace=local-path-storage \
@@ -339,16 +328,12 @@ kind-delete:
 
 kind-load: docker-build
 	@echo "Loading Docker images into Kind cluster using ctr import..."
-	docker save $(HRAS_BACKEND_IMAGE) | docker exec -i $(KIND_CLUSTER_NAME)-control-plane ctr --namespace=k8s.io images import - & \
-	docker save $(HRAS_FRONTEND_IMAGE) | docker exec -i $(KIND_CLUSTER_NAME)-control-plane ctr --namespace=k8s.io images import - & \
-	wait;
+	docker save $(HRAS_BACKEND_IMAGE) | docker exec -i $(KIND_CLUSTER_NAME)-control-plane ctr --namespace=k8s.io images import -
 	@echo "Images loaded into Kind cluster."
 
 kind-load-fast: docker-build-fast
 	@echo "Loading optimized Docker images into Kind cluster using ctr import..."
-	docker save $(HRAS_BACKEND_IMAGE) | docker exec -i $(KIND_CLUSTER_NAME)-control-plane ctr --namespace=k8s.io images import - & \
-	docker save $(HRAS_FRONTEND_IMAGE) | docker exec -i $(KIND_CLUSTER_NAME)-control-plane ctr --namespace=k8s.io images import - & \
-	wait;
+	docker save $(HRAS_BACKEND_IMAGE) | docker exec -i $(KIND_CLUSTER_NAME)-control-plane ctr --namespace=k8s.io images import -
 	@echo "Optimized images loaded into Kind cluster."
 
 kind-dev-up:
@@ -361,9 +346,10 @@ kind-dev-up:
 	@echo "🎉 HRAS Development Environment Ready!"
 	@echo ""
 	@echo "Application:"
-	@echo "  Frontend: http://localhost:3000"
-	@echo "  Backend:  http://localhost:8000"
-	@echo "  Health:   http://localhost:8000/health"
+	@echo "  Backend API: http://localhost:8000"
+	@echo "  Health:      http://localhost:8000/health"
+	@echo ""
+	@echo "Note: Frontend is deployed separately on AWS Amplify."
 	@echo ""
 	@echo "Monitoring (via NodePort):"
 	@echo "  Grafana:      http://localhost:30031 (admin/CHANGE_ME_IN_PRODUCTION)"
@@ -376,23 +362,15 @@ kind-dev-up:
 
 kind-deploy-backend:
 	@echo "Deploying backend to Kind cluster..."
-	kubectl apply -k k8s/dev/backend
+	kubectl apply -k zarf/k8s/dev/backend
 	@echo "Waiting for backend deployment..."
 	kubectl wait --namespace hras-system \
 		--for=condition=available deployment/backend \
 		--timeout=120s || true
 
-kind-deploy-frontend:
-	@echo "Deploying frontend to Kind cluster..."
-	kubectl apply -k k8s/dev/frontend
-	@echo "Waiting for frontend deployment..."
-	kubectl wait --namespace hras-system \
-		--for=condition=available deployment/frontend \
-		--timeout=120s || true
-
 kind-deploy-postgres:
 	@echo "Deploying PostgreSQL to Kind cluster..."
-	kubectl apply -k k8s/dev/postgres
+	kubectl apply -k zarf/k8s/dev/postgres
 	@echo "Waiting for PostgreSQL to be ready..."
 	kubectl wait --namespace hras-system \
 		--for=condition=ready pod \
@@ -400,13 +378,13 @@ kind-deploy-postgres:
 		--timeout=120s || true
 	@echo "PostgreSQL deployed and ready."
 
-kind-deploy: kind-deploy-postgres kind-deploy-backend kind-deploy-frontend
+kind-deploy: kind-deploy-postgres kind-deploy-backend
 	@echo ""
 	@echo "HRAS deployed to Kind cluster '$(KIND_CLUSTER_NAME)'."
-	@echo "Frontend:   http://localhost:3000"
-	@echo "Backend:    http://localhost:8000"
-	@echo "PostgreSQL: localhost:30432"
+	@echo "Backend API: http://localhost:8000"
+	@echo "PostgreSQL:  localhost:30432"
 	@echo ""
+	@echo "Note: Frontend is deployed separately on AWS Amplify."
 	@echo "Note: Data ingestion job runs automatically on first deployment."
 	@echo "Check ingestion status: kubectl get jobs -n hras-system"
 
@@ -428,25 +406,70 @@ kind-status:
 
 kind-logs:
 	@echo "Tailing logs from HRAS pods (Ctrl+C to stop)..."
-	kubectl logs -n hras-system -l app=backend -f --prefix --max-log-requests=10 &
-	kubectl logs -n hras-system -l app=frontend -f --prefix --max-log-requests=10
+	kubectl logs -n hras-system -l app=backend -f --prefix --max-log-requests=10
 
 kind-logs-backend:
 	@echo "Tailing backend logs..."
 	kubectl logs -n hras-system -l app=backend -f
 
-kind-logs-frontend:
-	@echo "Tailing frontend logs..."
-	kubectl logs -n hras-system -l app=frontend -f
-
 kind-clean:
 	@echo "Removing HRAS resources, monitoring, and deleting Kind cluster..."
-	kubectl delete -k k8s/dev/monitoring --ignore-not-found || true
-	kubectl delete -k k8s/dev/frontend --ignore-not-found || true
-	kubectl delete -k k8s/dev/backend --ignore-not-found || true
-	kubectl delete -k k8s/dev/postgres --ignore-not-found || true
+	kubectl delete -k zarf/k8s/dev/monitoring --ignore-not-found || true
+	kubectl delete -k zarf/k8s/dev/backend --ignore-not-found || true
+	kubectl delete -k zarf/k8s/dev/postgres --ignore-not-found || true
 	kind delete cluster --name $(KIND_CLUSTER_NAME)
 	@echo "Kind cluster '$(KIND_CLUSTER_NAME)' deleted."
+
+# =============================================================================
+# K3s (Production - EC2)
+# =============================================================================
+
+k3s-setup:
+	@echo "Setting up K3s on EC2 instance..."
+	@if [ ! -f "zarf/scripts/k3s-setup.sh" ]; then \
+		echo "Error: zarf/scripts/k3s-setup.sh not found."; \
+		exit 1; \
+	fi
+	chmod +x zarf/scripts/k3s-setup.sh
+	./zarf/scripts/k3s-setup.sh
+
+k3s-deploy:
+	@echo "Deploying HRAS to K3s cluster..."
+	@if [ ! -f "zarf/scripts/k3s-deploy.sh" ]; then \
+		echo "Error: zarf/scripts/k3s-deploy.sh not found."; \
+		exit 1; \
+	fi
+	chmod +x zarf/scripts/k3s-deploy.sh
+	./zarf/scripts/k3s-deploy.sh
+
+k3s-status:
+	@echo "=== K3s Cluster Status ==="
+	kubectl get nodes -o wide
+	@echo ""
+	@echo "=== HRAS Pods ==="
+	kubectl get pods -n hras-system -o wide
+	@echo ""
+	@echo "=== HRAS Services ==="
+	kubectl get services -n hras-system
+	@echo ""
+	@echo "=== Ingress ==="
+	kubectl get ingress -n hras-system
+	@echo ""
+	@echo "=== Ingestion Jobs ==="
+	kubectl get jobs -n hras-system
+
+k3s-logs:
+	@echo "Tailing HRAS logs in K3s (Ctrl+C to stop)..."
+	kubectl logs -n hras-system -l app=backend -f --prefix --max-log-requests=10
+
+k3s-teardown:
+	@echo "Tearing down K3s and all resources..."
+	@if [ ! -f "zarf/scripts/k3s-teardown.sh" ]; then \
+		echo "Error: zarf/scripts/k3s-teardown.sh not found."; \
+		exit 1; \
+	fi
+	chmod +x zarf/scripts/k3s-teardown.sh
+	./zarf/scripts/k3s-teardown.sh
 
 # =============================================================================
 # Monitoring
@@ -454,7 +477,7 @@ kind-clean:
 
 monitoring-deploy:
 	@echo "Deploying monitoring stack (Prometheus, Grafana, Alertmanager)..."
-	kubectl apply -k k8s/dev/monitoring
+	kubectl apply -k zarf/k8s/dev/monitoring
 	@echo "Waiting for monitoring components to be ready..."
 	kubectl wait --namespace monitoring \
 		--for=condition=Available deployment/prometheus \
@@ -472,7 +495,7 @@ monitoring-deploy:
 
 monitoring-delete:
 	@echo "Removing monitoring stack from cluster..."
-	kubectl delete -k k8s/dev/monitoring --ignore-not-found || true
+	kubectl delete -k zarf/k8s/dev/monitoring --ignore-not-found || true
 	@echo "Monitoring stack removed."
 
 monitoring-status:

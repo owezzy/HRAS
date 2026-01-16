@@ -1,0 +1,17 @@
+# Kustomization for Nginx Ingress Controller base manifests
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: ingress-base
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/managed-by: kustomize
+
+resources:
+  - namespace.yaml
+  - ingress-class.yaml
+  - nginx-ingress-controller.yaml
+  - backend-ingress.yaml
