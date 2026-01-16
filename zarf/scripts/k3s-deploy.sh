@@ -100,7 +100,7 @@ main() {
     log ""
     log "Access the API:"
     log "  Internal: kubectl port-forward svc/backend-service 8000:80 -n ${NAMESPACE}"
-    log "  External: https://PLACEHOLDER.owezzy.tech/api (after DNS/TLS setup)"
+    log "  External: Configure DNS and TLS for your API domain"
 }
 
 main "$@"

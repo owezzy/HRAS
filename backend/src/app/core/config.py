@@ -42,7 +42,11 @@ class Settings(BaseSettings):
     # ==========================================================================
     # CORS Configuration
     # ==========================================================================
-    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://feature-backend-refactor-testing.d3q35zh7ig6w8u.amplifyapp.com",
+    ]
     cors_allow_credentials: bool = True
     # Restrict methods and headers in production
     cors_allow_methods: list[str] = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
@@ -114,6 +118,23 @@ class Settings(BaseSettings):
         """Parse trusted hosts from comma-separated string or list."""
         if isinstance(v, str):
             return [h.strip() for h in v.split(",") if h.strip()]
+        return v
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+        """Parse CORS origins from JSON string, comma-separated string, or list."""
+        import json
+
+        if isinstance(v, str):
+            # Try JSON array first (e.g., '["http://localhost:3000"]')
+            if v.startswith("["):
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError:
+                    pass
+            # Fall back to comma-separated (e.g., 'http://localhost:3000,http://example.com')
+            return [o.strip() for o in v.split(",") if o.strip()]
         return v
 
     @property

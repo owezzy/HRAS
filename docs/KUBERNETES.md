@@ -192,13 +192,13 @@ This deploys:
 The production ingress includes CORS headers for the Amplify-hosted frontend:
 
 ```yaml
-nginx.ingress.kubernetes.io/cors-allow-origin: "https://PLACEHOLDER.owezzy.tech"
+nginx.ingress.kubernetes.io/cors-allow-origin: "https://feature-backend-refactor-testing.d3q35zh7ig6w8u.amplifyapp.com"
 nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
 nginx.ingress.kubernetes.io/cors-allow-headers: "Accept, Content-Type, Authorization"
 nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
 ```
 
-Update `PLACEHOLDER.owezzy.tech` in `zarf/k8s/prod/ingress/prod-ingress-patch.yaml` with your actual Amplify domain.
+Update the CORS origin in `zarf/k8s/base/ingress/backend-ingress.yaml` if your Amplify domain changes.
 
 ### SSL Certificates
 

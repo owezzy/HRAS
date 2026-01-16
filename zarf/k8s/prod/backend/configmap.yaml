@@ -25,8 +25,8 @@ data:
   database_name: "hras"
   use_postgres: "true"
 
-  # CORS - update with actual Amplify domain
-  cors_origins: '["https://PLACEHOLDER.owezzy.tech", "https://www.PLACEHOLDER.owezzy.tech"]'
+  # CORS - Amplify frontend domain
+  cors_origins: '["https://feature-backend-refactor-testing.d3q35zh7ig6w8u.amplifyapp.com"]'
 
   # Logging
   log_level: "INFO"

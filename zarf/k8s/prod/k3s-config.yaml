@@ -8,7 +8,7 @@
 cluster-init: true
 write-kubeconfig-mode: "0644"
 tls-san:
-  - "PLACEHOLDER.owezzy.tech"
+  - "d3q35zh7ig6w8u.amplifyapp.com"
   - "localhost"
   - "127.0.0.1"
 
