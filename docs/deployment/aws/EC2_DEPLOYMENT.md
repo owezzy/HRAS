@@ -59,16 +59,29 @@ aws ec2 run-instances \
   --block-device-mappings 'DeviceName=/dev/xvda,Ebs={VolumeSize=20,VolumeType=gp3}'
 ```
 
-### 1.3 Allocate Elastic IP
+### 1.3 Static IP (Optional)
 
+**Option A: Elastic IP ($3.65/month)**
 ```bash
 # Allocate Elastic IP
 aws ec2 allocate-address --domain vpc
 
 # Associate with instance (replace with your instance-id and allocation-id)
 aws ec2 associate-address \
-  --instance-id i-1234567890abcdef0 \
+  --instance-id i-01ff0b8da320eb9f8 \
   --allocation-id eipalloc-12345678
+```
+
+**Option B: Use Public DNS/IP (Free)**
+
+Skip Elastic IP and use the instance's public DNS or IP directly. Note: IP changes on stop/start.
+
+```bash
+# Get current public DNS (run on EC2)
+curl -s http://169.254.169.254/latest/meta-data/public-hostname
+
+# Get current public IP
+curl -s http://169.254.169.254/latest/meta-data/public-ipv4
 ```
 
 ## Step 2: Server Setup
@@ -77,7 +90,7 @@ aws ec2 associate-address \
 
 ```bash
 # SSH to instance (replace with your key and IP)
-ssh -i ~/.ssh/your-key.pem ec2-user@your-elastic-ip
+ssh -i ~/.ssh/your-key.pem ec2-user@44.222.129.49
 ```
 
 ### 2.2 Install Prerequisites
@@ -99,31 +112,14 @@ sudo chmod +x /usr/local/bin/docker-compose
 # Install Git
 sudo yum install -y git
 
-# Install Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
-sudo systemctl enable ollama
-sudo systemctl start ollama
-
 # Verify installations
 docker --version
 docker-compose --version
 git --version
-ollama --version
 ```
 
-### 2.3 Configure Ollama
-
-```bash
-# Download models (this may take 10-20 minutes)
-ollama pull nemotron-3-nano:30b-cloud
-ollama pull nomic-embed-text
-
-# Verify models are available
-ollama list
-
-# Test model inference
-ollama run nemotron-3-nano:30b-cloud "Hello, how are you?"
-```
+> **Note**: Ollama is now containerized - no separate installation required.
+> Models are pulled inside the container after starting Docker Compose.
 
 ## Step 3: Deploy Application
 
@@ -131,7 +127,7 @@ ollama run nemotron-3-nano:30b-cloud "Hello, how are you?"
 
 ```bash
 # Clone your HRAS repository
-git clone https://github.com/your-username/HRAS.git
+git clone https://github.com/owezzy/HRAS.git
 cd HRAS
 
 # Or if using private repo
@@ -155,8 +151,8 @@ nano backend/.env
 DATABASE_URL=postgresql+asyncpg://hras:hras_prod_password@postgres:5432/hras
 USE_POSTGRES=true
 
-# LLM Configuration
-OLLAMA_BASE_URL=http://host.docker.internal:11434
+# LLM Configuration (containerized Ollama)
+OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_MODEL=nemotron-3-nano:30b-cloud
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 
@@ -192,11 +188,34 @@ docker compose logs grafana
 docker compose logs prometheus
 ```
 
-### 3.4 Initialize Data
+### 3.4 Pull Ollama Models
+
+Once the Ollama container is running, pull the required models:
 
 ```bash
-# Wait for services to be healthy (2-3 minutes)
-sleep 180
+# Pull embedding model (required for RAG)
+docker compose exec ollama ollama pull nomic-embed-text
+
+# Pull LLM model (choose one based on your instance size)
+# For t3.large (8GB): cloud model via authenticated Ollama
+docker compose exec ollama ollama pull nemotron-3-nano:30b-cloud
+
+# Alternative: For t3.medium (4GB) use a smaller local model
+# docker compose exec ollama ollama pull llama3.2:3b
+
+# Verify models are available
+docker compose exec ollama ollama list
+```
+
+> **Cloud Model Authentication**: The `nemotron-3-nano:30b-cloud` model requires Ollama authentication.
+> Run `ollama login` on your host machine first, then mount credentials into container.
+> Credentials are automatically mounted from `~/.ollama/id_ed25519*`.
+
+### 3.5 Initialize Data
+
+```bash
+# Wait for services to be healthy (1-2 minutes after model pull)
+sleep 60
 
 # Ingest initial documents
 curl -X POST http://localhost:8000/api/v1/admin/ingest \

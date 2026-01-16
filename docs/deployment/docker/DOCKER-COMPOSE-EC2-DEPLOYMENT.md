@@ -16,7 +16,12 @@ This guide deploys HRAS on a budget EC2 instance using Docker Compose as a syste
 │  │  ┌─────────┐  ┌─────────┐  ┌──────────────────┐    │    │
 │  │  │  Nginx  │──│ Backend │──│ SQLite/PostgreSQL│    │    │
 │  │  │  :80/443│  │  :8000  │  │                  │    │    │
-│  │  └─────────┘  └─────────┘  └──────────────────┘    │    │
+│  │  └─────────┘  └────┬────┘  └──────────────────┘    │    │
+│  │                    │                                │    │
+│  │              ┌─────▼─────┐                         │    │
+│  │              │  Ollama   │  (alpine/ollama:latest) │    │
+│  │              │  :11434   │  51MB CPU-only image    │    │
+│  │              └───────────┘                         │    │
 │  └─────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
          │
@@ -35,17 +40,15 @@ This guide deploys HRAS on a budget EC2 instance using Docker Compose as a syste
 
 ### Recommended: t3.small ($15-19/month)
 
-| Instance    | vCPU | RAM  | Cost (us-east-1) | Use Case                    |
-|-------------|------|------|------------------|-----------------------------|
-| t3.micro    | 2    | 1GB  | ~$9/month        | ❌ Too small for LLM        |
-| **t3.small**| 2    | 2GB  | ~$15/month       | ✅ Minimal (SQLite, no LLM) |
-| t3.medium   | 2    | 4GB  | ~$30/month       | ✅ Comfortable (PostgreSQL) |
-| t3.large    | 2    | 8GB  | ~$60/month       | ✅ Full stack + local LLM   |
+| Instance    | vCPU | RAM  | Cost (us-east-1) | Use Case                                    |
+|-------------|------|------|------------------|---------------------------------------------|
+| t3.micro    | 2    | 1GB  | ~$9/month        | ❌ Too small                                |
+| **t3.small**| 2    | 2GB  | ~$15/month       | ✅ Embeddings only (cloud LLM recommended)  |
+| t3.medium   | 2    | 4GB  | ~$30/month       | ✅ Small local models (llama3.2:3b)         |
+| t3.large    | 2    | 8GB  | ~$60/month       | ✅ Full stack + cloud/larger models         |
 
-**For cheapest viable deployment: t3.small with SQLite and external LLM API**
-
-> ⚠️ **Note**: Running Ollama locally requires t3.large minimum (8GB RAM).
-> For budget deployment, use OpenAI API or a separate LLM server.
+> **Ollama is containerized**: Uses lightweight `alpine/ollama:latest` (51MB).
+> Models are pulled into the container after deployment.
 
 ---
 
@@ -169,9 +172,8 @@ FRONTEND_DOMAIN=feature-backend-refactor-testing.d3q35zh7ig6w8u.amplifyapp.com
 SECRET_KEY=<generated_64_char_hex>
 JWT_SECRET_KEY=<generated_64_char_hex>
 
-# For budget deployment, use external LLM
-OLLAMA_BASE_URL=https://api.openai.com/v1
-# Or keep localhost if running Ollama separately
+# Ollama is containerized - use container hostname
+OLLAMA_BASE_URL=http://ollama:11434
 
 # CORS - include your Amplify frontend
 CORS_ORIGINS=["https://feature-backend-refactor-testing.d3q35zh7ig6w8u.amplifyapp.com","http://localhost:3000"]
@@ -229,6 +231,30 @@ sudo systemctl status hras
 # View logs
 sudo journalctl -u hras -f
 ```
+
+### 5.3 Pull Ollama Models
+
+After services are running, pull models into the Ollama container:
+
+```bash
+cd /opt/hras
+
+# Pull embedding model (required)
+docker compose exec ollama ollama pull nomic-embed-text
+
+# Pull LLM model based on instance size:
+# t3.small/medium: Use cloud model (requires authentication)
+docker compose exec ollama ollama pull nemotron-3-nano:30b-cloud
+
+# Alternative for t3.medium: Use smaller local model
+# docker compose exec ollama ollama pull llama3.2:3b
+
+# Verify models
+docker compose exec ollama ollama list
+```
+
+> **Cloud Model Auth**: For `nemotron-3-nano:30b-cloud`, run `ollama login` on host first.
+> Credentials from `~/.ollama/` are mounted into the container automatically.
 
 ---
 
