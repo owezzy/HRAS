@@ -2,7 +2,8 @@
 	db-up db-down db-migrate db-upgrade db-downgrade db-revision db-history \
 	docker-build docker-build-backend docker-build-frontend docker-build-fast docker-build-backend-fast docker-build-frontend-fast \
 	kind-create kind-delete kind-load kind-load-fast kind-deploy kind-dev-up kind-deploy-backend kind-deploy-frontend kind-deploy-postgres kind-status kind-logs kind-logs-backend kind-logs-frontend kind-clean \
-	monitoring-deploy monitoring-undeploy monitoring-status monitoring-logs monitoring-port-forward monitoring-grafana monitoring-prometheus
+	monitoring-deploy monitoring-undeploy monitoring-status monitoring-logs monitoring-port-forward monitoring-grafana monitoring-prometheus \
+	deploy-setup deploy-ssl deploy-production deploy-rollback deploy-backup deploy-health-check deploy-monitoring deploy-status deploy-logs
 
 # Default target
 help:
@@ -83,6 +84,18 @@ help:
 	@echo "  monitoring-logs      Tail monitoring component logs"
 	@echo "  monitoring-grafana   Port-forward to Grafana (http://localhost:30031)"
 	@echo "  monitoring-prometheus Port-forward to Prometheus (http://localhost:9090)"
+	@echo ""
+	@echo "AWS EC2 Production Deployment:"
+	@echo "  deploy-aws-setup     Set up AWS infrastructure (EC2, Security Groups, S3)"
+	@echo "  deploy-setup         Set up EC2 instance for production deployment"
+	@echo "  deploy-ssl           Configure SSL certificates with Let's Encrypt"
+	@echo "  deploy-production    Deploy application to production (with backup)"
+	@echo "  deploy-rollback      Rollback to previous deployment"
+	@echo "  deploy-backup        Create manual backup"
+	@echo "  deploy-health-check  Run comprehensive health check"
+	@echo "  deploy-monitoring    Set up production monitoring stack"
+	@echo "  deploy-status        Show production deployment status"
+	@echo "  deploy-logs          View production application logs"
 
 # =============================================================================
 # Development
@@ -496,3 +509,200 @@ monitoring-prometheus:
 	@echo "Prometheus will be available at http://localhost:9090"
 	@echo "Press Ctrl+C to stop"
 	kubectl port-forward -n monitoring svc/prometheus 9090:9090
+
+# =============================================================================
+# AWS EC2 Production Deployment
+# =============================================================================
+
+# Deployment Configuration
+DEPLOY_SCRIPTS_DIR = deploy/scripts
+DEPLOY_CONFIG_DIR = deploy/config
+
+deploy-setup:
+	@echo "Setting up EC2 instance for HRAS production deployment..."
+	@if [ ! -f "$(DEPLOY_CONFIG_DIR)/deployment.env" ]; then \
+		echo "Error: deployment.env not found. Please copy deployment.env.example to deployment.env and configure it."; \
+		exit 1; \
+	fi
+	chmod +x $(DEPLOY_SCRIPTS_DIR)/*.sh
+	$(DEPLOY_SCRIPTS_DIR)/setup-server.sh
+
+deploy-aws-setup:
+	@echo "Setting up AWS infrastructure for HRAS..."
+	@if [ ! -f "$(DEPLOY_CONFIG_DIR)/deployment.env" ]; then \
+		echo "Error: deployment.env not found. Please copy deployment.env.example to deployment.env and configure it."; \
+		exit 1; \
+	fi
+	chmod +x $(DEPLOY_SCRIPTS_DIR)/*.sh
+	$(DEPLOY_SCRIPTS_DIR)/setup-aws.sh
+
+deploy-ssl:
+	@echo "Configuring SSL certificates..."
+	@if [ ! -f "$(DEPLOY_CONFIG_DIR)/deployment.env" ]; then \
+		echo "Error: deployment.env not found. Please run 'make deploy-setup' first."; \
+		exit 1; \
+	fi
+	$(DEPLOY_SCRIPTS_DIR)/setup-ssl.sh
+
+deploy-production:
+	@echo "Deploying HRAS to production..."
+	@if [ ! -f "$(DEPLOY_CONFIG_DIR)/deployment.env" ]; then \
+		echo "Error: deployment.env not found. Please run 'make deploy-setup' first."; \
+		exit 1; \
+	fi
+	$(DEPLOY_SCRIPTS_DIR)/deploy.sh
+
+deploy-rollback:
+	@echo "Rolling back HRAS deployment..."
+	@read -p "Enter backup ID to rollback to (or press Enter for latest): " backup_id; \
+	$(DEPLOY_SCRIPTS_DIR)/rollback.sh $$backup_id
+
+deploy-backup:
+	@echo "Creating HRAS backup..."
+	$(DEPLOY_SCRIPTS_DIR)/backup.sh
+
+deploy-health-check:
+	@echo "Running HRAS health check..."
+	$(DEPLOY_SCRIPTS_DIR)/health-check.sh
+
+deploy-monitoring:
+	@echo "Setting up production monitoring..."
+	$(DEPLOY_SCRIPTS_DIR)/setup-monitoring.sh
+
+deploy-status:
+	@echo "Checking HRAS production status..."
+	@echo "=== System Services ==="
+	@systemctl status hras.service nginx.service docker.service --no-pager || true
+	@echo ""
+	@echo "=== Docker Containers ==="
+	@cd /opt/hras/app && docker-compose -f docker-compose.prod.yml ps || true
+	@echo ""
+	@echo "=== Resource Usage ==="
+	@echo "CPU Usage: $$(top -bn1 | grep "Cpu(s)" | awk '{print $$2}' | sed 's/%us,//')%"
+	@echo "Memory Usage: $$(free | grep Mem | awk '{printf "%.1f", ($$3/$$2) * 100.0}')%"
+	@echo "Disk Usage: $$(df /opt/hras | awk 'NR==2 {print $$5}')"
+	@echo ""
+	@echo "=== SSL Certificate ==="
+	@if [ -f "/opt/hras/ssl/fullchain.pem" ]; then \
+		openssl x509 -in /opt/hras/ssl/fullchain.pem -noout -dates; \
+	else \
+		echo "SSL certificate not found"; \
+	fi
+
+deploy-logs:
+	@echo "Viewing HRAS production logs..."
+	@echo "Press Ctrl+C to stop..."
+	@tail -f /opt/hras/logs/app/*.log
+
+# Deployment helpers
+deploy-ssh:
+	@if [ -z "$(EC2_HOST)" ]; then \
+		echo "Error: EC2_HOST not set in deployment.env"; \
+		exit 1; \
+	fi
+	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST)
+
+deploy-sync-scripts:
+	@echo "Syncing deployment scripts to server..."
+	@if [ -z "$(EC2_HOST)" ]; then \
+		echo "Error: EC2_HOST not set in deployment.env"; \
+		exit 1; \
+	fi
+	@rsync -avz -e "ssh -i $(EC2_SSH_KEY_PATH)" \
+		$(DEPLOY_SCRIPTS_DIR)/ $(DEPLOY_CONFIG_DIR)/ \
+		$(EC2_USER)@$(EC2_HOST):/tmp/hras-deploy/
+	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST) \
+		"sudo mkdir -p /opt/hras/deploy && sudo cp -r /tmp/hras-deploy/* /opt/hras/deploy/ && sudo chmod +x /opt/hras/deploy/scripts/*.sh"
+
+deploy-remote-setup:
+	@echo "Running remote server setup..."
+	@make deploy-sync-scripts
+	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST) \
+		"cd /opt/hras/deploy && sudo ./scripts/setup-server.sh"
+
+deploy-remote-deploy:
+	@echo "Running remote deployment..."
+	@make deploy-sync-scripts
+	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST) \
+		"cd /opt/hras/deploy && sudo ./scripts/deploy.sh"
+
+deploy-remote-health:
+	@echo "Running remote health check..."
+	@ssh -i $(EC2_SSH_KEY_PATH) $(EC2_USER)@$(EC2_HOST) \
+		"cd /opt/hras/deploy && ./scripts/health-check.sh"
+
+# =============================================================================
+# Production Docker Compose Deployment
+# =============================================================================
+
+prod-deploy:
+	@echo "Deploying HRAS backend to production with Docker Compose..."
+	@if [ ! -f ".env.prod" ]; then \
+		echo "Error: .env.prod not found. Please copy .env.prod.example and configure it."; \
+		exit 1; \
+	fi
+	./scripts/deployment/deploy-production.sh deploy-backend
+
+prod-deploy-full:
+	@echo "Deploying full HRAS stack to production..."
+	@if [ ! -f ".env.prod" ]; then \
+		echo "Error: .env.prod not found. Please copy .env.prod.example and configure it."; \
+		exit 1; \
+	fi
+	./scripts/deployment/deploy-production.sh deploy --postgres --monitoring --ssl-init
+
+prod-ssl-init:
+	@echo "Initializing SSL certificates..."
+	./scripts/deployment/deploy-production.sh ssl-init
+
+prod-status:
+	@echo "Production deployment status:"
+	@docker compose -f docker-compose.prod.yml ps
+	@echo ""
+	@echo "Health check:"
+	@./scripts/health/health-check.sh --verbose
+
+prod-logs:
+	@echo "Following production logs (Ctrl+C to stop)..."
+	@docker compose -f docker-compose.prod.yml logs -f
+
+prod-health:
+	@echo "Running production health checks..."
+	@./scripts/health/health-check.sh --verbose
+
+prod-stop:
+	@echo "Stopping production services..."
+	@docker compose -f docker-compose.prod.yml down
+
+prod-clean:
+	@echo "Cleaning production deployment..."
+	@docker compose -f docker-compose.prod.yml down -v
+	@docker system prune -f
+
+prod-backup:
+	@echo "Creating production backup..."
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	if [ -f docker-compose.prod.yml ]; then \
+		docker compose -f docker-compose.prod.yml exec backend tar -czf /app/data/backup_$$timestamp.tar.gz -C /app/data chroma_db || true; \
+		if docker compose -f docker-compose.prod.yml ps postgres | grep -q "Up"; then \
+			docker compose -f docker-compose.prod.yml exec postgres pg_dump -U $${POSTGRES_USER:-hras} $${POSTGRES_DB:-hras} > backup_$$timestamp.sql || true; \
+		fi; \
+		echo "Backup created: backup_$$timestamp"; \
+	else \
+		echo "Production environment not found"; \
+	fi
+
+prod-update:
+	@echo "Updating production deployment..."
+	@docker compose -f docker-compose.prod.yml pull
+	@docker compose -f docker-compose.prod.yml up -d --force-recreate
+	@echo "Update completed"
+
+prod-monitoring:
+	@echo "Starting production monitoring stack..."
+	@docker compose -f docker-compose.prod.yml --profile monitoring up -d
+	@echo "Monitoring stack started:"
+	@echo "  Grafana:      http://localhost:3001"
+	@echo "  Prometheus:   http://localhost:9090"
+	@echo "  Loki:         http://localhost:3100"
+	@echo "  AlertManager: http://localhost:9093"

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from prometheus_client import make_asgi_app
 
 from src.app.api.routes import admin, chat, conversations, health
@@ -13,6 +14,7 @@ from src.app.core.logging import get_logger, setup_logging
 from src.app.core.metrics import init_app_info
 from src.app.middleware.logging import RequestLoggingMiddleware
 from src.app.middleware.metrics import PrometheusMiddleware
+from src.app.middleware.security import SecurityHeadersMiddleware
 
 logger = get_logger(__name__)
 
@@ -24,7 +26,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging()
     init_app_info(
         version=settings.app_version,
-        environment="production" if not settings.debug else "development",
+        environment="production" if settings.is_production else "development",
     )
 
     logger.info(
@@ -32,6 +34,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         app_name=settings.app_name,
         version=settings.app_version,
         debug=settings.debug,
+        environment=settings.app_env,
     )
 
     logger.info(
@@ -48,24 +51,38 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 def create_app() -> FastAPI:
     settings = get_settings()
 
+    docs_url = "/docs" if settings.docs_enabled and not settings.is_production else None
+    redoc_url = "/redoc" if settings.docs_enabled and not settings.is_production else None
+    openapi_url = "/openapi.json" if settings.docs_enabled and not settings.is_production else None
+
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
         description="AI-powered Human Rights Advisory System for UN officers",
         lifespan=lifespan,
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url=docs_url,
+        redoc_url=redoc_url,
+        openapi_url=openapi_url,
     )
 
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(PrometheusMiddleware)
+
+    if settings.is_production:
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=settings.trusted_hosts,
+        )
 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_credentials=settings.cors_allow_credentials,
+        allow_methods=settings.cors_allow_methods,
+        allow_headers=settings.cors_allow_headers,
+        expose_headers=["X-Request-ID"],
+        max_age=3600,
     )
 
     app.include_router(health.router)

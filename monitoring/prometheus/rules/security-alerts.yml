@@ -1,0 +1,178 @@
+groups:
+  - name: hras_security_alerts
+    rules:
+      - alert: HighRateLimitHits
+        expr: increase(nginx_http_requests_total{status="429"}[5m]) > 100
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High rate limit hits detected"
+          description: "More than 100 rate-limited requests in 5 minutes. Possible DDoS or abuse."
+
+      - alert: UnauthorizedAccessAttempts
+        expr: increase(nginx_http_requests_total{status="401"}[5m]) > 50
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Multiple unauthorized access attempts"
+          description: "More than 50 401 errors in 5 minutes. Possible credential stuffing attack."
+
+      - alert: ForbiddenAccessAttempts
+        expr: increase(nginx_http_requests_total{status="403"}[5m]) > 30
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Multiple forbidden access attempts"
+          description: "More than 30 403 errors in 5 minutes. Possible access control bypass attempt."
+
+      - alert: SuspiciousErrorRate
+        expr: (sum(rate(nginx_http_requests_total{status=~"4.."}[5m])) / sum(rate(nginx_http_requests_total[5m]))) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High 4xx error rate"
+          description: "More than 30% of requests are resulting in 4xx errors."
+
+      - alert: ServerErrorSpike
+        expr: increase(nginx_http_requests_total{status=~"5.."}[5m]) > 50
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Server error spike detected"
+          description: "More than 50 5xx errors in 5 minutes. Application may be under attack or failing."
+
+  - name: hras_availability_alerts
+    rules:
+      - alert: BackendDown
+        expr: up{job="hras-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "HRAS Backend is down"
+          description: "The HRAS backend service has been unreachable for more than 1 minute."
+
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Nginx is down"
+          description: "The Nginx reverse proxy has been unreachable for more than 1 minute."
+
+      - alert: HighResponseLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="hras-backend"}[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High API response latency"
+          description: "95th percentile response time is above 5 seconds for 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "High memory usage on EC2 instance"
+          description: "Memory usage is above 90% for 5 minutes."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "High CPU usage on EC2 instance"
+          description: "CPU usage is above 80% for 10 minutes."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "Low disk space on EC2 instance"
+          description: "Less than 15% disk space remaining on root filesystem."
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.05
+        for: 2m
+        labels:
+          severity: critical
+          category: resource
+        annotations:
+          summary: "Critical disk space on EC2 instance"
+          description: "Less than 5% disk space remaining on root filesystem."
+
+  - name: hras_ai_alerts
+    rules:
+      - alert: OllamaConnectionFailure
+        expr: increase(hras_llm_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          category: ai
+        annotations:
+          summary: "Ollama connection failures"
+          description: "More than 10 LLM errors in 5 minutes. Check Ollama service connectivity."
+
+      - alert: SlowAIResponses
+        expr: histogram_quantile(0.95, rate(hras_llm_request_duration_seconds_bucket[5m])) > 60
+        for: 5m
+        labels:
+          severity: warning
+          category: ai
+        annotations:
+          summary: "Slow AI response times"
+          description: "95th percentile AI response time is above 60 seconds."
+
+      - alert: VectorStoreErrors
+        expr: increase(hras_vectorstore_errors_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          category: ai
+        annotations:
+          summary: "Vector store errors"
+          description: "Multiple ChromaDB errors detected. Check vector store health."
+
+  - name: hras_ssl_alerts
+    rules:
+      - alert: SSLCertificateExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 30
+        for: 1h
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate will expire in less than 30 days."
+
+      - alert: SSLCertificateExpiringCritical
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 7
+        for: 1h
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "SSL certificate expiring critical"
+          description: "SSL certificate will expire in less than 7 days. Immediate action required."

@@ -1,0 +1,340 @@
+# HRAS Production Deployment Pipeline
+# Deploys to AWS EC2 with zero-downtime updates, SSL provisioning, and health checks
+
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '*.md'
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if tests fail'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '22.x'
+  PYTHON_VERSION: '3.12'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: hras
+
+# Ensure only one deployment runs at a time
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # =============================================================================
+  # Quality Gates
+  # =============================================================================
+
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Frontend Quality
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci --legacy-peer-deps
+
+      - name: Lint frontend
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
+      # Backend Quality
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          uv sync --all-groups
+
+      - name: Lint backend
+        run: |
+          cd backend
+          uv run ruff check src agents chains tools vectorstore prompts
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          uv run pytest tests/ -v --cov=src --cov-report=xml
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage.xml
+          fail_ci_if_error: false
+
+  # =============================================================================
+  # Build and Push Docker Images
+  # =============================================================================
+
+  build-images:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    if: success() || github.event.inputs.force_deploy == 'true'
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      backend-image: ${{ steps.meta.outputs.backend-image }}
+      frontend-image: ${{ steps.meta.outputs.frontend-image }}
+      image-tag: ${{ steps.meta.outputs.image-tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate metadata
+        id: meta
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}-$(date +%Y%m%d-%H%M%S)
+          BACKEND_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/backend:${IMAGE_TAG}
+          FRONTEND_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/frontend:${IMAGE_TAG}
+
+          echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "backend-image=${BACKEND_IMAGE}" >> $GITHUB_OUTPUT
+          echo "frontend-image=${FRONTEND_IMAGE}" >> $GITHUB_OUTPUT
+
+          # Also tag as latest
+          echo "backend-latest=${{ env.REGISTRY }}/${{ github.repository }}/backend:latest" >> $GITHUB_OUTPUT
+          echo "frontend-latest=${{ env.REGISTRY }}/${{ github.repository }}/frontend:latest" >> $GITHUB_OUTPUT
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.backend-image }}
+            ${{ steps.meta.outputs.backend-latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.frontend-image }}
+            ${{ steps.meta.outputs.frontend-latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =============================================================================
+  # Deploy to Production
+  # =============================================================================
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build-images
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          # Copy deployment scripts to server
+          rsync -avz \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.next' \
+            --exclude='__pycache__' \
+            scripts/ ubuntu@${{ secrets.EC2_HOST }}:/tmp/hras-deploy/
+
+          # Execute deployment
+          ssh ubuntu@${{ secrets.EC2_HOST }} "
+            cd /tmp/hras-deploy
+            sudo chmod +x *.sh
+
+            # Set deployment environment variables
+            export BACKEND_IMAGE='${{ needs.build-images.outputs.backend-image }}'
+            export FRONTEND_IMAGE='${{ needs.build-images.outputs.frontend-image }}'
+            export IMAGE_TAG='${{ needs.build-images.outputs.image-tag }}'
+            export DOMAIN='${{ secrets.DOMAIN }}'
+            export LETSENCRYPT_EMAIL='${{ secrets.LETSENCRYPT_EMAIL }}'
+            export DATABASE_URL='${{ secrets.DATABASE_URL }}'
+            export OLLAMA_BASE_URL='${{ secrets.OLLAMA_BASE_URL }}'
+            export OLLAMA_MODEL='${{ secrets.OLLAMA_MODEL }}'
+
+            # Run deployment
+            sudo ./deploy.sh
+          "
+
+      - name: Health check
+        run: |
+          echo "Waiting for deployment to stabilize..."
+          sleep 30
+
+          # Check backend health
+          for i in {1..10}; do
+            if curl -f https://${{ secrets.DOMAIN }}/api/health; then
+              echo "✅ Backend health check passed"
+              break
+            fi
+            echo "⏳ Waiting for backend... (attempt $i/10)"
+            sleep 10
+          done
+
+          # Check frontend
+          if curl -f https://${{ secrets.DOMAIN }}/; then
+            echo "✅ Frontend health check passed"
+          else
+            echo "❌ Frontend health check failed"
+            exit 1
+          fi
+
+      - name: Run post-deployment tests
+        run: |
+          # Run smoke tests against production
+          curl -X POST https://${{ secrets.DOMAIN }}/api/v1/chat \
+            -H "Content-Type: application/json" \
+            -d '{"message": "test deployment"}' | jq .
+
+          echo "🚀 Deployment completed successfully!"
+
+  # =============================================================================
+  # Rollback on Failure
+  # =============================================================================
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: [build-images, deploy]
+    if: failure() && needs.build-images.result == 'success'
+    environment: production
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rollback deployment
+        run: |
+          ssh ubuntu@${{ secrets.EC2_HOST }} "
+            cd /opt/hras
+            sudo ./rollback.sh
+          "
+
+          echo "🔄 Rollback completed"
+
+  # =============================================================================
+  # Notification
+  # =============================================================================
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [quality-gates, build-images, deploy]
+    if: always()
+
+    steps:
+      - name: Notify on success
+        if: needs.deploy.result == 'success'
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-type: application/json' \
+            --data '{
+              "text": "🚀 HRAS Production Deployment Successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*HRAS Production Deployment* ✅\n\n• *Commit:* `${{ github.sha }}`\n• *Author:* ${{ github.actor }}\n• *Image Tag:* `${{ needs.build-images.outputs.image-tag }}`\n• *URL:* https://${{ secrets.DOMAIN }}"
+                  }
+                }
+              ]
+            }'
+
+      - name: Notify on failure
+        if: needs.deploy.result == 'failure'
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-type: application/json' \
+            --data '{
+              "text": "❌ HRAS Production Deployment Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*HRAS Production Deployment* ❌\n\n• *Commit:* `${{ github.sha }}`\n• *Author:* ${{ github.actor }}\n• *View Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                }
+              ]
+            }'

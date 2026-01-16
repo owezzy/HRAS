@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  nginx-dev:
+    image: nginx:1.25-alpine
+    container_name: hras-nginx-dev
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/dev/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/dev/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/dev/self-signed:/etc/nginx/ssl:ro
+    depends_on:
+      - backend-dev
+    networks:
+      - hras-dev-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: hras-backend-dev
+    restart: unless-stopped
+    environment:
+      - DEBUG=true
+      - DATABASE_URL=${DEV_DATABASE_URL:-sqlite+aiosqlite:///./data/hras-dev.db}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-nemotron-3-nano:30b-cloud}
+      - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma_db
+      - CORS_ORIGINS=["http://localhost:3000","https://localhost:3000","http://localhost:80","https://localhost:443"]
+      - USE_POSTGRES=${USE_POSTGRES:-false}
+      - USE_ASYNC_TOOLS=true
+    volumes:
+      - ./backend:/app
+      - backend-dev-data:/app/data
+      - /app/.venv
+    ports:
+      - "8000:8000"
+    networks:
+      - hras-dev-network
+      - backend-dev-network
+    command: >
+      sh -c "
+        echo 'Starting development server...';
+        python -m uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  postgres-dev:
+    image: postgres:17-alpine
+    container_name: hras-postgres-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DEV_POSTGRES_DB:-hras_dev}
+      - POSTGRES_USER=${DEV_POSTGRES_USER:-hras_dev}
+      - POSTGRES_PASSWORD=${DEV_POSTGRES_PASSWORD:-hras_dev_password}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    networks:
+      - backend-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DEV_POSTGRES_USER:-hras_dev} -d ${DEV_POSTGRES_DB:-hras_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - postgres
+
+  redis-dev:
+    image: redis:7-alpine
+    container_name: hras-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - backend-dev-network
+    profiles:
+      - redis
+
+volumes:
+  backend-dev-data:
+  postgres-dev-data:
+  redis-dev-data:
+
+networks:
+  hras-dev-network:
+    driver: bridge
+  backend-dev-network:
+    driver: bridge

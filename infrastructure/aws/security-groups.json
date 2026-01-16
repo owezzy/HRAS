@@ -1,0 +1,227 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "HRAS Security Group Configuration for EC2 Deployment",
+
+    "Parameters": {
+        "VpcId": {
+            "Type": "AWS::EC2::VPC::Id",
+            "Description": "VPC ID where security groups will be created"
+        },
+        "AllowedSSHCIDR": {
+            "Type": "String",
+            "Default": "10.0.0.0/8",
+            "Description": "CIDR block allowed for SSH access (use VPN/bastion IP range)"
+        },
+        "AmplifyDomain": {
+            "Type": "String",
+            "Description": "Amplify frontend domain for CORS (e.g., main.d1234abcd.amplifyapp.com)"
+        }
+    },
+
+    "Resources": {
+        "HRASWebSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupName": "hras-web-sg",
+                "GroupDescription": "Security group for HRAS web tier (nginx)",
+                "VpcId": {"Ref": "VpcId"},
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "HTTP from anywhere (redirects to HTTPS)"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443,
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "HTTPS from anywhere"
+                    }
+                ],
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "-1",
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "Allow all outbound traffic"
+                    }
+                ],
+                "Tags": [
+                    {"Key": "Name", "Value": "hras-web-sg"},
+                    {"Key": "Application", "Value": "HRAS"},
+                    {"Key": "Environment", "Value": "Production"}
+                ]
+            }
+        },
+
+        "HRASSSHSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupName": "hras-ssh-sg",
+                "GroupDescription": "Security group for SSH access (restricted)",
+                "VpcId": {"Ref": "VpcId"},
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 22,
+                        "ToPort": 22,
+                        "CidrIp": {"Ref": "AllowedSSHCIDR"},
+                        "Description": "SSH from allowed CIDR only"
+                    }
+                ],
+                "Tags": [
+                    {"Key": "Name", "Value": "hras-ssh-sg"},
+                    {"Key": "Application", "Value": "HRAS"},
+                    {"Key": "Environment", "Value": "Production"}
+                ]
+            }
+        },
+
+        "HRASAppSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupName": "hras-app-sg",
+                "GroupDescription": "Security group for HRAS application tier",
+                "VpcId": {"Ref": "VpcId"},
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 8000,
+                        "ToPort": 8000,
+                        "SourceSecurityGroupId": {"Ref": "HRASWebSecurityGroup"},
+                        "Description": "FastAPI from nginx only"
+                    }
+                ],
+                "Tags": [
+                    {"Key": "Name", "Value": "hras-app-sg"},
+                    {"Key": "Application", "Value": "HRAS"},
+                    {"Key": "Environment", "Value": "Production"}
+                ]
+            }
+        },
+
+        "HRASRoute53IAMRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "hras-ec2-route53-role",
+                "Description": "IAM role for HRAS EC2 to manage Route53 for SSL certificates",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+                ],
+                "Tags": [
+                    {"Key": "Application", "Value": "HRAS"}
+                ]
+            }
+        },
+
+        "HRASRoute53Policy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "hras-route53-dns-challenge",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "route53:ListHostedZones",
+                                "route53:GetHostedZone"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "route53:ChangeResourceRecordSets",
+                                "route53:ListResourceRecordSets"
+                            ],
+                            "Resource": "arn:aws:route53:::hostedzone/*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "route53:GetChange"
+                            ],
+                            "Resource": "arn:aws:route53:::change/*"
+                        }
+                    ]
+                },
+                "Roles": [{"Ref": "HRASRoute53IAMRole"}]
+            }
+        },
+
+        "HRASSecretsPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "hras-secrets-access",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "secretsmanager:GetSecretValue"
+                            ],
+                            "Resource": "arn:aws:secretsmanager:*:*:secret:hras/*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "ssm:GetParameter",
+                                "ssm:GetParameters",
+                                "ssm:GetParametersByPath"
+                            ],
+                            "Resource": "arn:aws:ssm:*:*:parameter/hras/*"
+                        }
+                    ]
+                },
+                "Roles": [{"Ref": "HRASRoute53IAMRole"}]
+            }
+        },
+
+        "HRASEC2InstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "InstanceProfileName": "hras-ec2-instance-profile",
+                "Roles": [{"Ref": "HRASRoute53IAMRole"}]
+            }
+        }
+    },
+
+    "Outputs": {
+        "WebSecurityGroupId": {
+            "Description": "Security Group ID for web tier",
+            "Value": {"Ref": "HRASWebSecurityGroup"},
+            "Export": {"Name": "HRAS-WebSecurityGroupId"}
+        },
+        "SSHSecurityGroupId": {
+            "Description": "Security Group ID for SSH access",
+            "Value": {"Ref": "HRASSSHSecurityGroup"},
+            "Export": {"Name": "HRAS-SSHSecurityGroupId"}
+        },
+        "AppSecurityGroupId": {
+            "Description": "Security Group ID for application tier",
+            "Value": {"Ref": "HRASAppSecurityGroup"},
+            "Export": {"Name": "HRAS-AppSecurityGroupId"}
+        },
+        "EC2InstanceProfileArn": {
+            "Description": "Instance Profile ARN for EC2",
+            "Value": {"Fn::GetAtt": ["HRASEC2InstanceProfile", "Arn"]},
+            "Export": {"Name": "HRAS-EC2InstanceProfileArn"}
+        }
+    }
+}
