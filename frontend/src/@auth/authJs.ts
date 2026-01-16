@@ -11,8 +11,11 @@ import Facebook from 'next-auth/providers/facebook';
 import Google from 'next-auth/providers/google';
 import { authGetDbUserByEmail, authCreateDbUser } from './authApi';
 
+const useVercelKV =
+	process.env.VERCEL && process.env.AUTH_KV_REST_API_URL && process.env.AUTH_KV_REST_API_TOKEN;
+
 const storage = createStorage({
-	driver: process.env.VERCEL
+	driver: useVercelKV
 		? vercelKVDriver({
 				url: process.env.AUTH_KV_REST_API_URL,
 				token: process.env.AUTH_KV_REST_API_TOKEN,
