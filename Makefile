@@ -162,7 +162,7 @@ frontend-install:
 
 backend-install:
 	@echo "Installing backend dependencies..."
-	cd backend && uv sync
+	cd backend && uv sync --all-groups
 
 # =============================================================================
 # Utilities
