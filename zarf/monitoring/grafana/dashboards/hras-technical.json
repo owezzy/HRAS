@@ -1,0 +1,88 @@
+{
+  "id": null,
+  "title": "HRAS - Technical Metrics",
+  "tags": ["hras", "technical"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Database Operations",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(rate(hras_db_operations_total[5m])) by (operation, table)",
+          "legendFormat": "{{operation}} {{table}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "title": "Database Operation Duration",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(hras_db_operation_duration_seconds_bucket[5m])) by (le, operation))",
+          "legendFormat": "{{operation}} P95"
+        }
+      ],
+      "yAxes": [{"unit": "s"}],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "Token Usage by Model",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(rate(hras_model_tokens_total[5m])) by (model, type)",
+          "legendFormat": "{{model}} {{type}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "id": 4,
+      "title": "Error Rate by Component",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(rate(hras_errors_total[5m])) by (error_type, component)",
+          "legendFormat": "{{component}} {{error_type}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "id": 5,
+      "title": "Document Ingestion Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(rate(hras_document_ingestion_total[5m])) by (status)",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    },
+    {
+      "id": 6,
+      "title": "Agent Step Execution",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(rate(hras_agent_steps_total[5m])) by (agent_name, step_type)",
+          "legendFormat": "{{agent_name}} {{step_type}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "10s",
+  "schemaVersion": 27,
+  "version": 0
+}

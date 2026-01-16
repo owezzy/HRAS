@@ -249,3 +249,67 @@ HRAS/
 ├── Makefile           # Common commands
 └── README.md
 ```
+
+---
+
+## AWS Production Deployment
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ AWS Amplify (Frontend)                                      │
+│ • Next.js application with Fuse React UI                   │
+│ • Auto-scaling, global CDN                                 │
+│ • Custom domain: hras.owezzy.tech                          │
+│ • www redirect: www.hras.owezzy.tech → hras.owezzy.tech    │
+└─────────────────────────────────────────────────────────────┘
+                              │ API calls
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│ AWS EC2 (Backend + Monitoring)                             │
+│ • FastAPI backend with RAG pipeline                        │
+│ • PostgreSQL database                                       │
+│ • Prometheus + Grafana monitoring                          │
+│ • Ollama local LLM (no API costs)                         │
+│ • ChromaDB vector store                                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Cost Breakdown
+
+**Monthly AWS Costs (~$25/month):**
+- EC2 t3.small (2 vCPU, 2GB RAM): $15.18
+- EBS Storage (20GB): $2.00
+- Elastic IP: $3.65
+- Data Transfer: $2-5
+- **AWS Amplify**: Free tier (generous limits)
+- **LLM Inference**: $0 (Ollama local)
+
+### Deployment Guides
+
+- **[EC2 Backend Deployment](./docs/deployment/aws/EC2_DEPLOYMENT.md)** - Complete backend setup
+- **[Amplify Frontend Deployment](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md)** - Next.js frontend setup
+- **[Monitoring Setup](./docs/deployment/aws/MONITORING_SETUP.md)** - Prometheus + Grafana configuration
+- **[Domain & SSL Configuration](./docs/deployment/aws/DOMAIN_SSL.md)** - Custom domain setup
+- **[Troubleshooting Guide](./docs/deployment/aws/TROUBLESHOOTING.md)** - Common issues and solutions
+
+### Quick Deploy Commands
+
+```bash
+# 1. Deploy Backend to EC2
+./scripts/deploy-ec2.sh
+
+# 2. Deploy Frontend to Amplify
+git push origin main  # Auto-deploys via Amplify
+
+# 3. Configure custom domain
+./scripts/setup-domain.sh hras.owezzy.tech
+```
+
+### Environment URLs
+
+- **Production Frontend**: https://hras.owezzy.tech
+- **Production API**: http://your-ec2-ip:8000
+- **Monitoring (Grafana)**: http://your-ec2-ip:3001
+- **Metrics (Prometheus)**: http://your-ec2-ip:9090

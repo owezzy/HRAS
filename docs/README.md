@@ -1,48 +1,105 @@
-# 📖 HRAS Documentation Directory
+# HRAS Documentation
 
-Welcome to the comprehensive documentation for the **Human Rights Advisory System (HRAS)** - an AI-powered tool that helps UN human rights officers access and analyze UHRI documents through intelligent conversations.
+Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-powered system helps UN human rights officers access and analyze UHRI documents through intelligent conversations.
 
-## 📁 What's in This Directory
+## Documentation Structure
 
-This `docs/` folder contains all the documentation you need to understand, deploy, develop, and use HRAS effectively. Each file serves a specific purpose and audience.
+```
+docs/
+├── README.md                      # This file - documentation overview
+├── 00-INDEX.md                    # Quick navigation hub
+│
+├── getting-started/               # For new users
+│   └── USER_GUIDE.md              # How to use the system
+│
+├── architecture/                  # System design
+│   ├── ARCHITECTURE.md            # Overall system architecture
+│   └── AI_ML.md                   # RAG pipeline & AI/ML details
+│
+├── development/                   # For contributors
+│   ├── DEVELOPMENT.md             # Dev environment setup & workflow
+│   └── CONFIGURATION.md           # Environment variables & settings
+│
+├── deployment/                    # Deployment guides
+│   ├── DEPLOYMENT.md              # Deployment overview
+│   ├── docker/
+│   │   └── DOCKER-COMPOSE-EC2-DEPLOYMENT.md
+│   ├── kubernetes/
+│   │   └── KUBERNETES.md          # Kind & K3s deployment
+│   └── aws/
+│       ├── EC2_DEPLOYMENT.md      # Backend on EC2
+│       ├── AMPLIFY_DEPLOYMENT.md  # Frontend on Amplify
+│       ├── MONITORING_SETUP.md    # Prometheus & Grafana
+│       └── AWS_TROUBLESHOOTING.md # AWS-specific issues
+│
+├── operations/                    # For operators
+│   ├── TROUBLESHOOTING.md         # Common issues & solutions
+│   └── SECURITY_CHECKLIST.md      # Production security
+│
+└── reference/                     # API & technical reference
+    └── API.md                     # REST API documentation
+```
 
-### 📋 Complete File Listing
+## Quick Links by Role
 
-| File | Purpose | Target Audience |
-|------|---------|----------------|
-| **[00-INDEX.md](00-INDEX.md)** | 🏠 **Start here!** Navigation hub and quick start | Everyone |
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | 🏗️ System design, data flow, multi-agent setup | Developers, Architects |
-| **[DEPLOYMENT.md](DEPLOYMENT.md)** | 📦 Local, Docker, and Kubernetes deployment | DevOps, Operators |
-| **[DEVELOPMENT.md](DEVELOPMENT.md)** | ⚙️ Contributing, coding standards, workflow | Developers |
-| **[CONFIGURATION.md](CONFIGURATION.md)** | 🔧 Environment variables and settings | DevOps, Developers |
-| **[API.md](API.md)** | 🔌 REST endpoints, examples, testing | Developers, Integrators |
-| **[USER_GUIDE.md](USER_GUIDE.md)** | 👤 How to ask questions and use the system | End Users, Analysts |
-| **[AI_ML.md](AI_ML.md)** | 🤖 RAG pipeline, embeddings, prompt engineering | AI/ML Engineers |
-| **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | 🔍 Common issues, debugging, recovery | Support, Operators |
+### I'm a User
+- [User Guide](getting-started/USER_GUIDE.md) - How to ask questions and use the system
 
-## 🚀 Quick Start
+### I'm a Developer
+- [Development Setup](development/DEVELOPMENT.md) - Local environment setup
+- [Configuration](development/CONFIGURATION.md) - Environment variables
+- [Architecture](architecture/ARCHITECTURE.md) - System design overview
+- [API Reference](reference/API.md) - REST endpoints
 
-1. **New to HRAS?** → Start with [00-INDEX.md](00-INDEX.md)
-2. **Want to run it?** → Jump to [DEPLOYMENT.md](DEPLOYMENT.md#local-development-setup)
-3. **Need to fix something?** → Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+### I'm an Operator/DevOps
+- [Deployment Overview](deployment/DEPLOYMENT.md) - All deployment options
+- [Docker Compose Deployment](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) - Production Docker setup
+- [Kubernetes Deployment](deployment/kubernetes/KUBERNETES.md) - Kind & K3s
+- [AWS EC2 Guide](deployment/aws/EC2_DEPLOYMENT.md) - Backend deployment
+- [AWS Amplify Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md) - Frontend deployment
+- [Monitoring Setup](deployment/aws/MONITORING_SETUP.md) - Prometheus & Grafana
+- [Troubleshooting](operations/TROUBLESHOOTING.md) - Common issues
+- [Security Checklist](operations/SECURITY_CHECKLIST.md) - Production hardening
 
-## 📝 Documentation Standards
+## Technology Stack
 
-All documentation in this directory follows these principles:
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 15, React 19, MUI 7, TailwindCSS 4 |
+| Backend | Python 3.12+, FastAPI, LangChain, LangGraph |
+| AI/LLM | Ollama + Nemotron 3 Nano (30B cloud model) |
+| Embeddings | nomic-embed-text (via Ollama) |
+| Vector Store | ChromaDB |
+| Database | PostgreSQL 17 (optional, SQLite default) |
+| Monitoring | Prometheus, Grafana |
 
-- ✅ **Accuracy**: Verified against HRAS v0.2.0 codebase
-- ✅ **Clarity**: Written for humans, not just experts
-- ✅ **Completeness**: Covers setup through advanced usage
-- ✅ **Currency**: Updated with latest Ollama migration and Kubernetes automation
+## Quick Start
 
-## 🔄 Keeping Docs Updated
+```bash
+# Clone and install
+git clone https://github.com/owezzy/HRAS.git
+cd HRAS
+make install
 
-This documentation is maintained alongside the codebase. When you see outdated information:
+# Start development
+make dev
 
-1. Check if the issue exists in the latest version
-2. Create an issue or pull request with corrections
-3. Update relevant files and test the changes
+# Or use Docker Compose (full stack)
+docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d
+```
 
----
+## Production Deployment
 
-> **💡 Tip**: Most documents include a "Table of Contents" for easy navigation. Use your browser's search (Ctrl+F / Cmd+F) to find specific topics quickly.
+**Recommended**: Docker Compose on EC2 + Amplify for frontend
+
+- Backend: [EC2 Deployment Guide](deployment/aws/EC2_DEPLOYMENT.md)
+- Frontend: [Amplify Deployment Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md)
+- Monitoring: [Monitoring Setup](deployment/aws/MONITORING_SETUP.md)
+
+**Monthly Cost**: ~$25 (EC2 t3.small + Amplify free tier)
+
+## Getting Help
+
+- Check [Troubleshooting](operations/TROUBLESHOOTING.md) for common issues
+- Review [AWS Troubleshooting](deployment/aws/AWS_TROUBLESHOOTING.md) for cloud-specific problems
+- Open an issue on GitHub for bugs or feature requests

@@ -1,97 +1,105 @@
-# 📚 HRAS Documentation Hub
+# HRAS Documentation Hub
 
-Welcome to the **Human Rights Advisory System (HRAS)** documentation! This AI-powered advisory system helps UN human rights officers access and analyze UHRI (UN Human Rights Index) documents through intelligent conversational interfaces.
+Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-powered advisory system helps UN human rights officers access and analyze UHRI documents through intelligent conversational interfaces.
 
 > **Version:** 0.2.0 | **Last Updated:** January 2026
 
 ---
 
-## 🚀 Quick Navigation
+## Quick Navigation
 
-### 👨‍💻 **For Developers**
-| Document | What's Inside | Best For |
-|----------|---------------|----------|
-| [🏗️ **Architecture**](ARCHITECTURE.md) | System design, data flow, multi-agent setup | Understanding how HRAS works |
-| [⚙️ **Development**](DEVELOPMENT.md) | Setup, coding standards, workflows | Contributing to HRAS |
-| [🔧 **Configuration**](CONFIGURATION.md) | Environment variables, settings | Customizing your installation |
+### Getting Started
+| Document | Description |
+|----------|-------------|
+| [User Guide](getting-started/USER_GUIDE.md) | How to ask questions and use the system |
 
-### 🚀 **For Operators**
-| Document | What's Inside | Best For |
-|----------|---------------|----------|
-| [📦 **Deployment**](DEPLOYMENT.md) | Local, Docker, Kubernetes deployment | Getting HRAS running |
-| [📊 **Monitoring**](DEPLOYMENT.md#prometheus-monitoring-stack) | Prometheus, Grafana, alerts | Setting up observability |
-| [🔍 **Troubleshooting**](TROUBLESHOOTING.md) | Common issues, debugging, recovery | Solving problems quickly |
-| [🔌 **API Reference**](API.md) | REST endpoints, examples, testing | Integration and automation |
+### Architecture & Design
+| Document | Description |
+|----------|-------------|
+| [Architecture](architecture/ARCHITECTURE.md) | System design, data flow, multi-agent setup |
+| [AI/ML Pipeline](architecture/AI_ML.md) | RAG system, embeddings, prompt engineering |
 
-### 👥 **For End Users**
-| Document | What's Inside | Best For |
-|----------|---------------|----------|
-| [👤 **User Guide**](USER_GUIDE.md) | How to ask questions, interpret results | Using HRAS effectively |
-| [🤖 **AI/ML Pipeline**](AI_ML.md) | RAG system, embeddings, prompt engineering | Understanding AI behavior |
+### Development
+| Document | Description |
+|----------|-------------|
+| [Development Guide](development/DEVELOPMENT.md) | Setup, coding standards, workflows |
+| [Configuration](development/CONFIGURATION.md) | Environment variables, settings |
+
+### Deployment
+| Document | Description |
+|----------|-------------|
+| [Deployment Overview](deployment/DEPLOYMENT.md) | All deployment options summary |
+| [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) | Production Docker deployment |
+| [Kubernetes](deployment/kubernetes/KUBERNETES.md) | Kind & K3s deployment |
+| [AWS EC2](deployment/aws/EC2_DEPLOYMENT.md) | Backend on EC2 |
+| [AWS Amplify](deployment/aws/AMPLIFY_DEPLOYMENT.md) | Frontend on Amplify |
+| [Monitoring](deployment/aws/MONITORING_SETUP.md) | Prometheus & Grafana setup |
+
+### Operations
+| Document | Description |
+|----------|-------------|
+| [Troubleshooting](operations/TROUBLESHOOTING.md) | Common issues, debugging, recovery |
+| [AWS Troubleshooting](deployment/aws/AWS_TROUBLESHOOTING.md) | AWS-specific issues |
+| [Security Checklist](operations/SECURITY_CHECKLIST.md) | Production security hardening |
+
+### Reference
+| Document | Description |
+|----------|-------------|
+| [API Reference](reference/API.md) | REST endpoints, examples, testing |
 
 ---
 
-## 🎯 Start Here Based on Your Role
+## Start Here Based on Your Role
 
-### **🔧 I want to run HRAS locally**
-1. Check [Prerequisites](DEPLOYMENT.md#prerequisites)
-2. Follow [Quick Start](DEPLOYMENT.md#local-development-setup)
+### I want to run HRAS locally
+1. Check [Prerequisites](deployment/DEPLOYMENT.md#prerequisites)
+2. Follow [Development Setup](development/DEVELOPMENT.md)
 3. Run `make dev` and visit http://localhost:3000
 
-### **🏢 I want to deploy HRAS in production**
-1. Review [Kubernetes Guide](DEPLOYMENT.md#kubernetes-deployment-kind)
-2. Set up [Environment Variables](CONFIGURATION.md)
-3. Configure [Monitoring](TROUBLESHOOTING.md#monitoring-and-health-checks)
+### I want to deploy HRAS in production
+1. Review [Deployment Overview](deployment/DEPLOYMENT.md)
+2. Follow [EC2 Deployment](deployment/aws/EC2_DEPLOYMENT.md) for backend
+3. Follow [Amplify Deployment](deployment/aws/AMPLIFY_DEPLOYMENT.md) for frontend
+4. Set up [Monitoring](deployment/aws/MONITORING_SETUP.md)
 
-### **💻 I want to contribute code**
-1. Read [Development Setup](DEVELOPMENT.md#development-environment-setup)
-2. Study [Code Structure](DEVELOPMENT.md#code-structure)
-3. Follow [Commit Conventions](DEVELOPMENT.md#commit-conventions)
+### I want to contribute code
+1. Read [Development Setup](development/DEVELOPMENT.md)
+2. Study [Architecture](architecture/ARCHITECTURE.md)
+3. Follow commit conventions in [Development Guide](development/DEVELOPMENT.md#commit-conventions)
 
-### **❓ I want to use HRAS to answer questions**
-1. Start with [User Guide Basics](USER_GUIDE.md#getting-started)
-2. Learn [Best Practices for Questions](USER_GUIDE.md#asking-questions)
-3. Understand [Response Format](USER_GUIDE.md#interpreting-results)
+### I want to use HRAS to answer questions
+1. Start with [User Guide](getting-started/USER_GUIDE.md)
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| **Frontend** | Next.js + React + MUI + TailwindCSS | 15.3.5 / 19.1.0 / 7.2.0 / 4.1.4 |
-| **Backend** | Python + FastAPI + LangChain | 3.12+ / 0.115.0+ / 0.3.0+ |
-| **AI/LLM** | Ollama + Nemotron 3 Nano (30B) | Latest |
-| **Embeddings** | nomic-embed-text (via Ollama) | Latest |
-| **Vector Store** | ChromaDB | 0.5.0+ |
-| **Orchestration** | LangGraph (Multi-agent) | 0.2.0+ |
-| **Deployment** | Docker + Kubernetes (Kind) | Latest |
+| Frontend | Next.js + React + MUI + TailwindCSS | 15 / 19 / 7 / 4 |
+| Backend | Python + FastAPI + LangChain | 3.12+ / 0.115+ / 0.3+ |
+| AI/LLM | Ollama + Nemotron 3 Nano | Latest |
+| Embeddings | nomic-embed-text (via Ollama) | Latest |
+| Vector Store | ChromaDB | 0.5+ |
+| Orchestration | LangGraph (Multi-agent) | 0.2+ |
+| Database | PostgreSQL (optional) | 17 |
+| Monitoring | Prometheus + Grafana | Latest |
 
 ---
 
-## 💡 Key Features
+## Key Features
 
-- **🔍 Intelligent Document Search**: Semantic search across UN human rights documents
-- **💬 Conversational AI**: Natural language Q&A with source citations
-- **🤖 Multi-Agent System**: Specialized agents for retrieval, generation, and validation
-- **📊 Source Attribution**: Every answer includes document references and citations
-- **⚡ Fast Deployment**: One-command deployment with automatic data ingestion
-- **🔄 Real-time Updates**: Live document processing and vector store updates
-
----
-
-## 🆘 Need Help?
-
-- **🐛 Found a bug?** Check [Troubleshooting Guide](TROUBLESHOOTING.md) or create an issue
-- **💡 Have a feature idea?** Review [Development Guide](DEVELOPMENT.md#contributing-guide)
-- **📧 Need support?** Contact the development team
+- **Intelligent Document Search**: Semantic search across UN human rights documents
+- **Conversational AI**: Natural language Q&A with source citations
+- **Multi-Agent System**: Specialized agents for retrieval, generation, and validation
+- **Source Attribution**: Every answer includes document references
+- **Fast Deployment**: Docker Compose with automatic data ingestion
+- **Full Observability**: Prometheus metrics + Grafana dashboards
 
 ---
 
-## 📋 Documentation Standards
+## Need Help?
 
-All HRAS documentation follows these principles:
-- **Accessibility**: Clear language for all skill levels
-- **Accuracy**: Verified against current codebase (v0.2.0)
-- **Actionability**: Every guide includes concrete next steps
-- **Consistency**: Unified formatting and terminology throughout
+- **Found a bug?** Check [Troubleshooting](operations/TROUBLESHOOTING.md)
+- **AWS issues?** See [AWS Troubleshooting](deployment/aws/AWS_TROUBLESHOOTING.md)
+- **Feature request?** Open a GitHub issue

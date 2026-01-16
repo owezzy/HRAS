@@ -292,7 +292,7 @@ docker-build-fast: docker-build-backend-fast
 
 docker-build-backend:
 	@echo "Building backend Docker image..."
-	docker build -f zarf/docker/dockerfile.backend -t $(HRAS_BACKEND_IMAGE) ./backend
+	docker build -f zarf/docker/dockerfile.backend -t $(HRAS_BACKEND_IMAGE) .
 
 docker-build-backend-fast:
 	@echo "Building backend Docker image with optimizations..."
@@ -301,7 +301,7 @@ docker-build-backend-fast:
 		--cache-from $(HRAS_BACKEND_IMAGE) \
 		-f zarf/docker/dockerfile.backend \
 		-t $(HRAS_BACKEND_IMAGE) \
-		./backend
+		.
 
 # =============================================================================
 # Kind (Local Kubernetes - Development)
