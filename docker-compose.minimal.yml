@@ -1,0 +1,75 @@
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: hras-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - hras-network
+    environment:
+      - DOMAIN=${DOMAIN}
+      - FRONTEND_DOMAIN=${FRONTEND_DOMAIN}
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: hras-backend:${VERSION:-latest}
+    container_name: hras-backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:///./data/hras.db}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-gpt-4o-mini}
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma_db
+      - CORS_ORIGINS=${CORS_ORIGINS:-["https://${FRONTEND_DOMAIN}"]}
+      - DEBUG=false
+      - APP_ENV=production
+      - USE_POSTGRES=false
+      - USE_ASYNC_TOOLS=true
+      - UVICORN_WORKERS=${UVICORN_WORKERS:-2}
+    volumes:
+      - backend-data:/app/data
+    networks:
+      - hras-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.5'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  backend-data:
+    driver: local
+
+networks:
+  hras-network:
+    driver: bridge
