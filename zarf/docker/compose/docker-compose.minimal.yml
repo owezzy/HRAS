@@ -1,6 +1,6 @@
 services:
   ollama:
-    image: ollama/ollama:latest
+    image: alpine/ollama:latest
     container_name: hras-ollama
     ports:
       - "11434:11434"
@@ -15,7 +15,7 @@ services:
           memory: 4G
           cpus: '1.5'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 10s
       retries: 3
