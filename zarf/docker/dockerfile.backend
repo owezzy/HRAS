@@ -34,7 +34,8 @@ FROM python:3.12-slim-bookworm
 # Create non-root user for security
 RUN groupadd -g 1000 appuser && \
     useradd -m -u 1000 -g appuser appuser && \
-    mkdir -p /data && chown appuser:appuser /data
+    mkdir -p /data && chown appuser:appuser /data && \
+    mkdir -p /app/chroma_db && chown appuser:appuser /app/chroma_db
 
 # Copy virtual environment from builder
 COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
