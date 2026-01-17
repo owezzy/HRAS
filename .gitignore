@@ -82,3 +82,6 @@ logs/
 .ruff_cache/
 .mypy_cache/
 .eslintcache
+
+# SSL Certificates
+zarf/docker/caddy/certs/

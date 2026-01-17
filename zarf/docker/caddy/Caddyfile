@@ -1,15 +1,14 @@
 {
 	email admin@hras.local
+	local_certs
 }
 
 https://18.215.166.248 {
-	tls internal
+	tls /etc/caddy/certs/cert.pem /etc/caddy/certs/key.pem
 
 	reverse_proxy backend:8000 {
 		header_up Host {upstream_hostport}
 		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Forwarded-Proto {scheme}
 	}
 
 	header {
