@@ -9,17 +9,7 @@ api.hras.owezzy.tech {
 		header_up X-Real-IP {remote_host}
 	}
 
-	header {
-		Access-Control-Allow-Origin "https://hras.owezzy.tech"
-		Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-		Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-		Access-Control-Allow-Credentials "true"
-		Access-Control-Max-Age "86400"
-	}
-
-	@options method OPTIONS
-	respond @options 204
-
+	# Security headers only - CORS handled by backend
 	header {
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
