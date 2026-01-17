@@ -6,7 +6,7 @@ import '../../public/assets/fonts/Geist/geist.css';
 import '../../public/assets/fonts/meteocons/style.css';
 import '../../public/assets/styles/prism.css';
 import { SessionProvider } from 'next-auth/react';
-import { auth } from '@auth/authJs';
+import { demoSession } from '@auth/authJs';
 import generateMetadata from '../utils/generateMetadata';
 import App from './App';
 
@@ -26,8 +26,6 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const session = await auth();
-
 	return (
 		<html lang="en">
 			<head>
@@ -61,7 +59,7 @@ export default async function RootLayout({
 			>
 				<SessionProvider
 					basePath="/auth"
-					session={session}
+					session={demoSession}
 				>
 					<App>{children}</App>
 				</SessionProvider>

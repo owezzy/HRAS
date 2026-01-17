@@ -3,7 +3,7 @@ import type { NextAuthConfig } from 'next-auth';
 import type { Provider } from 'next-auth/providers';
 import Credentials from 'next-auth/providers/credentials';
 
-const demoUser = {
+export const demoUser = {
 	id: '0',
 	email: 'demo@hras.org',
 	name: 'Demo User',
@@ -13,6 +13,17 @@ const demoUser = {
 	photoURL: '/assets/images/avatars/brian-hughes.jpg',
 	settings: { layout: {}, theme: {} },
 	shortcuts: ['apps.calendar', 'apps.mailbox', 'apps.contacts']
+};
+
+export const demoSession = {
+	user: {
+		id: demoUser.id,
+		email: demoUser.email,
+		name: demoUser.name,
+		image: demoUser.image
+	},
+	db: demoUser,
+	expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 };
 
 export const providers: Provider[] = [
