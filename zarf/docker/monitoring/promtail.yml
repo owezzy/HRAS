@@ -10,90 +10,152 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: nginx-access
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: nginx-access
-          __path__: /var/log/nginx/access.log
-    pipeline_stages:
-      - json:
-          expressions:
-            timestamp: time_local
-            method: request
-            status: status
-            response_time: request_time
-      - timestamp:
-          source: timestamp
-          format: "02/Jan/2006:15:04:05 -0700"
-      - labels:
-          method:
-          status:
-
-  - job_name: nginx-error
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: nginx-error
-          __path__: /var/log/nginx/error.log
-
+  # HRAS Backend - FastAPI with structured JSON logging
   - job_name: hras-backend
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: hras-backend
-          __path__: /var/log/backend/*.log
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: name
+            values: ["hras-backend"]
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        target_label: container
+        replacement: hras-backend
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+      - target_label: service
+        replacement: backend
+      - target_label: job
+        replacement: hras-backend
     pipeline_stages:
+      - docker: {}
       - json:
           expressions:
             level: level
             message: message
             timestamp: timestamp
+            service: service
+            version: version
+            environment: environment
+            request_id: request_id
+            user_id: user_id
+            event_type: event_type
+      - labels:
+          level:
+          service:
+          environment:
+          event_type:
       - timestamp:
           source: timestamp
           format: RFC3339
+      - output:
+          source: message
 
-  - job_name: postgres
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: postgres
-          __path__: /var/log/postgres/*.log
-
-  - job_name: redis
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: redis
-          __path__: /var/log/redis/*.log
-
-  - job_name: certbot
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: certbot
-          __path__: /var/log/certbot/*.log
-
-  - job_name: docker
+  # HRAS Caddy - Web server access and error logs
+  - job_name: hras-caddy
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s
+        filters:
+          - name: name
+            values: ["hras-caddy"]
     relabel_configs:
-      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
-        target_label: compose_service
-      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
-        target_label: service_name
-      - source_labels: [__meta_docker_container_label_com_hras_component]
-        target_label: hras_component
       - source_labels: [__meta_docker_container_name]
-        regex: '/(.+)'
-        target_label: container_name
-        replacement: '${1}'
+        target_label: container
+        replacement: hras-caddy
       - source_labels: [__meta_docker_container_log_stream]
         target_label: stream
+      - target_label: service
+        replacement: caddy
+      - target_label: job
+        replacement: hras-caddy
+    pipeline_stages:
+      - docker: {}
+      - regex:
+          expression: '^(?P<timestamp>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) (?P<level>\w+) (?P<message>.*)$'
+      - labels:
+          level:
+      - timestamp:
+          source: timestamp
+          format: "2006/01/02 15:04:05"
+
+  # HRAS PostgreSQL - Database logs
+  - job_name: hras-postgres
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: name
+            values: ["hras-postgres"]
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        target_label: container
+        replacement: hras-postgres
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+      - target_label: service
+        replacement: postgres
+      - target_label: job
+        replacement: hras-postgres
+    pipeline_stages:
+      - docker: {}
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} UTC) \[(?P<pid>\d+)\] (?P<level>\w+):\s*(?P<message>.*)$'
+      - labels:
+          level:
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02 15:04:05.000 MST"
+
+  # HRAS Ollama - Local LLM service
+  - job_name: hras-ollama
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: name
+            values: ["hras-ollama"]
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        target_label: container
+        replacement: hras-ollama
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+      - target_label: service
+        replacement: ollama
+      - target_label: job
+        replacement: hras-ollama
+    pipeline_stages:
+      - docker: {}
+      - regex:
+          expression: '^(?P<timestamp>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) (?P<level>\w+) (?P<message>.*)$'
+      - labels:
+          level:
+      - timestamp:
+          source: timestamp
+          format: "2006/01/02 15:04:05"
+
+  # Catch-all for other HRAS containers (monitoring stack)
+  - job_name: hras-monitoring
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: name
+            values: ["hras-prometheus", "hras-grafana", "hras-loki"]
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        regex: 'hras-(.*)'
+        target_label: container
+        replacement: 'hras-${1}'
+      - source_labels: [__meta_docker_container_name]
+        regex: 'hras-(.*)'
+        target_label: service
+        replacement: '${1}'
+      - source_labels: [__meta_docker_container_name]
+        target_label: job
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+    pipeline_stages:
+      - docker: {}
