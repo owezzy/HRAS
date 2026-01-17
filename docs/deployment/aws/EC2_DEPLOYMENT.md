@@ -26,16 +26,14 @@ aws ec2 authorize-security-group-ingress \
 
 aws ec2 authorize-security-group-ingress \
   --group-name hras-backend-sg \
-  --protocol tcp --port 8000 --cidr 0.0.0.0/0  # Backend API
+  --protocol tcp --port 80 --cidr 0.0.0.0/0    # HTTP (Caddy redirects to HTTPS)
 
 aws ec2 authorize-security-group-ingress \
   --group-name hras-backend-sg \
-  --protocol tcp --port 3001 --cidr 0.0.0.0/0  # Grafana
-
-aws ec2 authorize-security-group-ingress \
-  --group-name hras-backend-sg \
-  --protocol tcp --port 9090 --cidr 0.0.0.0/0  # Prometheus
+  --protocol tcp --port 443 --cidr 0.0.0.0/0   # HTTPS (Caddy with Let's Encrypt)
 ```
+
+**Note**: Monitoring ports (3001, 9090) are NOT exposed publicly. Access via SSH tunnel for security.
 
 ### 1.2 Launch Instance
 
@@ -241,42 +239,89 @@ curl -X POST http://localhost:8000/api/v1/chat \
 ### 4.1 Check Service Health
 
 ```bash
-# Backend API health
-curl http://your-elastic-ip:8000/health
+# Backend API health (local/internal check)
+curl http://localhost:8000/health
 
 # Prometheus metrics
-curl http://your-elastic-ip:8000/metrics
+curl http://localhost:8000/metrics
 
 # Grafana (should return HTML)
-curl http://your-elastic-ip:3001/
+curl http://localhost:3001/
 
 # Prometheus web UI
-curl http://your-elastic-ip:9090/
+curl http://localhost:9090/
 ```
 
 ### 4.2 Access Web Interfaces
 
-Open in browser:
-- **Backend API**: http://your-elastic-ip:8000/docs
-- **Grafana**: http://your-elastic-ip:3001 (no login required)
-- **Prometheus**: http://your-elastic-ip:9090
+**Locally (from EC2 instance):**
+- **Backend API**: http://localhost:8000/docs
+- **Grafana**: http://localhost:3001 (no login required)
+- **Prometheus**: http://localhost:9090
+
+**Publicly (via domain with HTTPS):**
+- **Production API**: https://api.hras.owezzy.tech
+- **API Documentation**: https://api.hras.owezzy.tech/docs
+- **Health Check**: https://api.hras.owezzy.tech/health
+
+**Note**: Grafana and Prometheus are not exposed publicly. Use SSH tunneling for remote access:
+```bash
+ssh -i ~/.ssh/your-key.pem -L 3001:localhost:3001 -L 9090:localhost:9090 ubuntu@your-ec2-ip
+# Then access: http://localhost:3001 and http://localhost:9090 from your local machine
+```
 
 ### 4.3 Test Full Pipeline
 
 ```bash
-# Test RAG pipeline
-curl -X POST http://your-elastic-ip:8000/api/v1/chat \
+# Test RAG pipeline via public API
+curl -X POST https://api.hras.owezzy.tech/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Explain the treaty body reporting process for human rights"
   }'
 ```
 
+## Step 5: Configure API Domain (api.hras.owezzy.tech)
+
+The backend API is served via Caddy reverse proxy with automatic HTTPS:
+
+1. **DNS Configuration** (Route53 or your DNS provider):
+   ```
+   Type: A
+   Name: api.hras.owezzy.tech
+   Value: <your-ec2-elastic-ip>
+   TTL: 300
+   ```
+
+2. **Caddy Configuration**: Already configured in `zarf/docker/caddy/Caddyfile`:
+   ```
+   api.hras.owezzy.tech {
+       reverse_proxy backend:8000
+   }
+   ```
+   Caddy automatically provisions Let's Encrypt TLS certificates.
+
+3. **Verify HTTPS**:
+   ```bash
+   curl -I https://api.hras.owezzy.tech/health
+   # Should return: HTTP/2 200
+   ```
+
+4. **Update Frontend CORS**: Ensure `backend/.env` includes:
+   ```env
+   CORS_ORIGINS=["https://hras.owezzy.tech", "https://www.hras.owezzy.tech"]
+   ```
+
 ## Next Steps
 
-1. **Configure Custom Domain** - Set up hras.owezzy.tech
-2. **Deploy Frontend** - AWS Amplify setup
-3. **Set up Alerts** - Configure alerting rules
-4. **Security Hardening** - Production security checklist
+1. **Deploy Frontend** - AWS Amplify setup (see [AMPLIFY_DEPLOYMENT.md](./AMPLIFY_DEPLOYMENT.md))
+2. **Set up Monitoring** - Configure alerting rules (see [MONITORING_SETUP.md](./MONITORING_SETUP.md))
+3. **Security Hardening** - Production security checklist
+4. **Backup Strategy** - Set up automated backups
 
-Expected monthly cost: ~$23 (EC2 t3.small + EBS + Elastic IP)
+**Production URLs:**
+- Frontend: https://hras.owezzy.tech
+- API: https://api.hras.owezzy.tech
+- API Docs: https://api.hras.owezzy.tech/docs
+
+Expected monthly cost: ~$25 (EC2 t3.small + EBS + Elastic IP + minimal data transfer)

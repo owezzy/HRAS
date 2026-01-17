@@ -205,9 +205,17 @@ CORS_ORIGINS=["http://localhost:3000"]
 
 ## API Documentation
 
+**Local Development:**
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 - OpenAPI JSON: http://localhost:8000/openapi.json
+
+**Production:**
+- Base URL: https://api.hras.owezzy.tech
+- Swagger UI: https://api.hras.owezzy.tech/docs
+- Health Check: https://api.hras.owezzy.tech/health
+
+**Note**: Production API is served through Caddy reverse proxy with automatic HTTPS via Let's Encrypt.
 
 ## Tech Stack
 

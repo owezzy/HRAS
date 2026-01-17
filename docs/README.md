@@ -52,12 +52,12 @@ docs/
 - [API Reference](reference/API.md) - REST endpoints
 
 ### I'm an Operator/DevOps
-- [Deployment Overview](deployment/DEPLOYMENT.md) - All deployment options
-- [Docker Compose Deployment](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) - Production Docker setup
-- [Kubernetes Deployment](deployment/kubernetes/KUBERNETES.md) - Kind & K3s
-- [AWS EC2 Guide](deployment/aws/EC2_DEPLOYMENT.md) - Backend deployment
-- [AWS Amplify Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md) - Frontend deployment
-- [Monitoring Setup](deployment/aws/MONITORING_SETUP.md) - Prometheus & Grafana
+- **[Deployment Overview](deployment/DEPLOYMENT.md)** - **Start here** for all deployment options
+- **[AWS EC2 Guide](deployment/aws/EC2_DEPLOYMENT.md)** - Current production backend
+- **[AWS Amplify Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md)** - Current production frontend
+- **[Monitoring Setup](deployment/aws/MONITORING_SETUP.md)** - Prometheus + Grafana (SSH tunnel)
+- [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) - Alternative Docker deployment
+- [Kubernetes](deployment/kubernetes/KUBERNETES.md) - Alternative K8s (Kind/K3s)
 - [Troubleshooting](operations/TROUBLESHOOTING.md) - Common issues
 - [Security Checklist](operations/SECURITY_CHECKLIST.md) - Production hardening
 
@@ -90,13 +90,24 @@ docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d
 
 ## Production Deployment
 
-**Recommended**: Docker Compose on EC2 + Amplify for frontend
+**Current production uses AWS Amplify (frontend) + EC2 (backend):**
 
-- Backend: [EC2 Deployment Guide](deployment/aws/EC2_DEPLOYMENT.md)
-- Frontend: [Amplify Deployment Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md)
-- Monitoring: [Monitoring Setup](deployment/aws/MONITORING_SETUP.md)
+- **Backend**: EC2 with Caddy reverse proxy, Docker, PostgreSQL, Ollama
+- **Frontend**: AWS Amplify with auto-deploy from GitHub
+- **Monitoring**: Prometheus + Grafana (SSH tunnel access only)
+
+**See:**
+- [Deployment Overview](deployment/DEPLOYMENT.md) - All deployment options
+- [EC2 Deployment Guide](deployment/aws/EC2_DEPLOYMENT.md) - Production backend
+- [Amplify Deployment Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md) - Production frontend
+- [Monitoring Setup](deployment/aws/MONITORING_SETUP.md) - Observability
 
 **Monthly Cost**: ~$25 (EC2 t3.small + Amplify free tier)
+
+**Production URLs:**
+- Frontend: https://hras.owezzy.tech
+- API: https://api.hras.owezzy.tech
+- Monitoring: SSH tunnel only (secure)
 
 ## Getting Help
 

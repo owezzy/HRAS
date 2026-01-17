@@ -46,13 +46,28 @@ curl http://localhost:3001/api/health
 
 ## Step 2: Access Monitoring Dashboards
 
-### 2.1 Open Grafana Dashboard
+### 2.1 Set Up SSH Tunnel (Recommended for Security)
 
-**URL**: http://your-elastic-ip:3001
+Monitoring services run on EC2 but are NOT exposed publicly. Access them via SSH tunnel:
 
-- **Authentication**: None required (configured for open access)
+```bash
+# From your local machine, create SSH tunnel
+ssh -i ~/.ssh/your-key.pem -L 3001:localhost:3001 -L 9090:localhost:9090 ubuntu@<your-ec2-ip>
+
+# Keep this terminal open. In another terminal, access:
+# Grafana:    http://localhost:3001
+# Prometheus: http://localhost:9090
+```
+
+### 2.2 Open Grafana Dashboard
+
+**URL**: http://localhost:3001 (via SSH tunnel)
+
+- **Authentication**: None required (configured for internal access)
 - **Default Dashboard**: HRAS Overview (auto-loaded)
 - **Additional Dashboards**: HRAS Technical Metrics
+
+**Note**: Grafana and Prometheus ports (3001, 9090) should NOT be in your EC2 security group. Keep them internal-only.
 
 ### 2.2 Key Dashboards
 
@@ -73,7 +88,7 @@ curl http://localhost:3001/api/health
 
 ### 2.3 Prometheus Query Interface
 
-**URL**: http://your-elastic-ip:9090
+**URL**: http://localhost:9090 (via SSH tunnel)
 
 **Key Queries to Try:**
 ```promql
@@ -329,13 +344,20 @@ limits_config:
 
 ### 6.1 Security Hardening
 
-```bash
-# Update security group to restrict access
-aws ec2 authorize-security-group-ingress \
-  --group-name hras-backend-sg \
-  --protocol tcp --port 3001 --source-group sg-monitoring-access-only
+**IMPORTANT**: Do NOT expose monitoring ports publicly.
 
-# Consider VPN or bastion host for production monitoring access
+```bash
+# Ensure ports 3001 and 9090 are NOT in your security group
+# Access monitoring only via SSH tunnel
+
+# If you need to revoke public access:
+aws ec2 revoke-security-group-ingress \
+  --group-name hras-backend-sg \
+  --protocol tcp --port 3001 --cidr 0.0.0.0/0
+
+aws ec2 revoke-security-group-ingress \
+  --group-name hras-backend-sg \
+  --protocol tcp --port 9090 --cidr 0.0.0.0/0
 ```
 
 ### 6.2 Backup Configuration
@@ -431,20 +453,34 @@ curl http://localhost:8000/metrics | grep hras_
 
 ## Monitoring URLs Summary
 
-After successful deployment, access monitoring via:
+After successful deployment, access monitoring services:
 
-- **Grafana Dashboards**: http://your-elastic-ip:3001
-  - No authentication required
+**Via SSH Tunnel (Recommended for Security):**
+```bash
+# Set up SSH tunnel from your local machine
+ssh -i ~/.ssh/your-key.pem -L 3001:localhost:3001 -L 9090:localhost:9090 ubuntu@<your-ec2-ip>
+
+# Then access from your browser:
+# - Grafana: http://localhost:3001
+# - Prometheus: http://localhost:9090
+```
+
+**Access via SSH Tunnel (Recommended):**
+- **Grafana Dashboards**: http://localhost:3001 (after SSH tunnel)
+  - No authentication required for internal access
   - HRAS Overview dashboard pre-loaded
   - HRAS Technical dashboard available
 
-- **Prometheus**: http://your-elastic-ip:9090
+- **Prometheus**: http://localhost:9090 (after SSH tunnel)
   - Query interface for custom metrics exploration
   - Target health monitoring
 
-- **Raw Metrics**: http://your-elastic-ip:8000/metrics
+- **Raw Metrics**: http://localhost:8000/metrics (internal only)
   - Backend Prometheus metrics endpoint
   - 18+ different metric types available
+  - Access via SSH tunnel or from within EC2
+
+**Security Note**: Monitoring ports (3001, 9090) are NOT exposed publicly. All remote access is via SSH tunneling. This prevents unauthorized access to monitoring data.
 
 Your monitoring stack provides comprehensive observability into:
 - ✅ HTTP request performance and errors

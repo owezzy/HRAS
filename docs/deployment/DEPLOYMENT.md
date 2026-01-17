@@ -1,25 +1,57 @@
-# HRAS - Deployment Guide
+# HRAS Deployment Guide
+
+Complete guide for deploying HRAS in local development, Docker, Kubernetes, and AWS production environments.
 
 ## Overview
 
-This guide covers deployment options for the HRAS (Human Rights Advisory System) including local development, Docker, and Kubernetes environments.
+HRAS can be deployed in multiple configurations:
 
-## Prerequisites
+| Environment | Use Case | Complexity | Cost |
+|-------------|----------|------------|------|
+| **Local Development** | Development and testing | Low | $0 |
+| **Docker Compose** | Simple deployments, dev/staging | Low | $0-25/mo |
+| **Kind (Kubernetes)** | Local K8s testing | Medium | $0 |
+| **AWS Production** | Current production setup | Medium | ~$25/mo |
+| **K3s (Kubernetes)** | Alternative production | Medium | ~$25/mo |
+
+## Current Production Architecture
+
+**HRAS is currently deployed on AWS with:**
+
+```
+Frontend: AWS Amplify (Next.js 15)
+  ↓ HTTPS
+Backend: EC2 + Caddy + Docker
+  • Caddy reverse proxy with Let's Encrypt TLS
+  • FastAPI backend in Docker
+  • PostgreSQL database
+  • Ollama local LLM
+  • Prometheus + Grafana (SSH tunnel access)
+```
+
+**Production URLs:**
+- Frontend: https://hras.owezzy.tech
+- API: https://api.hras.owezzy.tech
+- Monitoring: SSH tunnel only (secure)
+
+**See: [AWS Production Deployment](#aws-production-deployment)**
+
+---
+
+## Local Development Setup
+
+### Prerequisites
 
 - Node.js >= 22.12.0
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
 - [Ollama](https://ollama.com/) installed and running
-- Docker (for containerized deployments)
-- [kind](https://kind.sigs.k8s.io/) (for Kubernetes testing)
 
-## Local Development Setup
-
-### 1. Manual Setup
+### Quick Start
 
 ```bash
-# Clone the repository
-git clone <repo-url>
+# Clone repository
+git clone https://github.com/owezzy/HRAS.git
 cd HRAS
 
 # Install dependencies
@@ -27,13 +59,25 @@ make install
 
 # Configure environment
 cp backend/.env.example backend/.env
-# Edit .env with your settings
+
+# Set up Ollama
+ollama serve                    # Terminal 1
+ollama login                    # Required for cloud models
+ollama pull nomic-embed-text
+
+# Run development servers
+make dev                        # Frontend + backend
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:8000
+
+# Ingest sample data (first time only)
+make ingest
 ```
 
-### 2. Environment Configuration
+### Environment Configuration
 
-### Backend (.env)
-```ini
+**Backend (.env)**
+```env
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=nemotron-3-nano:30b-cloud
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
@@ -42,265 +86,390 @@ DATABASE_URL=sqlite+aiosqlite:///./hras.db
 CORS_ORIGINS=["http://localhost:3000"]
 ```
 
-### Frontend (.env.local)
-```bash
+**Frontend (.env.local)**
+```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
-AUTH_SECRET=your-auth-secret
 ```
 
-## Docker Deployment
+---
 
-### 1. Build Images
+## Docker Compose Deployment
+
+For simple containerized deployments without Kubernetes.
+
+### Quick Start
 
 ```bash
-# Build all images
-make docker-build
+# Build backend image
+make docker-build-backend
 
-# Or build individually
-make docker-build-backend   # Backend image
-make docker-build-frontend  # Frontend image
+# Start full stack (backend + postgres + monitoring)
+docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d
+
+# Verify services
+docker compose -f zarf/docker/compose/docker-compose.yml ps
+
+# Access:
+# Backend: http://localhost:8000
+# Grafana: http://localhost:3001
+# Prometheus: http://localhost:9090
 ```
 
-### 2. Run with Docker Compose
+### Architecture
 
-```bash
-# Full stack with Redis, PostgreSQL, and Ollama
-docker compose -f zarf/docker/compose/docker-compose.yml up
-
-# Or run components separately:
-docker compose -f zarf/docker/compose/docker-compose.yml up frontend
-docker compose -f zarf/docker/compose/docker-compose.yml up backend
-docker compose -f zarf/docker/compose/docker-compose.yml up redis
-docker compose -f zarf/docker/compose/docker-compose.yml up postgres
+```
+docker compose
+├── backend (FastAPI + Ollama)
+├── postgres (database)
+├── prometheus (metrics)
+└── grafana (dashboards)
 ```
 
-### 3. Docker Images
+**See: [Docker Compose EC2 Deployment](./docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md)** for production setup.
 
-- **frontend-image:** Next.js application with production build
-- **backend-image:** FastAPI application with uvicorn server
-- **redis-image:** Redis for caching (optional)
-- **postgres-image:** PostgreSQL database (optional, currently using SQLite)
+---
 
-## Kubernetes Deployment (Kind)
+## Kind (Kubernetes) Deployment
 
-### 1. Prerequisites
+For local Kubernetes testing and development.
+
+### Prerequisites
 
 - Docker running
-- kind installed
+- [kind](https://kind.sigs.k8s.io/) installed
 - kubectl installed
 - Ollama running on host machine
 
-### 2. Setup and Deploy
+### Quick Start
 
 ```bash
 # Create Kind cluster
 make kind-create
 
-# Build and load images into cluster
+# Build and load backend image
 make kind-load
 
-# Deploy all services (includes automatic data ingestion)
+# Deploy backend + postgres (auto-ingests data)
 make kind-deploy
 
-# Check deployment status
+# Check status
 make kind-status
 
-# View logs
-make kind-logs          # All logs
-make kind-logs-backend  # Backend logs only
-make kind-logs-frontend # Frontend logs only
+# Access:
+# Backend API: http://localhost:8000
+# PostgreSQL:  localhost:30432
 ```
 
-### 3. Project Structure (Ardan Labs Pattern)
+### Kubernetes Structure
 
 ```
-k8s/
-├── base/                 # Base Kustomize manifests
-│   ├── backend/          # Backend Deployment/Svc/PVC
-│   │   ├── kustomization.yaml
-│   │   └── base-backend.yaml
-│   └── frontend/         # Frontend Deployment/Svc
-│       ├── kustomization.yaml
-│       └── base-frontend.yaml
-└── dev/                  # Development overlays
-    ├── kind-config.yaml  # Kind cluster config
-    ├── backend/          # Backend patches
-    │   ├── kustomization.yaml
-    │   ├── dev-backend-configmap.yaml
-    │   ├── dev-backend-patch-deploy.yaml
-    │   └── dev-backend-patch-service.yaml
-    └── frontend/         # Frontend patches
-        ├── kustomization.yaml
-        ├── dev-frontend-patch-deploy.yaml
-        └── dev-frontend-patch-service.yaml
+zarf/k8s/
+├── base/              # Base Kustomize manifests
+│   ├── backend/       # Backend Deployment/Service/PVC
+│   ├── postgres/      # PostgreSQL StatefulSet
+│   ├── monitoring/    # Prometheus/Grafana/Alertmanager
+│   └── ingress/       # Nginx Ingress
+└── dev/               # Kind overlay
+    ├── backend/       # Dev ConfigMap/patches
+    ├── postgres/      # Dev patches
+    └── monitoring/    # Dev NodePort services
 ```
 
-### 4. Key Patterns
+**See: [Kubernetes Deployment](./kubernetes/KUBERNETES.md)** for details.
 
-- **Base Manifests:** Use placeholder images (`backend-image`, `frontend-image`)
-- **Overlays:** Use `images:` transformer to inject actual image names
-- **Patches:** Separate files for deploy/service modifications
-- **ConfigMaps:** Environment-specific configurations in overlays
-- **Network Configuration:** `hostNetwork: true` for direct port access
-- **Automatic Ingestion:** Sample data ingested on first deployment
+---
+
+## AWS Production Deployment
+
+**Current production setup** with Amplify frontend + EC2 backend.
+
+### Architecture Overview
+
+```
+┌──────────────────────────────────────────────┐
+│ AWS Amplify (Frontend)                       │
+│ https://hras.owezzy.tech                     │
+│ • Next.js SSR with CDN                       │
+│ • Auto-deploy on push to main               │
+└──────────────────────────────────────────────┘
+                   │ HTTPS API calls
+                   ▼
+┌──────────────────────────────────────────────┐
+│ AWS EC2 (Backend)                            │
+│ https://api.hras.owezzy.tech                 │
+│ • Caddy reverse proxy (TLS via Let's Encrypt)│
+│ • Docker: FastAPI + PostgreSQL + Ollama     │
+│ • Prometheus + Grafana (SSH tunnel)         │
+└──────────────────────────────────────────────┘
+```
+
+### Deployment Steps
+
+1. **[Deploy Backend to EC2](./aws/EC2_DEPLOYMENT.md)**
+   - Launch EC2 instance (t3.small)
+   - Install Docker and dependencies
+   - Deploy backend with Docker Compose
+   - Configure Caddy with Let's Encrypt TLS
+   - Set up monitoring stack
+
+2. **[Deploy Frontend to Amplify](./aws/AMPLIFY_DEPLOYMENT.md)**
+   - Connect GitHub repository
+   - Configure build settings
+   - Add custom domain (hras.owezzy.tech)
+   - Configure CORS with backend
+
+3. **[Configure Monitoring](./aws/MONITORING_SETUP.md)**
+   - Access Grafana via SSH tunnel
+   - Configure alerting rules
+   - Set up backup strategy
+
+### Monthly Cost
+
+| Service | Cost |
+|---------|------|
+| EC2 t3.small | $15.18 |
+| EBS 20GB | $2.00 |
+| Elastic IP | $3.65 |
+| Data transfer | $2-5 |
+| **AWS Amplify** | Free tier |
+| **LLM inference** | $0 (local) |
+| **Total** | **~$25/mo** |
+
+---
+
+## K3s Production (Alternative)
+
+Lightweight Kubernetes for production (alternative to current Caddy+Docker setup).
+
+### Quick Start
+
+```bash
+# SSH to EC2 instance
+ssh -i ~/.ssh/your-key.pem ubuntu@your-ec2-ip
+
+# Clone repository
+git clone https://github.com/owezzy/HRAS.git
+cd HRAS
+
+# Install K3s
+./zarf/scripts/k3s-setup.sh
+
+# Deploy HRAS
+./zarf/scripts/k3s-deploy.sh
+
+# Check status
+kubectl get pods -n hras-system
+```
+
+**See: [Kubernetes Deployment](./kubernetes/KUBERNETES.md)** for full K3s guide.
+
+---
+
+## Data Ingestion
+
+HRAS requires UHRI documents to be ingested into the vector store before use.
+
+### Commands
+
+```bash
+# Ingest sample data (fast, good for dev/testing)
+make ingest
+
+# Ingest full dataset (slower, for production)
+curl -X POST "http://localhost:8000/api/v1/admin/ingest?use_sample=false"
+
+# Clear and re-ingest
+make ingest-clear
+
+# Verify ingestion
+make db-stats
+# or
+curl http://localhost:8000/api/v1/admin/stats
+```
+
+### Automatic Ingestion
+
+- **Kind**: Kubernetes Job runs on deployment
+- **Docker Compose**: Run manually after startup
+- **Production**: Run manually after deployment
+
+---
+
+## Monitoring
+
+### Prometheus + Grafana Stack
+
+All deployment options include monitoring:
+
+**Components:**
+- Prometheus: Metrics collection
+- Grafana: Visualization dashboards
+- AlertManager: Alert routing (optional)
+
+**Access:**
+- **Local/Kind**: http://localhost:9090, http://localhost:3001
+- **Production**: SSH tunnel only (secure)
+
+```bash
+# SSH tunnel for production monitoring
+ssh -i ~/.ssh/your-key.pem -L 3001:localhost:3001 -L 9090:localhost:9090 ubuntu@<ec2-ip>
+
+# Then access:
+# Grafana:    http://localhost:3001
+# Prometheus: http://localhost:9090
+```
+
+**Key Metrics:**
+- HTTP request rates and latency
+- RAG query performance (P50, P95, P99)
+- LLM inference times
+- Vector store operations
+- Database connection health
+- Error rates by component
+
+**See: [Monitoring Setup](./aws/MONITORING_SETUP.md)**
+
+---
+
+## Health Checks
+
+### API Health Endpoints
+
+```bash
+# Basic health check
+curl http://localhost:8000/health
+
+# Detailed stats (vector store, etc.)
+curl http://localhost:8000/api/v1/admin/stats
+
+# Production
+curl https://api.hras.owezzy.tech/health
+```
+
+### Service Status
+
+```bash
+# Docker Compose
+docker compose ps
+
+# Kubernetes
+make kind-status
+# or
+kubectl get pods -n hras-system
+
+# Production EC2
+docker compose -f zarf/docker/compose/docker-compose.yml ps
+```
+
+---
 
 ## Environment Variables Reference
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
 | `OLLAMA_BASE_URL` | Ollama server URL | `http://localhost:11434` | Yes |
-| `OLLAMA_MODEL` | LLM model for chat | `nemotron-3-nano:30b-cloud` | Yes |
+| `OLLAMA_MODEL` | LLM model | `nemotron-3-nano:30b-cloud` | Yes |
 | `OLLAMA_EMBEDDING_MODEL` | Embedding model | `nomic-embed-text` | Yes |
 | `CHROMA_PERSIST_DIRECTORY` | Vector store path | `./chroma_db` | Yes |
 | `DATABASE_URL` | Database connection | `sqlite+aiosqlite:///./hras.db` | Yes |
 | `CORS_ORIGINS` | Allowed origins | `["http://localhost:3000"]` | No |
+| `USE_POSTGRES` | Enable PostgreSQL | `false` | No |
 
-## Configuration Management
+**See: [Configuration Guide](../development/CONFIGURATION.md)** for complete reference.
 
-### 1. Environment-Specific Configurations
-
-- **Development:** `.env` files with local settings
-- **Staging:** ConfigMaps with pre-configured values
-- **Production:** Secure secrets management (Vault, AWS Secrets Manager)
-
-### 2. Configuration Validation
-
-- `.env.example` files for template reference
-- Validation scripts to check required variables
-- Configuration precedence rules (env vars > command line > defaults)
-
-## Data Ingestion System
-
-### 1. Ingestion Pipeline
-
-1. **Trigger:** Deployment process or manual command
-2. **Components:**
-   - UHRI Data Sources (API endpoints)
-   - Document Processing Pipeline
-   - Text Chunking and Embedding
-   - Vector Store Indexing (ChromaDB)
-3. **Status Tracking:** Progress monitoring and completion notifications
-
-### 2. Ingestion Commands
-
-```bash
-# Ingest sample data (fast, good for testing)
-make ingest
-
-# Ingest full dataset (slower, for production)
-make ingest use_sample=false
-
-# Clear and re-ingest
-make ingest-clear
-```
-
-## Monitoring and Health Checks
-
-### 1. API Health Checks
-
-```bash
-# Basic health check
-curl http://localhost:8000/health
-
-# Detailed health check
-curl http://localhost:8000/api/v1/admin/stats
-```
-
-### 2. Service Status
-
-```bash
-# Check all services in Kubernetes
-make kind-status
-
-# View running pods
-kubectl get pods -A
-```
-
-### Prometheus Monitoring Stack
-
-The project includes a complete Prometheus monitoring stack for production observability.
-
-**Components:**
-- Prometheus server (v2.47.0) - Metrics collection and alerting
-- Grafana (v10.2.0) - Visualization and dashboards
-- AlertManager (v0.26.0) - Alert routing and notifications
-
-**Deploy Monitoring Stack:**
-```bash
-# Deploy to Kind cluster
-kustomize build k8s/dev/monitoring | kubectl apply -f -
-
-# Access services (after Kind port mappings)
-# Prometheus: http://localhost:9090
-# Grafana: http://localhost:3001 (admin/CHANGE_ME_IN_PRODUCTION)
-# AlertManager: http://localhost:9093
-```
-
-**Pre-configured Alerts:**
-| Alert | Condition | Severity |
-|-------|-----------|----------|
-| HighErrorRate | Error rate > 0.1/s for 5m | warning |
-| SlowRAGQueries | p95 latency > 30s | warning |
-| HighModelLatency | p95 inference > 60s | warning |
-| LowVectorStoreDocuments | < 10 documents | critical |
-| HighHTTPErrorRate | 5xx rate > 5% | critical |
-
-**Backend Metrics Endpoint:**
-```bash
-curl http://localhost:8000/metrics
-```
-
-### Production Security Configuration
-
-Security features implemented for production deployments:
-
-**Docker Security:**
-- Non-root users: `appuser` (UID 1000) for backend, `nextjs` (UID 1001) for frontend
-- Proper file ownership and minimal permissions
-
-**Kubernetes Security:**
-- ServiceAccounts with RBAC (least privilege)
-- Pod Security Context (runAsNonRoot, capabilities drop ALL)
-- seccompProfile: RuntimeDefault
-
-**RBAC Configuration:**
-```bash
-# View RBAC resources
-kubectl get serviceaccounts,roles,rolebindings -n hras-system
-```
+---
 
 ## Security Considerations
 
-### 1. Environment Security
+### Development
+- Use `.env.local` for local secrets
+- Never commit `.env` files
+- Use sample data only
 
-- Do not commit sensitive data to version control
-- Use .env.local for local secrets
-- Rotate API keys and passwords regularly
-- Use secure configuration management for production
+### Production
+- Rotate API keys regularly
+- Use Secrets Manager (AWS) or Vault
+- Restrict security group ports (only 22, 80, 443)
+- Access monitoring via SSH tunnel only
+- Enable HTTPS with Let's Encrypt
+- Configure CORS for Amplify domain only
+- Run containers as non-root users
 
-### 2. Network Security
+**See: [Security Checklist](../operations/SECURITY_CHECKLIST.md)**
 
-- Firewall rules for production deployments
-- Network policies in Kubernetes
-- SSL/TLS termination for external access
-- Rate limiting for public APIs
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Ollama Connection Failed:**
+```bash
+# Check Ollama is running
+ollama serve
+
+# Verify models are pulled
+ollama list
+
+# Test connection
+curl http://localhost:11434/api/tags
+```
+
+**Vector Store Empty:**
+```bash
+# Re-ingest data
+make ingest-clear
+
+# Verify documents
+make db-stats
+```
+
+**CORS Errors (Production):**
+- Verify `CORS_ORIGINS` includes Amplify domain
+- Restart backend after config change
+
+**Monitoring Not Accessible:**
+- Use SSH tunnel, don't expose ports publicly
+- Check ports 3001/9090 are NOT in security group
+
+**See: [Troubleshooting Guide](../operations/TROUBLESHOOTING.md)**
+
+---
 
 ## Scaling Strategies
 
-### 1. Horizontal Scaling
+### Horizontal Scaling
+- Load balancer + multiple backend instances
+- Managed database (RDS PostgreSQL)
+- Redis for caching
 
-- Stateless services for easy scaling
-- Load balancing across instances
-- Connection pooling for databases
+### Vertical Scaling
+- Larger EC2 instance for Ollama models
+- More memory for vector store
+- SSD for faster disk I/O
 
-### 2. Vertical Scaling
+### Cost Optimization
+- Use Ollama locally (no API costs)
+- AWS Amplify free tier for frontend
+- Single EC2 for low-traffic (~$25/mo)
 
-- Resource monitoring and alerts
-- Auto-scaling based on metrics
-- Performance testing for capacity planning
+---
 
-### 3. Database Scaling
+## Next Steps
 
-- Connection limits and pooling
-- Read replicas for heavy read workloads
-- Caching strategies for frequent queries
+**For Development:**
+- Follow [Development Guide](../development/DEVELOPMENT.md)
+- Set up local environment
+- Run tests with `make test`
+
+**For Production:**
+1. [Deploy Backend (EC2)](./aws/EC2_DEPLOYMENT.md)
+2. [Deploy Frontend (Amplify)](./aws/AMPLIFY_DEPLOYMENT.md)
+3. [Configure Monitoring](./aws/MONITORING_SETUP.md)
+4. [Review Security](../operations/SECURITY_CHECKLIST.md)
+
+**For Operators:**
+- Review [Troubleshooting](../operations/TROUBLESHOOTING.md)
+- Set up monitoring alerts
+- Configure automated backups
+- Plan scaling strategy

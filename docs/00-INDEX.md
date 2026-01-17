@@ -28,12 +28,12 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 ### Deployment
 | Document | Description |
 |----------|-------------|
-| [Deployment Overview](deployment/DEPLOYMENT.md) | All deployment options summary |
-| [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) | Production Docker deployment |
-| [Kubernetes](deployment/kubernetes/KUBERNETES.md) | Kind & K3s deployment |
-| [AWS EC2](deployment/aws/EC2_DEPLOYMENT.md) | Backend on EC2 |
-| [AWS Amplify](deployment/aws/AMPLIFY_DEPLOYMENT.md) | Frontend on Amplify |
-| [Monitoring](deployment/aws/MONITORING_SETUP.md) | Prometheus & Grafana setup |
+| [Deployment Overview](deployment/DEPLOYMENT.md) | **Start here** - All deployment options |
+| [AWS EC2 (Production)](deployment/aws/EC2_DEPLOYMENT.md) | Current production backend deployment |
+| [AWS Amplify (Production)](deployment/aws/AMPLIFY_DEPLOYMENT.md) | Current production frontend deployment |
+| [Monitoring Setup](deployment/aws/MONITORING_SETUP.md) | Prometheus + Grafana (SSH tunnel access) |
+| [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) | Alternative Docker deployment |
+| [Kubernetes (Kind/K3s)](deployment/kubernetes/KUBERNETES.md) | Alternative K8s deployment |
 
 ### Operations
 | Document | Description |
@@ -57,10 +57,12 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 3. Run `make dev` and visit http://localhost:3000
 
 ### I want to deploy HRAS in production
-1. Review [Deployment Overview](deployment/DEPLOYMENT.md)
-2. Follow [EC2 Deployment](deployment/aws/EC2_DEPLOYMENT.md) for backend
-3. Follow [Amplify Deployment](deployment/aws/AMPLIFY_DEPLOYMENT.md) for frontend
-4. Set up [Monitoring](deployment/aws/MONITORING_SETUP.md)
+**Current production uses AWS Amplify + EC2:**
+1. Review [Deployment Overview](deployment/DEPLOYMENT.md#aws-production-deployment)
+2. Deploy backend: [EC2 Deployment](deployment/aws/EC2_DEPLOYMENT.md)
+3. Deploy frontend: [Amplify Deployment](deployment/aws/AMPLIFY_DEPLOYMENT.md)
+4. Set up monitoring: [Monitoring Setup](deployment/aws/MONITORING_SETUP.md)
+5. Verify: [Troubleshooting](operations/TROUBLESHOOTING.md)
 
 ### I want to contribute code
 1. Read [Development Setup](development/DEVELOPMENT.md)
@@ -69,6 +71,31 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 
 ### I want to use HRAS to answer questions
 1. Start with [User Guide](getting-started/USER_GUIDE.md)
+
+---
+
+## Current Production Architecture
+
+```
+AWS Amplify (Frontend)
+  https://hras.owezzy.tech
+        ↓ HTTPS API calls
+AWS EC2 (Backend)
+  https://api.hras.owezzy.tech
+  • Caddy reverse proxy (Let's Encrypt TLS)
+  • FastAPI backend (Docker)
+  • PostgreSQL database
+  • Ollama local LLM
+  • Prometheus + Grafana (SSH tunnel)
+```
+
+**Production URLs:**
+- Frontend: https://hras.owezzy.tech
+- API: https://api.hras.owezzy.tech
+- API Docs: https://api.hras.owezzy.tech/docs
+- Monitoring: SSH tunnel only (secure)
+
+**Monthly Cost: ~$25** (EC2 + Amplify free tier)
 
 ---
 
@@ -82,7 +109,7 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 | Embeddings | nomic-embed-text (via Ollama) | Latest |
 | Vector Store | ChromaDB | 0.5+ |
 | Orchestration | LangGraph (Multi-agent) | 0.2+ |
-| Database | PostgreSQL (optional) | 17 |
+| Database | PostgreSQL | 17 |
 | Monitoring | Prometheus + Grafana | Latest |
 
 ---
@@ -95,11 +122,15 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 - **Source Attribution**: Every answer includes document references
 - **Fast Deployment**: Docker Compose with automatic data ingestion
 - **Full Observability**: Prometheus metrics + Grafana dashboards
+- **Production-Ready**: AWS deployment with <$25/month cost
 
 ---
 
 ## Need Help?
 
-- **Found a bug?** Check [Troubleshooting](operations/TROUBLESHOOTING.md)
-- **AWS issues?** See [AWS Troubleshooting](deployment/aws/AWS_TROUBLESHOOTING.md)
-- **Feature request?** Open a GitHub issue
+- **Setting up locally?** → [Development Guide](development/DEVELOPMENT.md)
+- **Deploying to production?** → [Deployment Overview](deployment/DEPLOYMENT.md)
+- **Found a bug?** → [Troubleshooting](operations/TROUBLESHOOTING.md)
+- **AWS issues?** → [AWS Troubleshooting](deployment/aws/AWS_TROUBLESHOOTING.md)
+- **API questions?** → [API Reference](reference/API.md)
+- **Feature request?** → Open a GitHub issue
