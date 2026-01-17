@@ -11,7 +11,7 @@ from prometheus_client import make_asgi_app
 from src.app.api.routes import admin, chat, conversations, health
 from src.app.core.config import get_settings
 from src.app.core.logging import get_logger, setup_logging
-from src.app.core.metrics import init_app_info
+from src.app.core.metrics import VECTORSTORE_DOCUMENTS, init_app_info
 from src.app.middleware.logging import RequestLoggingMiddleware
 from src.app.middleware.metrics import PrometheusMiddleware
 from src.app.middleware.security import SecurityHeadersMiddleware
@@ -42,6 +42,17 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         use_postgres=settings.use_postgres,
         use_async_tools=settings.use_async_tools,
     )
+
+    # Initialize vectorstore document count metric from actual store
+    try:
+        from vectorstore.store import get_vector_store
+
+        vector_store = get_vector_store()
+        stats = vector_store.get_collection_stats()
+        VECTORSTORE_DOCUMENTS.set(stats["count"])
+        logger.info("vectorstore_metrics_initialized", document_count=stats["count"])
+    except Exception as e:
+        logger.warning("vectorstore_metrics_init_failed", error=str(e))
 
     yield
 
