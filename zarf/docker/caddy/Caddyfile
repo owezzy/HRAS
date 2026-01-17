@@ -1,7 +1,41 @@
 {
-	email admin@hras.local
+	email admin@owezzy.tech
 }
 
+# Primary domain with automatic Let's Encrypt certificate
+api.hras.owezzy.tech {
+	reverse_proxy backend:8000 {
+		header_up Host {upstream_hostport}
+		header_up X-Real-IP {remote_host}
+	}
+
+	header {
+		Access-Control-Allow-Origin "https://hras.owezzy.tech"
+		Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+		Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+		Access-Control-Allow-Credentials "true"
+		Access-Control-Max-Age "86400"
+	}
+
+	@options method OPTIONS
+	respond @options 204
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	encode gzip zstd
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# Fallback for IP-based access (self-signed)
 :443 {
 	tls /etc/caddy/certs/cert.pem /etc/caddy/certs/key.pem
 
