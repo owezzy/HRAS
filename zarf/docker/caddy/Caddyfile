@@ -1,0 +1,67 @@
+# HRAS Caddy Configuration
+# Provides HTTPS reverse proxy for backend API
+#
+# For IP-based access (no domain), Caddy uses self-signed certificates.
+# Browsers will show a warning, but HTTPS works for mixed-content resolution.
+#
+# When you have a domain, replace the IP with your domain name and Caddy
+# will automatically obtain Let's Encrypt certificates.
+
+{
+	# Email for Let's Encrypt notifications (used when domain is configured)
+	email admin@hras.local
+
+	# Skip SSL verification for upstream services (they're internal HTTP)
+	# This is safe because traffic between Caddy and backends is internal Docker network
+}
+
+# API Backend - HTTPS endpoint for frontend
+# Using IP address with automatic self-signed certificate
+:443 {
+	# TLS with self-signed cert for IP-based access
+	tls internal
+
+	# Reverse proxy to backend service
+	reverse_proxy backend:8000 {
+		# Pass original host and client info
+		header_up Host {upstream_hostport}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# CORS headers for Amplify frontend
+	header {
+		Access-Control-Allow-Origin "https://hras.owezzy.tech"
+		Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+		Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+		Access-Control-Allow-Credentials "true"
+		Access-Control-Max-Age "86400"
+	}
+
+	# Handle preflight OPTIONS requests
+	@options method OPTIONS
+	respond @options 204
+
+	# Security headers
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# Enable compression
+	encode gzip zstd
+
+	# Logging
+	log {
+		output stdout
+		format console
+	}
+}
+
+# HTTP to HTTPS redirect
+:80 {
+	redir https://{host}{uri} permanent
+}
