@@ -60,9 +60,9 @@ This guide deploys HRAS on a budget EC2 instance using Docker Compose as a syste
 
 2. **Name**: `hras-production`
 
-3. **AMI**: Amazon Linux 2023 (free tier eligible)
+3. **AMI**: Ubuntu Server 24.04 LTS (HVM)
 
-4. **Instance type**: `t3.small`
+4. **Instance type**: `t3.small` (or `t3.medium` for local LLM models)
 
 5. **Key pair**: Create or select existing (save the .pem file!)
 
@@ -71,6 +71,7 @@ This guide deploys HRAS on a budget EC2 instance using Docker Compose as a syste
      - SSH (22) from your IP
      - HTTP (80) from anywhere
      - HTTPS (443) from anywhere
+     - Port 8000 from anywhere (Backend API)
 
 7. **Storage**: 20GB gp3 (free tier: 30GB)
 
@@ -92,25 +93,24 @@ This guide deploys HRAS on a budget EC2 instance using Docker Compose as a syste
 ```bash
 # Replace with your key and public IP
 chmod 400 your-key.pem
-ssh -i your-key.pem ec2-user@<EC2_PUBLIC_IP>
+ssh -i your-key.pem ubuntu@<EC2_PUBLIC_IP>
 ```
 
 ### 3.2 System Updates & Docker Installation
 
 ```bash
 # Update system
-sudo dnf update -y
+sudo apt update && sudo apt upgrade -y
 
 # Install Docker
-sudo dnf install -y docker git
+sudo apt install -y docker.io git
 sudo systemctl enable docker
 sudo systemctl start docker
-sudo usermod -aG docker ec2-user
+sudo usermod -aG docker ubuntu
 
 # Install Docker Compose plugin
 sudo mkdir -p /usr/local/lib/docker/cli-plugins
-sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
-  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo curl -SL -o /usr/local/lib/docker/cli-plugins/docker-compose https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64
 sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Verify installation
@@ -124,7 +124,7 @@ exit
 ### 3.3 Reconnect and Continue
 
 ```bash
-ssh -i your-key.pem ec2-user@<EC2_PUBLIC_IP>
+ssh -i your-key.pem ubuntu@<EC2_PUBLIC_IP>
 ```
 
 ---
@@ -135,10 +135,10 @@ ssh -i your-key.pem ec2-user@<EC2_PUBLIC_IP>
 
 ```bash
 sudo mkdir -p /opt/hras
-sudo chown ec2-user:ec2-user /opt/hras
+sudo chown ubuntu:ubuntu /opt/hras
 cd /opt/hras
 
-git clone --branch feature/backend-refactor-testing https://github.com/owezzy/HRAS.git .
+git clone --branch main https://github.com/owezzy/HRAS.git .
 ```
 
 ### 4.2 Create Data Directories

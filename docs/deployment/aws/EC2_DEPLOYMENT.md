@@ -40,8 +40,8 @@ aws ec2 authorize-security-group-ingress \
 ### 1.2 Launch Instance
 
 **Via AWS Console:**
-1. **AMI**: Amazon Linux 2023 AMI (HVM)
-2. **Instance Type**: t3.small (2 vCPU, 2 GB RAM)
+1. **AMI**: Ubuntu Server 24.04 LTS (HVM)
+2. **Instance Type**: t3.small (2 vCPU, 2 GB RAM) or t3.medium (4 GB RAM) for local models
 3. **Key Pair**: Select your existing key pair
 4. **Security Group**: hras-backend-sg
 5. **Storage**: 20 GB gp3 EBS volume
@@ -50,14 +50,16 @@ aws ec2 authorize-security-group-ingress \
 **Via AWS CLI:**
 ```bash
 aws ec2 run-instances \
-  --image-id ami-0abcdef1234567890 \
+  --image-id ami-0c7217cdde317cfec \
   --count 1 \
   --instance-type t3.small \
   --key-name your-key-pair \
   --security-groups hras-backend-sg \
   --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=hras-backend}]' \
-  --block-device-mappings 'DeviceName=/dev/xvda,Ebs={VolumeSize=20,VolumeType=gp3}'
+  --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=20,VolumeType=gp3}'
 ```
+
+> **Note**: The AMI ID above is for Ubuntu 24.04 in us-east-1. Find your region's AMI at https://cloud-images.ubuntu.com/locator/ec2/
 
 ### 1.3 Static IP (Optional)
 
@@ -90,31 +92,32 @@ curl -s http://169.254.169.254/latest/meta-data/public-ipv4
 
 ```bash
 # SSH to instance (replace with your key and IP)
-ssh -i ~/.ssh/your-key.pem ec2-user@44.222.129.49
+ssh -i ~/.ssh/your-key.pem ubuntu@52.90.150.69
 ```
 
 ### 2.2 Install Prerequisites
 
 ```bash
 # Update system
-sudo yum update -y
+sudo apt update && sudo apt upgrade -y
 
 # Install Docker
-sudo yum install -y docker
+sudo apt install -y docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
-sudo usermod -a -G docker ec2-user
+sudo usermod -aG docker ubuntu
 
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+# Install Docker Compose plugin and BuildKit
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -SL -o /usr/local/lib/docker/cli-plugins/docker-compose https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Install Git
-sudo yum install -y git
+sudo apt install -y git
 
 # Verify installations
 docker --version
-docker-compose --version
+docker compose version
 git --version
 ```
 
@@ -173,19 +176,22 @@ CORS_ORIGINS=["https://hras.owezzy.tech", "https://www.hras.owezzy.tech"]
 ```bash
 # Log out and back in to refresh Docker group membership
 exit
-ssh -i ~/.ssh/your-key.pem ec2-user@your-elastic-ip
+ssh -i ~/.ssh/your-key.pem ubuntu@your-elastic-ip
 cd HRAS
 
-# Start full stack with monitoring
-docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d
+# Build backend image with BuildKit enabled
+DOCKER_BUILDKIT=1 docker build -t hras-backend:latest -f zarf/docker/dockerfile.backend .
+
+# Start full stack with monitoring (skip build since we built manually)
+docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d --no-build
 
 # Verify all services are running
-docker compose ps
+docker compose -f zarf/docker/compose/docker-compose.yml ps
 
 # View logs if needed
-docker compose logs backend
-docker compose logs grafana
-docker compose logs prometheus
+docker compose -f zarf/docker/compose/docker-compose.yml logs backend
+docker compose -f zarf/docker/compose/docker-compose.yml logs grafana
+docker compose -f zarf/docker/compose/docker-compose.yml logs prometheus
 ```
 
 ### 3.4 Pull Ollama Models
@@ -194,17 +200,17 @@ Once the Ollama container is running, pull the required models:
 
 ```bash
 # Pull embedding model (required for RAG)
-docker compose exec ollama ollama pull nomic-embed-text
+docker compose -f zarf/docker/compose/docker-compose.yml exec ollama ollama pull nomic-embed-text
 
 # Pull LLM model (choose one based on your instance size)
 # For t3.large (8GB): cloud model via authenticated Ollama
-docker compose exec ollama ollama pull nemotron-3-nano:30b-cloud
+docker compose -f zarf/docker/compose/docker-compose.yml exec ollama ollama pull nemotron-3-nano:30b-cloud
 
 # Alternative: For t3.medium (4GB) use a smaller local model
-# docker compose exec ollama ollama pull llama3.2:3b
+# docker compose -f zarf/docker/compose/docker-compose.yml exec ollama ollama pull llama3.2:3b
 
 # Verify models are available
-docker compose exec ollama ollama list
+docker compose -f zarf/docker/compose/docker-compose.yml exec ollama ollama list
 ```
 
 > **Cloud Model Authentication**: The `nemotron-3-nano:30b-cloud` model requires Ollama authentication.

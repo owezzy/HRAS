@@ -102,20 +102,6 @@ services:
     profiles:
       - full
 
-  frontend:
-    build:
-      context: ../../../frontend
-      dockerfile: Dockerfile
-    container_name: hras-frontend
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    profiles:
-      - full
-
   # Monitoring Services
   prometheus:
     image: prom/prometheus:latest
