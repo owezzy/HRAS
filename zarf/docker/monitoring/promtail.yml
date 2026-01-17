@@ -87,6 +87,8 @@ scrape_configs:
     relabel_configs:
       - source_labels: [__meta_docker_container_label_com_docker_compose_service]
         target_label: compose_service
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service_name
       - source_labels: [__meta_docker_container_label_com_hras_component]
         target_label: hras_component
       - source_labels: [__meta_docker_container_name]
