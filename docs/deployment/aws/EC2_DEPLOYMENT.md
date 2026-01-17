@@ -134,7 +134,7 @@ git clone https://github.com/owezzy/HRAS.git
 cd HRAS
 
 # Or if using private repo
-git clone https://your-token@github.com/your-username/HRAS.git
+git clone https://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n@github.com/owezzy/HRAS.git
 cd HRAS
 ```
 

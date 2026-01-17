@@ -20,6 +20,7 @@ services:
     build:
       context: ../../..
       dockerfile: zarf/docker/dockerfile.backend
+    image: hras-backend:latest
     container_name: hras-backend
     user: "1000:1000"
     environment:
