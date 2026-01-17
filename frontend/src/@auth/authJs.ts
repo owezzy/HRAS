@@ -1,28 +1,11 @@
 import NextAuth from 'next-auth';
 import { User } from '@auth/user';
-import { createStorage } from 'unstorage';
-import memoryDriver from 'unstorage/drivers/memory';
-import vercelKVDriver from 'unstorage/drivers/vercel-kv';
-import { UnstorageAdapter } from '@auth/unstorage-adapter';
 import type { NextAuthConfig } from 'next-auth';
 import type { Provider } from 'next-auth/providers';
 import Credentials from 'next-auth/providers/credentials';
 import Facebook from 'next-auth/providers/facebook';
 import Google from 'next-auth/providers/google';
 import { authGetDbUserByEmail, authCreateDbUser } from './authApi';
-
-const useVercelKV =
-	process.env.VERCEL && process.env.AUTH_KV_REST_API_URL && process.env.AUTH_KV_REST_API_TOKEN;
-
-const storage = createStorage({
-	driver: useVercelKV
-		? vercelKVDriver({
-				url: process.env.AUTH_KV_REST_API_URL,
-				token: process.env.AUTH_KV_REST_API_TOKEN,
-				env: false
-			})
-		: memoryDriver()
-});
 
 export const providers: Provider[] = [
 	Credentials({
@@ -65,7 +48,6 @@ export const providers: Provider[] = [
 
 const config = {
 	theme: { logo: '/assets/images/logo/logo.svg' },
-	adapter: UnstorageAdapter(storage),
 	pages: {
 		signIn: '/sign-in'
 	},
