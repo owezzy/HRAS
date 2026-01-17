@@ -46,6 +46,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://feature-backend-refactor-testing.d3q35zh7ig6w8u.amplifyapp.com",
+        "https://hras.owezzy.tech",
     ]
     cors_allow_credentials: bool = True
     # Restrict methods and headers in production
