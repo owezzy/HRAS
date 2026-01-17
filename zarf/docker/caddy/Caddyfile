@@ -1,6 +1,5 @@
 {
 	email admin@hras.local
-	local_certs
 }
 
 https://18.215.166.248 {
