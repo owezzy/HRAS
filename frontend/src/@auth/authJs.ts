@@ -3,6 +3,9 @@ import type { NextAuthConfig } from 'next-auth';
 import type { Provider } from 'next-auth/providers';
 import Credentials from 'next-auth/providers/credentials';
 
+// Fallback secret for demo mode - in production, use AUTH_SECRET env var
+const DEMO_SECRET = 's55T4WnE0XHfkljb+Hqvib2M4QR4uETFP/R9vv0QwMo=';
+
 export const demoUser = {
 	id: '0',
 	email: 'demo@hras.org',
@@ -46,6 +49,7 @@ const config = {
 	providers,
 	basePath: '/auth',
 	trustHost: true,
+	secret: process.env.AUTH_SECRET || DEMO_SECRET,
 	callbacks: {
 		authorized() {
 			return true;
