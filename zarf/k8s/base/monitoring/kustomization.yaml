@@ -8,6 +8,8 @@ resources:
   - prometheus-deployment.yaml
   - alertmanager-config.yaml
   - alertmanager-deployment.yaml
+  - loki-deployment.yaml
+  - promtail-deployment.yaml
   - grafana-deployment.yaml
 
 labels:
