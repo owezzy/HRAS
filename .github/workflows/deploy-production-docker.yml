@@ -174,9 +174,28 @@ jobs:
             echo 'Starting services...'
             docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d
 
-            # Wait for services to be healthy
+            # Wait for critical services to be healthy with extended timeout
             echo 'Waiting for services to be ready...'
-            timeout 120 bash -c 'until docker compose -f zarf/docker/compose/docker-compose.yml ps | grep -q \"healthy\"; do echo \"Waiting for services...\"; sleep 5; done'
+
+            # Wait for backend to be healthy (up to 3 minutes)
+            echo 'Waiting for backend...'
+            for i in {1..36}; do
+              if docker inspect --format='{{.State.Health.Status}}' hras-backend 2>/dev/null | grep -q 'healthy'; then
+                echo '✅ Backend is healthy'
+                break
+              fi
+              if [ \$i -eq 36 ]; then
+                echo '❌ Backend health check timeout'
+                docker logs hras-backend --tail 50
+                exit 1
+              fi
+              echo \"Waiting for backend... (\$i/36)\"
+              sleep 5
+            done
+
+            # Show final container status
+            echo '=== Container Status ==='
+            docker compose -f zarf/docker/compose/docker-compose.yml --profile full ps
           "
 
       - name: Verify deployment health
