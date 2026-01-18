@@ -5,7 +5,7 @@ Converts UHRI JSON records into LangChain Documents for embedding and retrieval.
 
 from langchain_core.documents import Document
 
-from tools.uhri_client import SAMPLE_UHRI_DATA, UHRIClient
+from src.app.ai.tools.uhri_client import SAMPLE_UHRI_DATA, UHRIClient
 
 
 class UHRIDocumentLoader:

@@ -295,11 +295,13 @@ HRAS/
 │   │   ├── api/               # API routes
 │   │   ├── core/              # Config, dependencies
 │   │   ├── schemas/           # Pydantic models
-│   │   └── services/          # Business logic
-│   ├── agents/                # LangGraph multi-agent system
-│   ├── chains/                # LangChain LCEL chains
-│   ├── vectorstore/           # ChromaDB management
-│   ├── prompts/               # Prompt templates
+│   │   ├── services/          # Business logic
+│   │   └── ai/                # AI/ML components
+│   │       ├── agents/        # LangGraph multi-agent system
+│   │       ├── chains/        # LangChain LCEL chains
+│   │       ├── tools/         # Agent tools (UHRI client)
+│   │       ├── vectorstore/   # ChromaDB management
+│   │       └── prompts/       # Prompt templates
 │   ├── tests/                 # Pytest suite
 │   ├── .env.example           # Environment template
 │   └── README.md              # Backend docs

@@ -10,8 +10,9 @@ import time
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
 
-from agents.nodes import advisory_agent, compare_agent, research_agent
-from agents.state import AgentState
+from src.app.ai.agents.nodes import advisory_agent, compare_agent, research_agent
+from src.app.ai.agents.state import AgentState
+from src.app.core.instrumentation import instrumented_llm_invoke
 from src.app.core.llm import get_deterministic_llm
 from src.app.core.logging import ai_logger, get_logger
 from src.app.core.metrics import (
@@ -86,7 +87,7 @@ User Question: {state.question}
 
 Classify this query:"""
 
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
 
     classification = _extract_json_from_response(response.content)
 

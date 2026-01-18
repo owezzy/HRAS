@@ -76,10 +76,10 @@ curl -X POST http://localhost:8000/api/v1/chat \
 PYTHONPATH=. uv run uvicorn src.app.main:app --reload
 
 # Lint code
-uv run ruff check src agents chains tools vectorstore prompts
+uv run ruff check src
 
 # Format code
-uv run ruff format src agents chains tools vectorstore prompts
+uv run ruff format src
 
 # Run all tests
 uv run pytest tests/ -v
@@ -126,19 +126,21 @@ backend/
 │   │   ├── database.py      # Async SQLAlchemy setup
 │   │   ├── async_utils.py   # Async wrappers
 │   │   ├── metrics.py       # Prometheus metrics
+│   │   ├── instrumentation.py # LLM & vectorstore metrics wrappers
 │   │   └── logging.py       # Structured logging
+│   ├── ai/                  # AI/ML components
+│   │   ├── agents/          # LangGraph agents
+│   │   │   ├── graph.py     # Workflow definition
+│   │   │   ├── nodes.py     # Agent implementations
+│   │   │   └── state.py     # State schema
+│   │   ├── chains/          # LangChain LCEL chains
+│   │   ├── tools/           # Agent tools (UHRI client)
+│   │   ├── vectorstore/     # ChromaDB setup
+│   │   └── prompts/         # Prompt templates
 │   ├── services/            # Business logic
 │   ├── schemas/             # Pydantic models
 │   ├── models/              # SQLAlchemy ORM
 │   └── repositories/        # Database access
-├── agents/                  # LangGraph agents
-│   ├── graph.py             # Workflow definition
-│   ├── nodes.py             # Agent implementations
-│   └── state.py             # State schema
-├── chains/                  # LangChain LCEL chains
-├── tools/                   # Agent tools (UHRI client)
-├── vectorstore/             # ChromaDB setup
-├── prompts/                 # Prompt templates
 ├── tests/                   # Pytest tests
 └── alembic/                 # Database migrations
 ```

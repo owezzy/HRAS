@@ -4,9 +4,10 @@ from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableSerializable
 
-from prompts.hr_advisor import SIMPLE_RAG_PROMPT
+from src.app.ai.prompts.hr_advisor import SIMPLE_RAG_PROMPT
+from src.app.ai.vectorstore.store import VectorStoreManager, get_vector_store
+from src.app.core.instrumentation import instrumented_llm_invoke
 from src.app.core.llm import get_llm
-from vectorstore.store import VectorStoreManager, get_vector_store
 
 
 def format_docs(docs: list[Document]) -> str:
@@ -60,7 +61,7 @@ class RAGChain:
         context = format_docs(docs)
 
         messages = SIMPLE_RAG_PROMPT.format_messages(context=context, question=question)
-        response = await self.llm.ainvoke(messages)
+        response = await instrumented_llm_invoke(self.llm, messages)
 
         sources = []
         for doc in docs:

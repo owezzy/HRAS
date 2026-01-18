@@ -45,7 +45,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Initialize vectorstore document count metric from actual store
     try:
-        from vectorstore.store import get_vector_store
+        from src.app.ai.vectorstore.store import get_vector_store
 
         vector_store = get_vector_store()
         stats = vector_store.get_collection_stats()

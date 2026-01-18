@@ -152,12 +152,19 @@ def get_service(
 ### Structure
 
 ```
-backend/
-├── agents/          # LangGraph agent definitions
-├── chains/          # LangChain LCEL chains
-├── tools/           # Agent tools (search, retrieve, etc.)
-├── vectorstore/     # Embedding and retrieval logic
-└── prompts/         # Prompt templates
+backend/src/app/
+├── ai/                  # AI/ML components
+│   ├── agents/          # LangGraph agent definitions
+│   ├── chains/          # LangChain LCEL chains
+│   ├── tools/           # Agent tools (search, retrieve, etc.)
+│   ├── vectorstore/     # Embedding and retrieval logic
+│   └── prompts/         # Prompt templates
+├── api/routes/          # FastAPI routers
+├── core/                # Config, dependencies, metrics
+├── services/            # Business logic
+├── schemas/             # Pydantic models
+├── models/              # SQLAlchemy ORM
+└── repositories/        # Database access
 ```
 
 ### Patterns

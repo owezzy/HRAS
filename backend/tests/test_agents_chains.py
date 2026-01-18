@@ -5,15 +5,39 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.documents import Document
 
-from agents.graph import (
+from src.app.ai.agents.graph import (
     _count_workflow_steps,
     _extract_json_from_response,
     build_graph,
     get_agent_graph,
     route_to_agent,
 )
-from agents.state import AgentState
-from chains.rag_chain import RAGChain, format_docs, reset_rag_chain
+from src.app.ai.agents.state import AgentState
+from src.app.ai.chains.rag_chain import RAGChain, format_docs, reset_rag_chain
+
+
+def create_mock_llm_response(content: str) -> MagicMock:
+    """Create a mock LLM response with proper metadata for instrumentation.
+
+    Args:
+        content: The response content string.
+
+    Returns:
+        A MagicMock configured with content, usage_metadata, and response_metadata.
+    """
+    mock_response = MagicMock()
+    mock_response.content = content
+    mock_response.usage_metadata = {
+        "input_tokens": 100,
+        "output_tokens": 50,
+        "total_tokens": 150,
+    }
+    mock_response.response_metadata = {
+        "model": "test-model",
+        "prompt_eval_count": 100,
+        "eval_count": 50,
+    }
+    return mock_response
 
 
 class TestAgentGraph:
@@ -68,7 +92,7 @@ class TestAgentGraph:
         assert "compare" in graph.nodes
 
     def test_get_agent_graph_returns_compiled_graph(self):
-        import agents.graph as graph_module
+        import src.app.ai.agents.graph as graph_module
 
         graph_module._compiled_graph = None
 
@@ -86,17 +110,17 @@ class TestAgentWorkflow:
     def mock_llm(self):
         mock = MagicMock()
         mock.ainvoke = AsyncMock(
-            return_value=MagicMock(
-                content='{"query_type": "research", "countries": ["Kenya"], "themes": ["torture"], "requires_comparison": false}'
+            return_value=create_mock_llm_response(
+                '{"query_type": "research", "countries": ["Kenya"], "themes": ["torture"], "requires_comparison": false}'
             )
         )
         return mock
 
     @pytest.mark.asyncio
     async def test_supervisor_node_routes_to_research(self, mock_llm):
-        from agents.graph import supervisor_node
+        from src.app.ai.agents.graph import supervisor_node
 
-        with patch("agents.graph.get_deterministic_llm", return_value=mock_llm):
+        with patch("src.app.ai.agents.graph.get_deterministic_llm", return_value=mock_llm):
             state = AgentState(question="What recommendations exist for Kenya?")
             result = await supervisor_node(state)
 
@@ -106,15 +130,15 @@ class TestAgentWorkflow:
 
     @pytest.mark.asyncio
     async def test_supervisor_node_routes_to_compare(self, mock_llm):
-        from agents.graph import supervisor_node
+        from src.app.ai.agents.graph import supervisor_node
 
         mock_llm.ainvoke = AsyncMock(
-            return_value=MagicMock(
-                content='{"query_type": "compare", "countries": ["Kenya", "Tanzania"], "themes": [], "requires_comparison": true}'
+            return_value=create_mock_llm_response(
+                '{"query_type": "compare", "countries": ["Kenya", "Tanzania"], "themes": [], "requires_comparison": true}'
             )
         )
 
-        with patch("agents.graph.get_deterministic_llm", return_value=mock_llm):
+        with patch("src.app.ai.agents.graph.get_deterministic_llm", return_value=mock_llm):
             state = AgentState(question="Compare Kenya and Tanzania")
             result = await supervisor_node(state)
 
@@ -122,15 +146,15 @@ class TestAgentWorkflow:
 
     @pytest.mark.asyncio
     async def test_supervisor_node_routes_to_advisory(self, mock_llm):
-        from agents.graph import supervisor_node
+        from src.app.ai.agents.graph import supervisor_node
 
         mock_llm.ainvoke = AsyncMock(
-            return_value=MagicMock(
-                content='{"query_type": "advisory", "countries": [], "themes": [], "requires_comparison": false}'
+            return_value=create_mock_llm_response(
+                '{"query_type": "advisory", "countries": [], "themes": [], "requires_comparison": false}'
             )
         )
 
-        with patch("agents.graph.get_deterministic_llm", return_value=mock_llm):
+        with patch("src.app.ai.agents.graph.get_deterministic_llm", return_value=mock_llm):
             state = AgentState(question="What should we focus on?")
             result = await supervisor_node(state)
 
@@ -138,11 +162,11 @@ class TestAgentWorkflow:
 
     @pytest.mark.asyncio
     async def test_supervisor_node_fallback_on_invalid_json(self, mock_llm):
-        from agents.graph import supervisor_node
+        from src.app.ai.agents.graph import supervisor_node
 
-        mock_llm.ainvoke = AsyncMock(return_value=MagicMock(content="I don't understand the format"))
+        mock_llm.ainvoke = AsyncMock(return_value=create_mock_llm_response("I don't understand the format"))
 
-        with patch("agents.graph.get_deterministic_llm", return_value=mock_llm):
+        with patch("src.app.ai.agents.graph.get_deterministic_llm", return_value=mock_llm):
             state = AgentState(question="Random question")
             result = await supervisor_node(state)
 
@@ -165,7 +189,7 @@ class TestRAGChain:
     @pytest.fixture
     def mock_llm(self):
         mock = MagicMock()
-        mock.ainvoke = AsyncMock(return_value=MagicMock(content="This is the RAG response."))
+        mock.ainvoke = AsyncMock(return_value=create_mock_llm_response("This is the RAG response."))
         return mock
 
     def test_format_docs_single_document(self):
@@ -205,7 +229,7 @@ class TestRAGChain:
 
     @pytest.mark.asyncio
     async def test_invoke_with_sources(self, mock_vector_store, mock_llm):
-        with patch("chains.rag_chain.get_llm", return_value=mock_llm):
+        with patch("src.app.ai.chains.rag_chain.get_llm", return_value=mock_llm):
             chain = RAGChain(vector_store=mock_vector_store)
             chain.llm = mock_llm
 
@@ -224,7 +248,7 @@ class TestRAGChain:
             Document(page_content=long_content, metadata={"country": "Kenya"})
         ]
 
-        with patch("chains.rag_chain.get_llm", return_value=mock_llm):
+        with patch("src.app.ai.chains.rag_chain.get_llm", return_value=mock_llm):
             chain = RAGChain(vector_store=mock_vector_store)
             chain.llm = mock_llm
 
@@ -234,7 +258,7 @@ class TestRAGChain:
             assert len(result["sources"][0]["snippet"]) == 203
 
     def test_reset_rag_chain(self):
-        import chains.rag_chain as rag_module
+        import src.app.ai.chains.rag_chain as rag_module
 
         rag_module._rag_chain = MagicMock()
         assert rag_module._rag_chain is not None
@@ -260,9 +284,9 @@ class TestVectorStoreManager:
         return mock
 
     def test_vector_store_manager_initialization(self, mock_embeddings, tmp_path):
-        from vectorstore.store import VectorStoreManager
+        from src.app.ai.vectorstore.store import VectorStoreManager
 
-        with patch("vectorstore.store.chromadb.PersistentClient") as mock_client:
+        with patch("src.app.ai.vectorstore.store.chromadb.PersistentClient") as mock_client:
             manager = VectorStoreManager(
                 embeddings=mock_embeddings,
                 persist_directory=str(tmp_path),
@@ -273,9 +297,9 @@ class TestVectorStoreManager:
             mock_client.assert_called_once()
 
     def test_get_collection_stats(self, mock_embeddings, mock_chroma_client, tmp_path):
-        from vectorstore.store import VectorStoreManager
+        from src.app.ai.vectorstore.store import VectorStoreManager
 
-        with patch("vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
+        with patch("src.app.ai.vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
             manager = VectorStoreManager(
                 embeddings=mock_embeddings,
                 persist_directory=str(tmp_path),
@@ -287,9 +311,9 @@ class TestVectorStoreManager:
             assert stats["count"] == 100
 
     def test_clear_collection(self, mock_embeddings, mock_chroma_client, tmp_path):
-        from vectorstore.store import VectorStoreManager
+        from src.app.ai.vectorstore.store import VectorStoreManager
 
-        with patch("vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
+        with patch("src.app.ai.vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
             manager = VectorStoreManager(
                 embeddings=mock_embeddings,
                 persist_directory=str(tmp_path),
@@ -302,11 +326,11 @@ class TestVectorStoreManager:
             assert manager._vectorstore is None
 
     def test_clear_collection_handles_missing(self, mock_embeddings, mock_chroma_client, tmp_path):
-        from vectorstore.store import VectorStoreManager
+        from src.app.ai.vectorstore.store import VectorStoreManager
 
         mock_chroma_client.delete_collection.side_effect = ValueError("Collection not found")
 
-        with patch("vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
+        with patch("src.app.ai.vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
             manager = VectorStoreManager(
                 embeddings=mock_embeddings,
                 persist_directory=str(tmp_path),
@@ -316,9 +340,9 @@ class TestVectorStoreManager:
 
     @pytest.mark.asyncio
     async def test_async_similarity_search(self, mock_embeddings, mock_chroma_client, tmp_path):
-        from vectorstore.store import VectorStoreManager
+        from src.app.ai.vectorstore.store import VectorStoreManager
 
-        with patch("vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
+        with patch("src.app.ai.vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
             manager = VectorStoreManager(
                 embeddings=mock_embeddings,
                 persist_directory=str(tmp_path),
@@ -334,9 +358,9 @@ class TestVectorStoreManager:
 
     @pytest.mark.asyncio
     async def test_async_get_collection_stats(self, mock_embeddings, mock_chroma_client, tmp_path):
-        from vectorstore.store import VectorStoreManager
+        from src.app.ai.vectorstore.store import VectorStoreManager
 
-        with patch("vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
+        with patch("src.app.ai.vectorstore.store.chromadb.PersistentClient", return_value=mock_chroma_client):
             manager = VectorStoreManager(
                 embeddings=mock_embeddings,
                 persist_directory=str(tmp_path),
@@ -347,8 +371,8 @@ class TestVectorStoreManager:
             assert result["count"] == 100
 
     def test_reset_vector_store(self):
-        import vectorstore.store as store_module
-        from vectorstore.store import reset_vector_store
+        import src.app.ai.vectorstore.store as store_module
+        from src.app.ai.vectorstore.store import reset_vector_store
 
         store_module._vector_store_manager = MagicMock()
         assert store_module._vector_store_manager is not None

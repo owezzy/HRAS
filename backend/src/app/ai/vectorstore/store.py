@@ -1,5 +1,7 @@
 """ChromaDB vector store for UHRI documents."""
 
+import time
+
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 from langchain_chroma import Chroma
@@ -9,6 +11,7 @@ from langchain_ollama import OllamaEmbeddings
 
 from src.app.core.async_utils import run_in_thread
 from src.app.core.config import get_settings
+from src.app.core.instrumentation import record_embeddings_generated, record_vector_search_metrics
 
 
 def get_embeddings() -> Embeddings:
@@ -69,6 +72,7 @@ class VectorStoreManager:
         Returns:
             List of document IDs.
         """
+        record_embeddings_generated(len(documents))
         return self.vectorstore.add_documents(documents)
 
     def similarity_search(
@@ -87,7 +91,16 @@ class VectorStoreManager:
         Returns:
             List of matching Documents.
         """
-        return self.vectorstore.similarity_search(query, k=k, filter=filter)
+        start_time = time.perf_counter()
+        try:
+            results = self.vectorstore.similarity_search(query, k=k, filter=filter)
+            duration = time.perf_counter() - start_time
+            record_vector_search_metrics(duration, success=True, num_results=len(results))
+            return results
+        except Exception:
+            duration = time.perf_counter() - start_time
+            record_vector_search_metrics(duration, success=False)
+            raise
 
     def similarity_search_with_score(
         self,
@@ -105,7 +118,16 @@ class VectorStoreManager:
         Returns:
             List of (Document, score) tuples.
         """
-        return self.vectorstore.similarity_search_with_score(query, k=k, filter=filter)
+        start_time = time.perf_counter()
+        try:
+            results = self.vectorstore.similarity_search_with_score(query, k=k, filter=filter)
+            duration = time.perf_counter() - start_time
+            record_vector_search_metrics(duration, success=True, num_results=len(results))
+            return results
+        except Exception:
+            duration = time.perf_counter() - start_time
+            record_vector_search_metrics(duration, success=False)
+            raise
 
     def as_retriever(self, search_kwargs: dict | None = None):
         """Get a retriever interface for the vector store.

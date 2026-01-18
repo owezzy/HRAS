@@ -5,9 +5,10 @@ Each agent is a specialized node in the LangGraph workflow.
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from agents.state import AgentState, Source
+from src.app.ai.agents.state import AgentState, Source
+from src.app.ai.tools.agent_tools import compare_countries, get_country_recommendations, search_recommendations
+from src.app.core.instrumentation import instrumented_llm_invoke
 from src.app.core.llm import get_llm
-from tools.agent_tools import compare_countries, get_country_recommendations, search_recommendations
 
 # ============================================================================
 # RESEARCH AGENT
@@ -75,7 +76,7 @@ Search Results:
 
 Provide a research summary of the relevant findings:"""
 
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
     state.research_summary = str(response.content)
     state.messages.append(AIMessage(content=f"[Research Agent] {response.content}"))
 
@@ -124,7 +125,7 @@ Provide a comprehensive advisory response that:
 3. Offers professional guidance
 4. Notes any important caveats or limitations"""
 
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
     state.advisory_response = str(response.content)
     state.messages.append(AIMessage(content=f"[Advisory Agent] {response.content}"))
 
@@ -185,7 +186,7 @@ Comparison Data:
 
 Provide a structured comparison analysis:"""
 
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
     state.comparison_result = str(response.content)
     state.messages.append(AIMessage(content=f"[Compare Agent] {response.content}"))
 

@@ -2,7 +2,7 @@
 
 from langchain_core.tools import tool
 
-from vectorstore.store import get_vector_store
+from src.app.ai.vectorstore.store import get_vector_store
 
 
 @tool

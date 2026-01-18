@@ -6,8 +6,10 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from agents.graph import run_agent_workflow
-from chains.rag_chain import RAGChain, get_rag_chain
+from src.app.ai.agents.graph import run_agent_workflow
+from src.app.ai.chains.rag_chain import RAGChain, get_rag_chain
+from src.app.ai.vectorstore.document_loader import UHRIDocumentLoader
+from src.app.ai.vectorstore.store import VectorStoreManager, get_vector_store
 from src.app.core.config import get_settings
 from src.app.core.logging import ai_logger, get_logger
 from src.app.core.metrics import (
@@ -23,8 +25,6 @@ from src.app.core.metrics import (
 )
 from src.app.repositories.conversation import ConversationRepository
 from src.app.schemas.chat import ChatMessage, ChatRequest, ChatResponse
-from vectorstore.document_loader import UHRIDocumentLoader
-from vectorstore.store import VectorStoreManager, get_vector_store
 
 logger = get_logger(__name__)
 settings = get_settings()
