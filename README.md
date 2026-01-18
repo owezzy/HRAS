@@ -12,6 +12,14 @@ AI-powered advisory system for UN human rights officers. Uses RAG (Retrieval-Aug
 | **Health Check** | https://api.hras.owezzy.tech/health |
 | **Repository** | https://github.com/owezzy/HRAS |
 
+**Monitoring** (via SSH tunnel):
+
+| Service | Local URL | SSH Tunnel Command |
+|---------|-----------|-------------------|
+| **Grafana** | http://localhost:3001 | `ssh -L 3001:localhost:3001 ubuntu@<EC2_HOST>` |
+| **Prometheus** | http://localhost:9090 | `ssh -L 9090:localhost:9090 ubuntu@<EC2_HOST>` |
+| **Loki** | http://localhost:3100 | `ssh -L 3100:localhost:3100 ubuntu@<EC2_HOST>` |
+
 ## 📚 Onboarding Guide
 
 ### For New Users (Non-Technical)
