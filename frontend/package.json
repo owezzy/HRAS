@@ -61,6 +61,8 @@
     "react-markdown": "^10.1.0",
     "react-popper": "2.3.0",
     "react-swipeable": "7.0.2",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
     "styled-components": "6.1.17",
     "stylis": "4.3.6",
     "stylis-plugin-rtl": "2.1.1",
