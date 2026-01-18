@@ -215,7 +215,7 @@ jobs:
 
           # Health check via HTTP
           for i in {1..10}; do
-            if curl -f -s https://${{ secrets.DOMAIN }}/api/health; then
+            if curl -f -s https://${{ secrets.DOMAIN }}/health; then
               echo "✅ Backend health check passed"
               break
             elif [ $i -eq 10 ]; then
