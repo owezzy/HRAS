@@ -86,7 +86,7 @@ jobs:
       - name: Lint backend
         run: |
           cd backend
-          uv run ruff check src agents chains tools vectorstore prompts
+          uv run ruff check src
 
       - name: Run backend tests
         run: |
