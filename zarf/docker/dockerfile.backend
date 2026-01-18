@@ -17,11 +17,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Copy backend source code
 COPY backend/src/ ./src/
-COPY backend/agents/ ./agents/
-COPY backend/chains/ ./chains/
-COPY backend/tools/ ./tools/
-COPY backend/vectorstore/ ./vectorstore/
-COPY backend/prompts/ ./prompts/
 COPY backend/pyproject.toml backend/uv.lock backend/README.md ./
 
 # Install the project
@@ -44,11 +39,6 @@ WORKDIR /app
 
 # Copy application source
 COPY --chown=appuser:appuser backend/src/ ./src/
-COPY --chown=appuser:appuser backend/agents/ ./agents/
-COPY --chown=appuser:appuser backend/chains/ ./chains/
-COPY --chown=appuser:appuser backend/tools/ ./tools/
-COPY --chown=appuser:appuser backend/vectorstore/ ./vectorstore/
-COPY --chown=appuser:appuser backend/prompts/ ./prompts/
 
 # Environment configuration
 ENV PATH="/app/.venv/bin:$PATH"
