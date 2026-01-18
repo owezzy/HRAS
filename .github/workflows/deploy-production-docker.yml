@@ -235,7 +235,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"message": "Hello, test deployment"}')
 
-          if echo "$CHAT_RESPONSE" | jq -e '.response' > /dev/null; then
+          if echo "$CHAT_RESPONSE" | jq -e '.message.content' > /dev/null; then
             echo "✅ Chat endpoint test passed"
             echo "$CHAT_RESPONSE" | jq .
           else
