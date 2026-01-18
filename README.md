@@ -2,15 +2,45 @@
 
 AI-powered advisory system for UN human rights officers. Uses RAG (Retrieval-Augmented Generation) over UN Human Rights Index (UHRI) documents with multi-agent orchestration powered by LangChain and LangGraph.
 
-## Documentation Map
+## 🌐 Production Links
 
-If you are new to this repo, read in this order:
+| Resource | URL |
+|----------|-----|
+| **Application** | https://hras.owezzy.tech |
+| **API** | https://api.hras.owezzy.tech |
+| **API Documentation** | https://api.hras.owezzy.tech/docs |
+| **Health Check** | https://api.hras.owezzy.tech/health |
+| **Repository** | https://github.com/owezzy/HRAS |
 
-1. **Root README (this file)** – What HRAS is, how to run it locally, production architecture.
-2. **Docs Index** – `./docs/00-INDEX.md` – Navigation hub for all documentation.
-3. **Backend** – `./backend/README.md` – Backend API, architecture, and testing.
-4. **Frontend** – `./frontend/README.md` – Next.js app, UI structure, and dev workflow.
-5. **Deployment** – `./docs/deployment/DEPLOYMENT.md` – All deployment options, with AWS Amplify + EC2 as current production.
+## 📚 Onboarding Guide
+
+### For New Users (Non-Technical)
+
+1. **Access the Application**: Visit https://hras.owezzy.tech
+2. **Start a Conversation**: Navigate to the Chat interface
+3. **Ask Questions**: Type natural language questions about UN human rights recommendations
+4. **View Sources**: Each response includes citations from UHRI documents
+
+### For New Developers
+
+| Step | Action | Documentation |
+|------|--------|---------------|
+| 1 | Read this README | Understand project overview and architecture |
+| 2 | Review [Docs Index](./docs/00-INDEX.md) | Navigate all documentation |
+| 3 | Set up local environment | Follow [Quick Start](#quick-start-local-development) below |
+| 4 | Explore Backend | [Backend README](./backend/README.md) - API, testing, agents |
+| 5 | Explore Frontend | [Frontend README](./frontend/README.md) - UI, components, styling |
+| 6 | Understand Deployment | [Deployment Guide](./docs/deployment/DEPLOYMENT.md) - AWS setup |
+
+### For DevOps / Operators
+
+| Task | Documentation |
+|------|---------------|
+| Deploy Backend (EC2) | [EC2 Deployment](./docs/deployment/aws/EC2_DEPLOYMENT.md) |
+| Deploy Frontend (Amplify) | [Amplify Deployment](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md) |
+| Set up Monitoring | [Monitoring Setup](./docs/deployment/aws/MONITORING_SETUP.md) |
+| Configure CI/CD | See [CI/CD Pipeline](#cicd-pipeline) section below |
+| Troubleshoot Issues | [Troubleshooting Guide](./docs/operations/TROUBLESHOOTING.md) |
 
 ---
 
@@ -35,7 +65,8 @@ HRAS enables human rights officers to ask natural language questions about UN hu
 | **Embeddings** | nomic-embed-text (via Ollama) |
 | **Vector Store** | ChromaDB |
 | **Database** | PostgreSQL (production) / SQLite (development) |
-| **Monitoring** | Prometheus + Grafana |
+| **Monitoring** | Prometheus + Grafana + Loki |
+| **CI/CD** | GitHub Actions |
 
 ## Quick Start (Local Development)
 
@@ -97,29 +128,47 @@ make db-stats
 ┌──────────────────────────────────────────────────────────┐
 │ AWS EC2 (Backend + Monitoring)                           │
 │ https://api.hras.owezzy.tech                             │
-│ • Caddy reverse proxy (TLS via Lets Encrypt)            │
+│ • Caddy reverse proxy (TLS via Let's Encrypt)           │
 │ • FastAPI backend (Docker)                               │
 │ • PostgreSQL database                                    │
 │ • Ollama local LLM (no API costs)                        │
 │ • ChromaDB vector store                                  │
-│ • Prometheus + Grafana (SSH tunnel access)              │
+│ • Prometheus + Grafana + Loki (SSH tunnel access)       │
 └──────────────────────────────────────────────────────────┘
 ```
 
-### Production URLs
-
-- **Frontend**: https://hras.owezzy.tech
-- **API**: https://api.hras.owezzy.tech
-- **API Docs**: https://api.hras.owezzy.tech/docs
-- **Health**: https://api.hras.owezzy.tech/health
-
-**Note**: Monitoring (Grafana/Prometheus) is accessed via SSH tunnel for security.
+**Note**: Monitoring dashboards are accessed via SSH tunnel for security.
 
 ### Deployment Guides
 
 1. **[EC2 Backend Deployment](./docs/deployment/aws/EC2_DEPLOYMENT.md)** - Backend setup with Caddy, Docker, PostgreSQL
 2. **[Amplify Frontend Deployment](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md)** - Next.js frontend with custom domain
 3. **[Monitoring Setup](./docs/deployment/aws/MONITORING_SETUP.md)** - Prometheus + Grafana configuration
+
+### CI/CD Pipeline
+
+Automated deployment via GitHub Actions on push to `main` branch:
+
+```
+.github/workflows/deploy-production-docker.yml
+```
+
+**Pipeline Stages:**
+1. **Quality Gates** - Lint, build, and test frontend/backend
+2. **Deploy to EC2** - Rsync code, rebuild Docker containers
+3. **Health Verification** - API health checks with automatic rollback on failure
+4. **Post-Deployment Tests** - Verify chat endpoint and admin stats
+
+**Required GitHub Secrets:**
+
+| Secret | Description |
+|--------|-------------|
+| `EC2_SSH_KEY` | SSH private key for EC2 access |
+| `EC2_HOST` | EC2 instance public IP or hostname |
+| `EC2_USER` | SSH user (e.g., `ubuntu`) |
+| `DB_PASSWORD` | PostgreSQL database password |
+| `DOMAIN` | API domain (e.g., `api.hras.owezzy.tech`) |
+| `LETSENCRYPT_EMAIL` | Email for Let's Encrypt SSL certificates |
 
 ### Monthly Cost: ~$25
 
@@ -130,28 +179,67 @@ make db-stats
 - AWS Amplify: Free tier
 - LLM inference: $0 (local Ollama)
 
+## Configuration
+
+### Backend Environment Variables
+
+Copy `backend/.env.example` to `backend/.env` and configure:
+
+```env
+# Application
+APP_ENV=development
+DEBUG=true
+
+# Database (SQLite for dev, PostgreSQL for production)
+DATABASE_URL=sqlite+aiosqlite:///./hras.db
+
+# Ollama Configuration
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=nemotron-3-nano:30b-cloud
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_TIMEOUT=180
+
+# Vector Store
+CHROMA_PERSIST_DIRECTORY=./chroma_db
+
+# CORS Origins (include frontend URL)
+CORS_ORIGINS=["http://localhost:3000"]
+
+# Feature Flags
+USE_POSTGRES=false
+USE_ASYNC_TOOLS=true
+```
+
+### Frontend Environment Variables
+
+Create `frontend/.env` for local development:
+
+```env
+# API URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Base URL
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Auth Configuration
+AUTH_URL=http://localhost:3000
+AUTH_SECRET=your-secret-here  # Generate with: openssl rand -base64 32
+
+# Optional: OAuth Providers
+AUTH_GOOGLE_ID=
+AUTH_GOOGLE_SECRET=
+```
+
+Production variables are set in AWS Amplify Console or `frontend/.env.production`.
+
 ## Documentation
 
-### For Developers
-- **[Backend README](./backend/README.md)** - Backend architecture, API, testing
-- **[Frontend README](./frontend/README.md)** - Frontend components, state, styling
-- **[Development Guide](./docs/development/DEVELOPMENT.md)** - Local setup, workflows, conventions
-- **[Configuration](./docs/development/CONFIGURATION.md)** - Environment variables
-
-### For Operators
-- **[Deployment Overview](./docs/deployment/DEPLOYMENT.md)** - All deployment options
-- **[AWS EC2 Guide](./docs/deployment/aws/EC2_DEPLOYMENT.md)** - Production backend
-- **[AWS Amplify Guide](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md)** - Production frontend
-- **[Monitoring](./docs/deployment/aws/MONITORING_SETUP.md)** - Observability setup
-- **[Troubleshooting](./docs/operations/TROUBLESHOOTING.md)** - Common issues
-
-### Architecture & Design
-- **[System Architecture](./docs/architecture/ARCHITECTURE.md)** - High-level design, data flow
-- **[AI/ML Pipeline](./docs/architecture/AI_ML.md)** - RAG system, agents, prompts
-
-### Reference
-- **[API Documentation](./docs/reference/API.md)** - Complete REST API reference
-- **[Documentation Index](./docs/00-INDEX.md)** - Quick navigation hub
+| Category | Key Documents |
+|----------|---------------|
+| **Development** | [Backend README](./backend/README.md) · [Frontend README](./frontend/README.md) · [Dev Guide](./docs/development/DEVELOPMENT.md) |
+| **Deployment** | [EC2 Guide](./docs/deployment/aws/EC2_DEPLOYMENT.md) · [Amplify Guide](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md) · [Monitoring](./docs/deployment/aws/MONITORING_SETUP.md) |
+| **Architecture** | [System Architecture](./docs/architecture/ARCHITECTURE.md) · [AI/ML Pipeline](./docs/architecture/AI_ML.md) |
+| **Reference** | [API Documentation](./docs/reference/API.md) · [Docs Index](./docs/00-INDEX.md) · [Troubleshooting](./docs/operations/TROUBLESHOOTING.md) |
 
 ## Common Commands
 
@@ -187,37 +275,45 @@ See `make help` for full command list.
 
 ```
 HRAS/
-├── frontend/              # Next.js 15 application
+├── frontend/                  # Next.js 15 application
 │   ├── src/
-│   │   ├── app/           # App router pages
-│   │   ├── @fuse/         # Fuse React UI components
-│   │   └── components/    # HRAS components
-│   └── README.md          # Frontend docs
-├── backend/               # FastAPI application
-│   ├── src/app/           # Main application
-│   │   ├── api/           # API routes
-│   │   ├── core/          # Config, dependencies
-│   │   ├── schemas/       # Pydantic models
-│   │   └── services/      # Business logic
-│   ├── agents/            # LangGraph multi-agent system
-│   ├── chains/            # LangChain LCEL chains
-│   ├── vectorstore/       # ChromaDB management
-│   ├── prompts/           # Prompt templates
-│   ├── tests/             # Pytest suite
-│   └── README.md          # Backend docs
-├── docs/                  # Documentation
-│   ├── 00-INDEX.md        # Quick navigation
-│   ├── architecture/      # System design docs
-│   ├── deployment/        # Deployment guides
-│   ├── development/       # Developer guides
-│   ├── operations/        # Operations docs
-│   └── reference/         # API reference
-├── zarf/                  # Deployment configs
-│   ├── docker/            # Dockerfiles
-│   ├── k8s/               # Kubernetes manifests
-│   └── scripts/           # Deployment scripts
-├── Makefile               # Common tasks
-└── README.md              # This file
+│   │   ├── app/               # App router pages
+│   │   ├── @fuse/             # Fuse React UI components
+│   │   └── components/        # HRAS components
+│   ├── .env.production        # Production environment
+│   └── README.md              # Frontend docs
+├── backend/                   # FastAPI application
+│   ├── src/app/               # Main application
+│   │   ├── api/               # API routes
+│   │   ├── core/              # Config, dependencies
+│   │   ├── schemas/           # Pydantic models
+│   │   └── services/          # Business logic
+│   ├── agents/                # LangGraph multi-agent system
+│   ├── chains/                # LangChain LCEL chains
+│   ├── vectorstore/           # ChromaDB management
+│   ├── prompts/               # Prompt templates
+│   ├── tests/                 # Pytest suite
+│   ├── .env.example           # Environment template
+│   └── README.md              # Backend docs
+├── docs/                      # Documentation
+│   ├── 00-INDEX.md            # Quick navigation
+│   ├── architecture/          # System design docs
+│   ├── deployment/            # Deployment guides
+│   ├── development/           # Developer guides
+│   ├── operations/            # Operations docs
+│   └── reference/             # API reference
+├── zarf/                      # Deployment configs
+│   ├── docker/                # Dockerfiles & Docker Compose
+│   │   ├── compose/           # Docker Compose configurations
+│   │   ├── caddy/             # Caddy reverse proxy config
+│   │   └── monitoring/        # Loki, Promtail configs
+│   ├── monitoring/            # Prometheus, Grafana configs
+│   ├── k8s/                   # Kubernetes manifests
+│   └── scripts/               # Deployment scripts
+├── .github/workflows/         # CI/CD pipeline
+│   └── deploy-production-docker.yml
+├── Makefile                   # Common tasks
+└── README.md                  # This file
 ```
 
 ## Getting Help
