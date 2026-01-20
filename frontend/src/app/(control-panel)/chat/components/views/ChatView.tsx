@@ -37,12 +37,16 @@ function ChatView() {
 	const chatMutation = useChatMutation();
 
 	const scrollToBottom = useCallback(() => {
-		if (scrollContainerRef.current) {
-			scrollContainerRef.current.scrollTo({
-				top: scrollContainerRef.current.scrollHeight,
-				behavior: 'smooth'
-			});
-		}
+		const container = scrollContainerRef.current;
+
+		if (!container) return;
+
+		const scrollableParent = container.closest('.FusePageSimple-content') as HTMLElement | null;
+		const scrollTarget = scrollableParent || container;
+
+		requestAnimationFrame(() => {
+			scrollTarget.scrollTop = scrollTarget.scrollHeight;
+		});
 	}, []);
 
 	useEffect(() => {
