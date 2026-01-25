@@ -6,26 +6,26 @@ Prometheus metrics without replacement.
 
 Key Features:
 - Feature flag controlled rollout (use_langsmith_tracing)
-- Sampling-based tracing for cost control
 - Input sanitization for government/UN context
 - Graceful degradation if LangSmith API unavailable
 - Session-based trace grouping for multi-agent workflows
+- Hierarchical parent-child run tracing for multi-agent workflows
 """
 
 import asyncio
 import contextlib
 import hashlib
-import random
 import re
 from collections.abc import Callable
 from contextvars import ContextVar
 from functools import wraps
-from typing import Any
+from typing import Any, Literal, cast
 from uuid import uuid4
 
 from langchain_core.messages import BaseMessage
 from langchain_core.tracers import LangChainTracer
 from langsmith import Client, traceable
+from langsmith.run_trees import RunTree
 
 from src.app.core.config import get_settings
 from src.app.core.logging import get_logger
@@ -35,8 +35,105 @@ logger = get_logger(__name__)
 # Context variable to store current trace session ID
 _trace_session_id: ContextVar[str | None] = ContextVar("trace_session_id", default=None)
 
+_parent_run_tree: ContextVar[RunTree | None] = ContextVar("parent_run_tree", default=None)
+
 # Global LangSmith client (initialized lazily)
 _langsmith_client: Client | None = None
+
+
+def get_parent_run() -> RunTree | None:
+    return _parent_run_tree.get()
+
+
+def set_parent_run(run: RunTree | None) -> Any:
+    return _parent_run_tree.set(run)
+
+
+def reset_parent_run(token: Any) -> None:
+    _parent_run_tree.reset(token)
+
+
+@contextlib.asynccontextmanager
+async def parent_run_context(
+    name: str,
+    run_type: str = "chain",
+    inputs: dict[str, Any] | None = None,
+    metadata: dict[str, Any] | None = None,
+):
+    if not should_trace():
+        yield None
+        return
+
+    settings = get_settings()
+    parent_run = RunTree(
+        name=name,
+        run_type=run_type,
+        inputs=inputs or {},
+        project_name=settings.langsmith_project,
+        extra=metadata or {},
+    )
+    parent_run.post()
+
+    token = set_parent_run(parent_run)
+    try:
+        yield parent_run
+    except Exception as e:
+        parent_run.end(error=str(e))
+        parent_run.patch()
+        raise
+    finally:
+        reset_parent_run(token)
+
+
+async def end_parent_run(parent_run: RunTree, outputs: dict[str, Any] | None = None) -> None:
+    if parent_run is None:
+        return
+    try:
+        parent_run.end(outputs=outputs or {})
+        parent_run.patch()
+    except Exception as e:
+        logger.warning("failed_to_end_parent_run", error=str(e))
+
+
+def create_child_run(
+    name: str,
+    run_type: str = "chain",
+    inputs: dict[str, Any] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> RunTree | None:
+    parent = get_parent_run()
+    if parent is None:
+        return None
+
+    try:
+        child = parent.create_child(
+            name=name,
+            run_type=run_type,
+            inputs=inputs or {},
+            extra=metadata or {},
+        )
+        child.post()
+        return child
+    except Exception as e:
+        logger.warning("failed_to_create_child_run", error=str(e), name=name)
+        return None
+
+
+async def end_child_run(
+    child_run: RunTree | None,
+    outputs: dict[str, Any] | None = None,
+    error: str | None = None,
+) -> None:
+    if child_run is None:
+        return
+    try:
+        if error:
+            child_run.end(error=error)
+        else:
+            child_run.end(outputs=outputs or {})
+        child_run.patch()
+    except Exception as e:
+        logger.warning("failed_to_end_child_run", error=str(e))
 
 
 class TracingConfig:
@@ -113,16 +210,13 @@ def get_langsmith_client() -> Client | None:
 
 
 def should_trace() -> bool:
-    """Determine if current request should be traced based on sampling rate."""
+    """Determine if current request should be traced."""
     settings = get_settings()
 
     if not settings.use_langsmith_tracing:
         return False
 
-    if not get_langsmith_client():
-        return False
-
-    return random.random() < settings.langsmith_sampling_rate
+    return bool(get_langsmith_client())
 
 
 @contextlib.asynccontextmanager
@@ -158,10 +252,13 @@ async def langsmith_trace_session(
         logger.debug("langsmith_session_ended", session_id=session_id, session_name=session_name)
 
 
+RunType = Literal["tool", "chain", "llm", "retriever", "embedding", "prompt", "parser"]
+
+
 def hras_traceable(
     name: str | None = None,
     *,
-    run_type: str = "chain",
+    run_type: RunType = "chain",
     sanitize_inputs: bool = True,
     include_metadata: bool = True,  # noqa: ARG001
 ):
@@ -182,10 +279,9 @@ def hras_traceable(
     def decorator(func: Callable) -> Callable:
         trace_name = name or f"{func.__module__}.{func.__name__}"
 
-        # Apply traceable decorator once at decoration time
         traced_func = traceable(
             name=trace_name,
-            run_type=run_type,
+            run_type=cast(RunType, run_type),
             project_name=get_settings().langsmith_project,
         )(func)
 
@@ -283,8 +379,7 @@ async def trace_llm_call(
     if not should_trace():
         return
 
-    client = get_langsmith_client()
-    if not client:
+    if not get_langsmith_client():
         return
 
     try:
@@ -309,17 +404,18 @@ async def trace_llm_call(
         if metadata:
             trace_metadata.update(metadata)
 
-        # Create run manually
-        run = client.create_run(
+        run = RunTree(
             name=f"llm_call_{model_name}",
             run_type="llm",
-            inputs={"messages": [msg.dict() for msg in sanitized_messages]},
-            outputs={"response": response_content},
+            inputs={"messages": [msg.model_dump() for msg in sanitized_messages]},
             project_name=get_settings().langsmith_project,
             extra=trace_metadata,
         )
+        run.post()
+        run.end(outputs={"response": response_content})
+        run.patch()
 
-        logger.debug("llm_call_traced", run_id=run.id, model=model_name)
+        logger.debug("llm_call_traced", run_id=str(run.id), model=model_name)
 
     except Exception as e:
         logger.warning("llm_trace_failed", error=str(e), model=model_name)
@@ -338,7 +434,6 @@ def langsmith_health_check() -> dict[str, Any]:
         "tracing_enabled": settings.use_langsmith_tracing,
         "api_key_configured": bool(settings.langsmith_api_key),
         "project": settings.langsmith_project,
-        "sampling_rate": settings.langsmith_sampling_rate,
         "client_initialized": _langsmith_client is not None,
     }
 

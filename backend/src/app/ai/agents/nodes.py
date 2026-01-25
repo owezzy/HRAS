@@ -10,20 +10,22 @@ from src.app.ai.tools.agent_tools import compare_countries, get_country_recommen
 from src.app.core.instrumentation import instrumented_llm_invoke
 from src.app.core.llm import get_llm
 
-# LangSmith tracing integration
 try:
-    from src.app.core.tracing import hras_traceable
+    from src.app.core.tracing import create_child_run, end_child_run, get_parent_run
 
     TRACING_AVAILABLE = True
 except ImportError:
-    # Graceful fallback if tracing not available
-    def hras_traceable(*_args, **_kwargs):
-        def decorator(func):
-            return func
 
-        return decorator
+    def create_child_run(*_args, **_kwargs):  # type: ignore[misc]  # pyright: ignore[reportRedeclaration]
+        return None
 
-    TRACING_AVAILABLE = False
+    async def end_child_run(*args, **kwargs):  # type: ignore[misc]  # pyright: ignore[reportRedeclaration]
+        pass
+
+    def get_parent_run():  # type: ignore[misc]  # pyright: ignore[reportRedeclaration]
+        return None
+
+    TRACING_AVAILABLE = False  # pyright: ignore[reportConstantRedefinition]
 # ============================================================================
 # RESEARCH AGENT
 # ============================================================================
@@ -44,45 +46,50 @@ Guidelines:
 Based on the search results provided, create a research summary."""
 
 
-@hras_traceable(name="research_agent", run_type="chain", sanitize_inputs=True)
 async def research_agent(state: AgentState) -> AgentState:
-    """Research agent: searches and summarizes UHRI data."""
-    llm = get_llm()
-
-    search_results = []
-
-    results = await search_recommendations.ainvoke({"query": state.question, "k": 8})
-    search_results.extend(results)
-
-    for country in state.countries[:3]:
-        country_results = await get_country_recommendations.ainvoke({"country": country, "limit": 5})
-        search_results.extend(country_results)
-
-    state.retrieved_docs = search_results
-
-    sources = []
-    for result in search_results[:10]:
-        sources.append(
-            Source(
-                country=result.get("country", ""),
-                mechanism=result.get("mechanism", ""),
-                year=result.get("year", ""),
-                theme=result.get("theme", ""),
-                status=result.get("status", ""),
-                snippet=result.get("content", "")[:200],
-                relevance_score=result.get("relevance_score", 0.0),
-            )
-        )
-    state.sources = sources
-
-    context = "\n\n".join(
-        [
-            f"[{r.get('country', 'N/A')} - {r.get('mechanism', 'N/A')} ({r.get('year', 'N/A')})]\n{r.get('content', '')}"
-            for r in search_results[:8]
-        ]
+    child_run = create_child_run(
+        name="research_agent",
+        run_type="chain",
+        inputs={"question": state.question, "countries": state.countries},
     )
 
-    prompt = f"""{RESEARCH_SYSTEM_PROMPT}
+    try:
+        llm = get_llm()
+
+        search_results = []
+
+        results = await search_recommendations.ainvoke({"query": state.question, "k": 8})
+        search_results.extend(results)
+
+        for country in state.countries[:3]:
+            country_results = await get_country_recommendations.ainvoke({"country": country, "limit": 5})
+            search_results.extend(country_results)
+
+        state.retrieved_docs = search_results
+
+        sources = []
+        for result in search_results[:10]:
+            sources.append(
+                Source(
+                    country=result.get("country", ""),
+                    mechanism=result.get("mechanism", ""),
+                    year=result.get("year", ""),
+                    theme=result.get("theme", ""),
+                    status=result.get("status", ""),
+                    snippet=result.get("content", "")[:200],
+                    relevance_score=result.get("relevance_score", 0.0),
+                )
+            )
+        state.sources = sources
+
+        context = "\n\n".join(
+            [
+                f"[{r.get('country', 'N/A')} - {r.get('mechanism', 'N/A')} ({r.get('year', 'N/A')})]\n{r.get('content', '')}"
+                for r in search_results[:8]
+            ]
+        )
+
+        prompt = f"""{RESEARCH_SYSTEM_PROMPT}
 
 User Question: {state.question}
 
@@ -91,12 +98,21 @@ Search Results:
 
 Provide a research summary of the relevant findings:"""
 
-    response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
-    state.research_summary = str(response.content)
-    state.messages.append(AIMessage(content=f"[Research Agent] {response.content}"))
+        response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
+        state.research_summary = str(response.content)
+        state.messages.append(AIMessage(content=f"[Research Agent] {response.content}"))
 
-    state.next_agent = "advisory"
-    return state
+        state.next_agent = "advisory"
+
+        await end_child_run(
+            child_run,
+            outputs={"research_summary": state.research_summary[:500], "sources_count": len(sources)},
+        )
+        return state
+
+    except Exception as e:
+        await end_child_run(child_run, error=str(e))
+        raise
 
 
 # ============================================================================
@@ -118,14 +134,21 @@ Guidelines:
 - Acknowledge limitations in available information"""
 
 
-@hras_traceable(name="advisory_agent", run_type="chain", sanitize_inputs=True)
 async def advisory_agent(state: AgentState) -> AgentState:
-    """Advisory agent: generates professional recommendations."""
-    llm = get_llm()
+    child_run = create_child_run(
+        name="advisory_agent",
+        run_type="chain",
+        inputs={"question": state.question, "research_summary_len": len(state.research_summary)},
+    )
 
-    sources_context = "\n".join([f"- {s.country} ({s.mechanism}, {s.year}): {s.snippet}..." for s in state.sources[:5]])
+    try:
+        llm = get_llm()
 
-    prompt = f"""{ADVISORY_SYSTEM_PROMPT}
+        sources_context = "\n".join(
+            [f"- {s.country} ({s.mechanism}, {s.year}): {s.snippet}..." for s in state.sources[:5]]
+        )
+
+        prompt = f"""{ADVISORY_SYSTEM_PROMPT}
 
 User Question: {state.question}
 
@@ -141,13 +164,22 @@ Provide a comprehensive advisory response that:
 3. Offers professional guidance
 4. Notes any important caveats or limitations"""
 
-    response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
-    state.advisory_response = str(response.content)
-    state.messages.append(AIMessage(content=f"[Advisory Agent] {response.content}"))
+        response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
+        state.advisory_response = str(response.content)
+        state.messages.append(AIMessage(content=f"[Advisory Agent] {response.content}"))
 
-    state.final_response = str(response.content)
-    state.next_agent = "end"
-    return state
+        state.final_response = str(response.content)
+        state.next_agent = "end"
+
+        await end_child_run(
+            child_run,
+            outputs={"response_length": len(state.final_response)},
+        )
+        return state
+
+    except Exception as e:
+        await end_child_run(child_run, error=str(e))
+        raise
 
 
 # ============================================================================
@@ -169,32 +201,38 @@ Guidelines:
 - Avoid value judgments - present the data objectively"""
 
 
-@hras_traceable(name="compare_agent", run_type="chain", sanitize_inputs=True)
 async def compare_agent(state: AgentState) -> AgentState:
     """Compare agent: performs cross-country analysis."""
-    llm = get_llm()
+    child_run = create_child_run(
+        name="compare_agent",
+        run_type="chain",
+        inputs={"question": state.question, "countries": state.countries},
+    )
 
-    comparison_data: dict = {}
-    if len(state.countries) >= 2:
-        comparison_data = await compare_countries.ainvoke(
-            {"countries": state.countries[:4], "theme": state.themes[0] if state.themes else None}
-        )
-    else:
-        results = await search_recommendations.ainvoke({"query": state.question, "k": 10})
-        for r in results:
-            country = r.get("country", "Unknown")
-            if country not in comparison_data:
-                comparison_data[country] = []
-            comparison_data[country].append(r)
+    try:
+        llm = get_llm()
 
-    comparison_context = ""
-    for country, recs in comparison_data.items():
-        comparison_context += f"\n## {country}\n"
-        for rec in recs[:3]:
-            if isinstance(rec, dict):
-                comparison_context += f"- [{rec.get('mechanism', 'N/A')}, {rec.get('year', 'N/A')}] {rec.get('recommendation', rec.get('content', ''))[:150]}...\n"
+        comparison_data: dict = {}
+        if len(state.countries) >= 2:
+            comparison_data = await compare_countries.ainvoke(
+                {"countries": state.countries[:4], "theme": state.themes[0] if state.themes else None}
+            )
+        else:
+            results = await search_recommendations.ainvoke({"query": state.question, "k": 10})
+            for r in results:
+                country = r.get("country", "Unknown")
+                if country not in comparison_data:
+                    comparison_data[country] = []
+                comparison_data[country].append(r)
 
-    prompt = f"""{COMPARE_SYSTEM_PROMPT}
+        comparison_context = ""
+        for country, recs in comparison_data.items():
+            comparison_context += f"\n## {country}\n"
+            for rec in recs[:3]:
+                if isinstance(rec, dict):
+                    comparison_context += f"- [{rec.get('mechanism', 'N/A')}, {rec.get('year', 'N/A')}] {rec.get('recommendation', rec.get('content', ''))[:150]}...\n"
+
+        prompt = f"""{COMPARE_SYSTEM_PROMPT}
 
 User Question: {state.question}
 
@@ -203,9 +241,18 @@ Comparison Data:
 
 Provide a structured comparison analysis:"""
 
-    response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
-    state.comparison_result = str(response.content)
-    state.messages.append(AIMessage(content=f"[Compare Agent] {response.content}"))
+        response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
+        state.comparison_result = str(response.content)
+        state.messages.append(AIMessage(content=f"[Compare Agent] {response.content}"))
 
-    state.next_agent = "advisory"
-    return state
+        state.next_agent = "advisory"
+
+        await end_child_run(
+            child_run,
+            outputs={"comparison_countries": len(comparison_data), "response_length": len(state.comparison_result)},
+        )
+        return state
+
+    except Exception as e:
+        await end_child_run(child_run, error=str(e))
+        raise

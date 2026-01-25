@@ -100,7 +100,6 @@ class Settings(BaseSettings):
     langsmith_api_key: str | None = None
     langsmith_project: str = "hras-production"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
-    langsmith_sampling_rate: float = 0.1  # 10% sampling in production
 
     # ==========================================================================
 

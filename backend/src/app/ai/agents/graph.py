@@ -18,18 +18,18 @@ from src.app.core.logging import ai_logger, get_logger
 
 # LangSmith tracing integration
 try:
-    from src.app.core.tracing import hras_traceable, langsmith_trace_session
+    from src.app.core.tracing import (
+        create_child_run,  # pyright: ignore[reportAssignmentType]
+        end_child_run,  # pyright: ignore[reportAssignmentType]
+        end_parent_run,  # pyright: ignore[reportAssignmentType]
+        parent_run_context,  # pyright: ignore[reportAssignmentType]
+        should_trace,  # pyright: ignore[reportAssignmentType]
+    )
 
     TRACING_AVAILABLE = True
 except ImportError:
-    # Graceful fallback if tracing not available
-    def hras_traceable(*_args, **_kwargs):
-        def decorator(func):
-            return func
 
-        return decorator
-
-    class langsmith_trace_session:
+    class parent_run_context:  # type: ignore[no-redef]  # pyright: ignore[reportRedeclaration]
         def __init__(self, *args, **kwargs):
             pass
 
@@ -39,7 +39,19 @@ except ImportError:
         async def __aexit__(self, *args):
             pass
 
-    TRACING_AVAILABLE = False
+    def create_child_run(*_args, **_kwargs):  # type: ignore[misc]  # pyright: ignore[reportRedeclaration]
+        return None
+
+    async def end_child_run(*args, **kwargs):  # type: ignore[misc]  # pyright: ignore[reportRedeclaration]
+        pass
+
+    async def end_parent_run(*args, **kwargs):  # type: ignore[misc]  # pyright: ignore[reportRedeclaration]
+        pass
+
+    def should_trace():  # type: ignore[misc]  # pyright: ignore[reportRedeclaration]
+        return False
+
+    TRACING_AVAILABLE = False  # pyright: ignore[reportConstantRedefinition]
 
 from src.app.core.metrics import (
     AGENT_EXECUTION_DURATION_SECONDS,
@@ -103,36 +115,55 @@ def _extract_json_from_response(content: str | list) -> dict | None:
         return None
 
 
-@hras_traceable(name="supervisor_agent", run_type="chain", sanitize_inputs=True)
 async def supervisor_node(state: AgentState) -> AgentState:
     """Supervisor node: classifies the query and routes to appropriate agent."""
-    llm = get_deterministic_llm()
+    child_run = create_child_run(
+        name="supervisor_agent",
+        run_type="chain",
+        inputs={"question": state.question},
+    )
 
-    prompt = f"""{SUPERVISOR_SYSTEM_PROMPT}
+    try:
+        llm = get_deterministic_llm()
+
+        prompt = f"""{SUPERVISOR_SYSTEM_PROMPT}
 
 User Question: {state.question}
 
 Classify this query:"""
 
-    response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
+        response = await instrumented_llm_invoke(llm, [HumanMessage(content=prompt)])
 
-    classification = _extract_json_from_response(response.content)
+        classification = _extract_json_from_response(response.content)
 
-    if classification:
-        state.query_type = classification.get("query_type", "research")
-        state.countries = classification.get("countries", [])
-        state.themes = classification.get("themes", [])
+        if classification:
+            state.query_type = classification.get("query_type", "research")
+            state.countries = classification.get("countries", [])
+            state.themes = classification.get("themes", [])
 
-        if classification.get("requires_comparison") or state.query_type == "compare":
-            state.next_agent = "compare"
-        elif state.query_type == "advisory":
-            state.next_agent = "advisory"
+            if classification.get("requires_comparison") or state.query_type == "compare":
+                state.next_agent = "compare"
+            elif state.query_type == "advisory":
+                state.next_agent = "advisory"
+            else:
+                state.next_agent = "research"
         else:
             state.next_agent = "research"
-    else:
-        state.next_agent = "research"
 
-    return state
+        await end_child_run(
+            child_run,
+            outputs={
+                "query_type": state.query_type,
+                "next_agent": state.next_agent,
+                "countries": state.countries,
+                "themes": state.themes,
+            },
+        )
+        return state
+
+    except Exception as e:
+        await end_child_run(child_run, error=str(e))
+        raise
 
 
 def route_to_agent(state: AgentState) -> str:
@@ -276,26 +307,63 @@ def _count_workflow_steps(state: dict) -> int:
     return steps
 
 
-@hras_traceable(name="agent_workflow", run_type="chain", sanitize_inputs=True)
 async def run_agent_workflow_with_tracing(question: str) -> dict:
-    """Run the multi-agent workflow with enhanced LangSmith tracing.
-
-    This version wraps the entire workflow execution in a LangSmith session
-    for comprehensive trace visualization across all agents.
-
-    Args:
-        question: The user's question.
-
-    Returns:
-        Dictionary with response and sources.
-    """
-    # Create unique session ID for this workflow execution
-    import hashlib
-
-    session_name = f"hras_query_{hashlib.sha256(question.encode()).hexdigest()[:8]}"
-
-    async with langsmith_trace_session(
-        session_name, metadata={"question_length": len(question), "workflow_type": "multi_agent_rag"}
-    ):
-        # Call the original workflow function
+    if not TRACING_AVAILABLE or not should_trace():
         return await run_agent_workflow(question)
+
+    async with parent_run_context(
+        name="hras_agent_workflow",
+        run_type="chain",
+        inputs={"question": question},
+        metadata={"workflow_type": "multi_agent_rag"},
+    ) as parent_run:
+        graph = get_agent_graph()
+        initial_state = AgentState(question=question)
+
+        start_time = time.perf_counter()
+        steps_count = 0
+
+        try:
+            final_state = await graph.ainvoke(initial_state)
+
+            steps_count = _count_workflow_steps(final_state)
+            agent_name = final_state.get("query_type", "workflow")
+            duration = time.perf_counter() - start_time
+
+            AGENT_EXECUTIONS_TOTAL.labels(agent_name=agent_name, status="success").inc()
+            AGENT_EXECUTION_DURATION_SECONDS.labels(agent_name=agent_name).observe(duration)
+            AGENT_STEPS_TOTAL.labels(agent_name=agent_name, step_type="completed").inc(steps_count)
+
+            ai_logger.log_agent_execution(
+                agent_name=agent_name,
+                execution_time_ms=duration * 1000,
+                steps_count=steps_count,
+                success=True,
+            )
+
+            result = {
+                "answer": final_state.get("final_response", ""),
+                "sources": [s.model_dump() for s in final_state.get("sources", [])],
+                "query_type": final_state.get("query_type", "general"),
+                "research_summary": final_state.get("research_summary", ""),
+            }
+
+            await end_parent_run(parent_run, outputs=result)
+            return result
+
+        except Exception as e:
+            duration = time.perf_counter() - start_time
+
+            AGENT_EXECUTIONS_TOTAL.labels(agent_name="workflow", status="error").inc()
+            AGENT_EXECUTION_DURATION_SECONDS.labels(agent_name="workflow").observe(duration)
+            ERRORS_TOTAL.labels(error_type="agent_workflow", component="agents.graph").inc()
+
+            ai_logger.log_agent_execution(
+                agent_name="workflow",
+                execution_time_ms=duration * 1000,
+                steps_count=steps_count,
+                success=False,
+                error=str(e),
+            )
+            logger.error("agent_workflow_failed", error=str(e), duration_s=duration)
+            raise
