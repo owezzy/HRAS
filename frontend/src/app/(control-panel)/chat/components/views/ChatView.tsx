@@ -33,20 +33,11 @@ function ChatView() {
 	const { t } = useTranslation('chatPage');
 	const [messages, setMessages] = useState<MessageWithSources[]>([]);
 	const [conversationId, setConversationId] = useState<string | undefined>();
-	const scrollContainerRef = useRef<HTMLDivElement>(null);
+	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const chatMutation = useChatMutation();
 
 	const scrollToBottom = useCallback(() => {
-		const container = scrollContainerRef.current;
-
-		if (!container) return;
-
-		const scrollableParent = container.closest('.FusePageSimple-content') as HTMLElement | null;
-		const scrollTarget = scrollableParent || container;
-
-		requestAnimationFrame(() => {
-			scrollTarget.scrollTop = scrollTarget.scrollHeight;
-		});
+		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 	}, []);
 
 	useEffect(() => {
@@ -113,6 +104,7 @@ function ChatView() {
 
 	return (
 		<Root
+			scroll="content"
 			header={
 				<div className="flex items-center gap-3 p-6">
 					<Box
@@ -144,10 +136,7 @@ function ChatView() {
 			}
 			content={
 				<div className="flex h-full flex-col">
-					<div
-						ref={scrollContainerRef}
-						className="flex-1 overflow-y-auto p-6"
-					>
+					<div className="flex-1 overflow-y-auto p-6">
 						{messages.length === 0 ? (
 							<div className="flex h-full flex-col items-center justify-center text-center">
 								<Box
@@ -222,6 +211,7 @@ function ChatView() {
 										<Typography variant="body2">{t('LOADING')}</Typography>
 									</div>
 								)}
+								<div ref={messagesEndRef} />
 							</div>
 						)}
 					</div>
