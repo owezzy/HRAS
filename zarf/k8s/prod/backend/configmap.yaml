@@ -40,4 +40,3 @@ data:
   use_langsmith_tracing: "false"
   langsmith_project: "hras-production"
   langsmith_endpoint: "https://api.smith.langchain.com"
-  langsmith_sampling_rate: "0.05"

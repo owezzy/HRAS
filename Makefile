@@ -360,7 +360,11 @@ kind-dev-up:
 	@echo "📝 View logs:    make kind-logs"
 	@echo "🧹 Clean up:     make kind-clean"
 
-kind-deploy-backend:
+kind-deploy-namespace:
+	@echo "Creating namespace..."
+	kubectl apply -f zarf/k8s/dev/namespace.yaml
+
+kind-deploy-backend: kind-deploy-namespace
 	@echo "Deploying backend to Kind cluster..."
 	kubectl apply -k zarf/k8s/dev/backend
 	@echo "Waiting for backend deployment..."
@@ -368,7 +372,7 @@ kind-deploy-backend:
 		--for=condition=available deployment/backend \
 		--timeout=120s || true
 
-kind-deploy-postgres:
+kind-deploy-postgres: kind-deploy-namespace
 	@echo "Deploying PostgreSQL to Kind cluster..."
 	kubectl apply -k zarf/k8s/dev/postgres
 	@echo "Waiting for PostgreSQL to be ready..."
@@ -378,7 +382,7 @@ kind-deploy-postgres:
 		--timeout=120s || true
 	@echo "PostgreSQL deployed and ready."
 
-kind-deploy: kind-deploy-postgres kind-deploy-backend
+kind-deploy: kind-deploy-namespace kind-deploy-postgres kind-deploy-backend
 	@echo ""
 	@echo "HRAS deployed to Kind cluster '$(KIND_CLUSTER_NAME)'."
 	@echo "Backend API: http://localhost:8000"

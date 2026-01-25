@@ -120,12 +120,6 @@ spec:
                   name: app-config
                   key: langsmith_endpoint
                   optional: true
-            - name: LANGSMITH_SAMPLING_RATE
-              valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: langsmith_sampling_rate
-                  optional: true
             - name: LANGSMITH_API_KEY
               valueFrom:
                 secretKeyRef:
