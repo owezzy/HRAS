@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 
 from src.app.core.async_utils import (
@@ -13,7 +14,8 @@ from src.app.core.config import Settings, get_settings
 
 class TestSettings:
     def test_default_settings(self):
-        settings = Settings()
+        with patch.dict(os.environ, {}, clear=True):
+            settings = Settings(_env_file=None)
 
         assert settings.app_name == "HRAS - Human Rights Advisory System"
         assert settings.app_version == "0.2.0"
@@ -22,7 +24,8 @@ class TestSettings:
         assert settings.port == 8000
 
     def test_feature_flags_default_to_false(self):
-        settings = Settings()
+        with patch.dict(os.environ, {}, clear=True):
+            settings = Settings(_env_file=None)
 
         assert settings.use_postgres is False
         assert settings.use_async_tools is False

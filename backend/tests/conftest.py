@@ -1,5 +1,6 @@
 """Pytest configuration and fixtures for HRAS backend tests."""
 
+import os
 from collections.abc import AsyncGenerator
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -12,6 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from src.app.main import create_app
 from src.app.models.conversation import Base
+
+# Disable LangSmith tracing during tests to avoid async event loop issues
+# This must happen before any imports that read settings
+os.environ["USE_LANGSMITH_TRACING"] = "false"
 
 
 @pytest.fixture
