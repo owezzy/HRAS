@@ -102,6 +102,36 @@ spec:
                   name: app-config
                   key: chroma_persist_directory
                   optional: true
+            - name: USE_LANGSMITH_TRACING
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: use_langsmith_tracing
+                  optional: true
+            - name: LANGSMITH_PROJECT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: langsmith_project
+                  optional: true
+            - name: LANGSMITH_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: langsmith_endpoint
+                  optional: true
+            - name: LANGSMITH_SAMPLING_RATE
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: langsmith_sampling_rate
+                  optional: true
+            - name: LANGSMITH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: langsmith-credentials
+                  key: api_key
+                  optional: true
 
           volumeMounts:
             - name: data

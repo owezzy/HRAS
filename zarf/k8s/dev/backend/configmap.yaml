@@ -11,3 +11,7 @@ data:
   api_url: "http://backend-service.hras-system.svc.cluster.local:8000"
   database_url: "postgresql+asyncpg://hras:hras_dev_password@postgres.hras-system.svc.cluster.local:5432/hras"
   use_postgres: "true"
+  use_langsmith_tracing: "true"
+  langsmith_project: "hras-development"
+  langsmith_endpoint: "https://api.smith.langchain.com"
+  langsmith_sampling_rate: "0.1"

@@ -35,3 +35,9 @@ data:
   # Application settings
   debug: "false"
   workers: "2"
+
+  # LangSmith tracing - disabled by default in prod, enable via secret
+  use_langsmith_tracing: "false"
+  langsmith_project: "hras-production"
+  langsmith_endpoint: "https://api.smith.langchain.com"
+  langsmith_sampling_rate: "0.05"

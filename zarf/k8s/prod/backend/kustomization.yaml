@@ -6,6 +6,7 @@ namespace: hras-production
 resources:
   - ../../base/backend
   - configmap.yaml
+  - langsmith-secret.yaml
 
 patches:
   - path: deployment-patch.yaml
