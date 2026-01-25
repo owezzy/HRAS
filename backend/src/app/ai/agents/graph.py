@@ -15,6 +15,32 @@ from src.app.ai.agents.state import AgentState
 from src.app.core.instrumentation import instrumented_llm_invoke
 from src.app.core.llm import get_deterministic_llm
 from src.app.core.logging import ai_logger, get_logger
+
+# LangSmith tracing integration
+try:
+    from src.app.core.tracing import hras_traceable, langsmith_trace_session
+
+    TRACING_AVAILABLE = True
+except ImportError:
+    # Graceful fallback if tracing not available
+    def hras_traceable(*_args, **_kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    class langsmith_trace_session:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return None
+
+        async def __aexit__(self, *args):
+            pass
+
+    TRACING_AVAILABLE = False
+
 from src.app.core.metrics import (
     AGENT_EXECUTION_DURATION_SECONDS,
     AGENT_EXECUTIONS_TOTAL,
@@ -77,6 +103,7 @@ def _extract_json_from_response(content: str | list) -> dict | None:
         return None
 
 
+@hras_traceable(name="supervisor_agent", run_type="chain", sanitize_inputs=True)
 async def supervisor_node(state: AgentState) -> AgentState:
     """Supervisor node: classifies the query and routes to appropriate agent."""
     llm = get_deterministic_llm()
@@ -247,3 +274,28 @@ def _count_workflow_steps(state: dict) -> int:
     if state.get("final_response"):
         steps += 1
     return steps
+
+
+@hras_traceable(name="agent_workflow", run_type="chain", sanitize_inputs=True)
+async def run_agent_workflow_with_tracing(question: str) -> dict:
+    """Run the multi-agent workflow with enhanced LangSmith tracing.
+
+    This version wraps the entire workflow execution in a LangSmith session
+    for comprehensive trace visualization across all agents.
+
+    Args:
+        question: The user's question.
+
+    Returns:
+        Dictionary with response and sources.
+    """
+    # Create unique session ID for this workflow execution
+    import hashlib
+
+    session_name = f"hras_query_{hashlib.sha256(question.encode()).hexdigest()[:8]}"
+
+    async with langsmith_trace_session(
+        session_name, metadata={"question_length": len(question), "workflow_type": "multi_agent_rag"}
+    ):
+        # Call the original workflow function
+        return await run_agent_workflow(question)

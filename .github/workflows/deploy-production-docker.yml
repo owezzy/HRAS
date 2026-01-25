@@ -159,6 +159,10 @@ jobs:
           POSTGRES_DB=hras
           DOMAIN=${{ secrets.DOMAIN }}
           LETSENCRYPT_EMAIL=${{ secrets.LETSENCRYPT_EMAIL }}
+          USE_LANGSMITH_TRACING=true
+          LANGSMITH_API_KEY=${{ secrets.LANGSMITH_API_KEY }}
+          LANGSMITH_PROJECT=hras-production
+          LANGSMITH_SAMPLING_RATE=0.1
           EOF
 
             # Stop existing services gracefully

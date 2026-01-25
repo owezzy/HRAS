@@ -37,6 +37,8 @@ dependencies = [
     # Ollama
     "langchain-ollama>=0.3.0",
     "aiosqlite>=0.22.1",
+    # LangSmith - Tracing and Evaluation
+    "langsmith>=0.3.13",
 ]
 
 [project.optional-dependencies]

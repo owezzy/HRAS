@@ -6,11 +6,24 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.app.ai.agents.graph import run_agent_workflow
+from src.app.ai.agents.graph import run_agent_workflow, run_agent_workflow_with_tracing
 from src.app.ai.chains.rag_chain import RAGChain, get_rag_chain
 from src.app.ai.vectorstore.document_loader import UHRIDocumentLoader
 from src.app.ai.vectorstore.store import VectorStoreManager, get_vector_store
 from src.app.core.config import get_settings
+
+# Check if tracing is available
+try:
+    from src.app.core.tracing import should_trace
+
+    TRACING_AVAILABLE = True
+except ImportError:
+
+    def should_trace() -> bool:
+        return False
+
+    TRACING_AVAILABLE = False
+
 from src.app.core.logging import ai_logger, get_logger
 from src.app.core.metrics import (
     AGENT_EXECUTION_DURATION_SECONDS,
@@ -144,7 +157,11 @@ class ChatService:
     async def _process_with_agents(self, message: str) -> dict[str, Any]:
         start_time = time.perf_counter()
         try:
-            result = await run_agent_workflow(message)
+            # Use enhanced tracing workflow if available and enabled
+            if TRACING_AVAILABLE and should_trace():
+                result = await run_agent_workflow_with_tracing(message)
+            else:
+                result = await run_agent_workflow(message)
 
             duration = time.perf_counter() - start_time
             AGENT_EXECUTIONS_TOTAL.labels(agent_name="multi_agent", status="success").inc()

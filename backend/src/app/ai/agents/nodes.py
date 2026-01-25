@@ -10,6 +10,20 @@ from src.app.ai.tools.agent_tools import compare_countries, get_country_recommen
 from src.app.core.instrumentation import instrumented_llm_invoke
 from src.app.core.llm import get_llm
 
+# LangSmith tracing integration
+try:
+    from src.app.core.tracing import hras_traceable
+
+    TRACING_AVAILABLE = True
+except ImportError:
+    # Graceful fallback if tracing not available
+    def hras_traceable(*_args, **_kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    TRACING_AVAILABLE = False
 # ============================================================================
 # RESEARCH AGENT
 # ============================================================================
@@ -30,6 +44,7 @@ Guidelines:
 Based on the search results provided, create a research summary."""
 
 
+@hras_traceable(name="research_agent", run_type="chain", sanitize_inputs=True)
 async def research_agent(state: AgentState) -> AgentState:
     """Research agent: searches and summarizes UHRI data."""
     llm = get_llm()
@@ -103,6 +118,7 @@ Guidelines:
 - Acknowledge limitations in available information"""
 
 
+@hras_traceable(name="advisory_agent", run_type="chain", sanitize_inputs=True)
 async def advisory_agent(state: AgentState) -> AgentState:
     """Advisory agent: generates professional recommendations."""
     llm = get_llm()
@@ -153,6 +169,7 @@ Guidelines:
 - Avoid value judgments - present the data objectively"""
 
 
+@hras_traceable(name="compare_agent", run_type="chain", sanitize_inputs=True)
 async def compare_agent(state: AgentState) -> AgentState:
     """Compare agent: performs cross-country analysis."""
     llm = get_llm()

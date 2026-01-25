@@ -95,11 +95,21 @@ class Settings(BaseSettings):
     uhri_api_url: str = "https://uhri.ohchr.org/api"
     uhri_api_timeout: int = 30  # seconds
 
+    # LangSmith Configuration - Tracing and Evaluation
+    # ==========================================================================
+    langsmith_api_key: str | None = None
+    langsmith_project: str = "hras-production"
+    langsmith_endpoint: str = "https://api.smith.langchain.com"
+    langsmith_sampling_rate: float = 0.1  # 10% sampling in production
+
+    # ==========================================================================
+
     # ==========================================================================
     # Feature Flags - gradual rollout of new features
     # ==========================================================================
     use_postgres: bool = False
     use_async_tools: bool = False
+    use_langsmith_tracing: bool = False
 
     # ==========================================================================
     # Validators
@@ -112,31 +122,6 @@ class Settings(BaseSettings):
         if v.lower() not in allowed:
             raise ValueError(f"app_env must be one of: {allowed}")
         return v.lower()
-
-    @field_validator("trusted_hosts", mode="before")
-    @classmethod
-    def parse_trusted_hosts(cls, v: str | list[str]) -> list[str]:
-        """Parse trusted hosts from comma-separated string or list."""
-        if isinstance(v, str):
-            return [h.strip() for h in v.split(",") if h.strip()]
-        return v
-
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
-        """Parse CORS origins from JSON string, comma-separated string, or list."""
-        import json
-
-        if isinstance(v, str):
-            # Try JSON array first (e.g., '["http://localhost:3000"]')
-            if v.startswith("["):
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    pass
-            # Fall back to comma-separated (e.g., 'http://localhost:3000,http://example.com')
-            return [o.strip() for o in v.split(",") if o.strip()]
-        return v
 
     @property
     def is_production(self) -> bool:

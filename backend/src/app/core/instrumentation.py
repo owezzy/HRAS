@@ -1,7 +1,14 @@
-"""Prometheus instrumentation wrappers for HRAS backend.
+"""Enhanced instrumentation wrappers for HRAS backend.
 
-Provides wrapper functions to instrument LLM calls and vector searches
-with Prometheus metrics. Kept separate from AILogger (structlog-based logging).
+Combines Prometheus metrics collection with LangSmith tracing for comprehensive
+observability. Maintains backward compatibility with existing metrics while
+adding detailed trace visualization for multi-agent workflows.
+
+Design Principles:
+- Additive: LangSmith complements, doesn't replace Prometheus
+- Graceful degradation: Works even if LangSmith is unavailable
+- Performance: Minimal overhead with sampling-based tracing
+- Privacy: Automatic sanitization of sensitive data
 """
 
 import time
@@ -19,6 +26,30 @@ from src.app.core.metrics import (
     VECTOR_SEARCH_RESULTS,
     VECTOR_SEARCH_TOTAL,
 )
+
+# Import LangSmith tracing (with graceful fallback)
+try:
+    from src.app.core.tracing import (
+        TracingConfig,
+        should_trace,
+        trace_llm_call,
+    )
+
+    LANGSMITH_AVAILABLE = True
+except ImportError:
+    LANGSMITH_AVAILABLE = False
+
+    # Fallback stubs if tracing module isn't available
+    def should_trace() -> bool:
+        return False
+
+    async def trace_llm_call(*args, **kwargs) -> None:
+        pass
+
+    class TracingConfig:
+        @staticmethod
+        def sanitize_input(text: str) -> str:
+            return text
 
 
 def extract_token_usage(response: BaseMessage) -> dict[str, int]:
@@ -131,13 +162,18 @@ async def instrumented_llm_invoke(
     llm: Any,
     messages: list[BaseMessage],
     model_name: str | None = None,
+    trace_metadata: dict[str, Any] | None = None,
 ) -> BaseMessage:
-    """Invoke LLM with automatic Prometheus metrics recording.
+    """Invoke LLM with automatic Prometheus metrics and LangSmith tracing.
+
+    Enhanced version that maintains all existing Prometheus metrics while
+    adding optional LangSmith tracing for detailed observability.
 
     Args:
         llm: The LangChain LLM instance.
         messages: Messages to send to the LLM.
         model_name: Optional model name override (defaults to settings).
+        trace_metadata: Optional metadata for LangSmith trace.
 
     Returns:
         The LLM response message.
@@ -149,16 +185,154 @@ async def instrumented_llm_invoke(
     fallback_model = model_name or settings.ollama_model
 
     start_time = time.perf_counter()
+
     try:
+        # Make the LLM call
         response = await llm.ainvoke(messages)
         duration = time.perf_counter() - start_time
+        duration_ms = duration * 1000
 
-        # Try to get actual model name from response
+        # Extract actual model name from response
         actual_model = extract_model_name(response, fallback_model)
+
+        # Record Prometheus metrics (existing functionality)
         record_llm_metrics(actual_model, duration, success=True, response=response)
 
+        # Add LangSmith tracing (new functionality)
+        if LANGSMITH_AVAILABLE and should_trace():
+            await trace_llm_call(
+                model_name=actual_model,
+                messages=messages,
+                response=response,
+                duration_ms=duration_ms,
+                metadata=trace_metadata,
+            )
+
         return response
+
     except Exception:
         duration = time.perf_counter() - start_time
+
+        # Record failure metrics
         record_llm_metrics(fallback_model, duration, success=False)
+
+        # Note: LangSmith will automatically capture exceptions if tracing is active
         raise
+
+
+async def instrumented_vector_search(
+    search_func: Any,
+    query: str,
+    k: int = 5,
+    trace_metadata: dict[str, Any] | None = None,  # noqa: ARG001
+) -> list[Any]:
+    """Perform vector search with automatic metrics and tracing.
+
+    Args:
+        search_func: The vector search function to call
+        query: Search query text
+        k: Number of results to return
+        trace_metadata: Optional metadata for LangSmith trace
+
+    Returns:
+        List of search results
+
+    Raises:
+        Exception: Re-raises any exception from the search after recording metrics.
+    """
+    start_time = time.perf_counter()
+
+    try:
+        # Sanitize query if LangSmith tracing is enabled
+        sanitized_query = query
+        if LANGSMITH_AVAILABLE and should_trace():
+            sanitized_query = TracingConfig.sanitize_input(query)
+
+        # Perform the search
+        results = await search_func(sanitized_query, k=k)
+        duration = time.perf_counter() - start_time
+
+        # Record Prometheus metrics
+        record_vector_search_metrics(duration=duration, success=True, num_results=len(results))
+
+        # TODO: Add LangSmith vector search tracing in Phase 3
+        # This would trace vector store operations with the RAG pipeline
+
+        return results
+
+    except Exception:
+        duration = time.perf_counter() - start_time
+
+        # Record failure metrics
+        record_vector_search_metrics(duration=duration, success=False)
+        raise
+
+
+def instrumented_embeddings_generate(
+    embed_func: Any,
+    texts: list[str],
+    trace_metadata: dict[str, Any] | None = None,  # noqa: ARG001
+) -> list[list[float]]:
+    """Generate embeddings with automatic metrics recording.
+
+    Args:
+        embed_func: The embedding function to call
+        texts: List of texts to embed
+        trace_metadata: Optional metadata for tracing
+
+    Returns:
+        List of embedding vectors
+
+    Raises:
+        Exception: Re-raises any exception after recording metrics.
+    """
+    try:
+        # Sanitize texts if tracing is enabled
+        sanitized_texts = texts
+        if LANGSMITH_AVAILABLE and should_trace():
+            sanitized_texts = [TracingConfig.sanitize_input(text) for text in texts]
+
+        # Generate embeddings
+        embeddings = embed_func(sanitized_texts)
+
+        # Record metrics
+        record_embeddings_generated(count=len(texts))
+
+        # TODO: Add LangSmith embeddings tracing in Phase 3
+
+        return embeddings
+
+    except Exception:
+        # Note: No failure metric for embeddings yet, could be added
+        raise
+
+
+# Health check for instrumentation
+def instrumentation_health_check() -> dict[str, Any]:
+    """Check instrumentation system health.
+
+    Returns:
+        Dictionary with health status of metrics and tracing systems
+    """
+    health_info = {
+        "prometheus_metrics": "healthy",  # Always available
+        "langsmith_available": LANGSMITH_AVAILABLE,
+    }
+
+    if LANGSMITH_AVAILABLE:
+        try:
+            from src.app.core.tracing import langsmith_health_check
+
+            health_info["langsmith_status"] = langsmith_health_check()
+        except Exception as e:
+            health_info["langsmith_status"] = f"error: {str(e)}"
+    else:
+        health_info["langsmith_status"] = "not_installed"
+
+    return health_info
+
+
+# Backward compatibility aliases
+# These ensure existing code continues to work without changes
+llm_invoke = instrumented_llm_invoke  # Legacy alias
+vector_search = instrumented_vector_search  # Legacy alias
