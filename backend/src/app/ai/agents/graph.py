@@ -15,6 +15,12 @@ from src.app.ai.agents.state import AgentState
 from src.app.core.instrumentation import instrumented_llm_invoke
 from src.app.core.llm import get_deterministic_llm
 from src.app.core.logging import ai_logger, get_logger
+from src.app.core.metrics import (
+    AGENT_EXECUTION_DURATION_SECONDS,
+    AGENT_EXECUTIONS_TOTAL,
+    AGENT_STEPS_TOTAL,
+    ERRORS_TOTAL,
+)
 
 # LangSmith tracing integration
 try:
@@ -53,12 +59,30 @@ except ImportError:
 
     TRACING_AVAILABLE = False  # pyright: ignore[reportConstantRedefinition]
 
-from src.app.core.metrics import (
-    AGENT_EXECUTION_DURATION_SECONDS,
-    AGENT_EXECUTIONS_TOTAL,
-    AGENT_STEPS_TOTAL,
-    ERRORS_TOTAL,
-)
+# LangSmith evaluators integration
+try:
+    from src.app.ai.evaluation.uhri_evaluators import (
+        get_production_evaluators as _get_evaluators,
+    )
+
+    EVALUATORS_AVAILABLE = True
+except ImportError:
+
+    def _get_evaluators() -> list:  # type: ignore[misc]
+        return []
+
+    EVALUATORS_AVAILABLE = False
+
+
+def get_production_evaluators() -> list:
+    if not EVALUATORS_AVAILABLE:
+        return []
+    try:
+        return _get_evaluators()
+    except Exception as e:
+        logger.warning("failed_to_get_evaluators", error=str(e))
+        return []
+
 
 logger = get_logger(__name__)
 
@@ -348,6 +372,8 @@ async def run_agent_workflow_with_tracing(question: str) -> dict:
                 "research_summary": final_state.get("research_summary", ""),
             }
 
+            await _run_evaluations(parent_run, question, result)
+
             await end_parent_run(parent_run, outputs=result)
             return result
 
@@ -367,3 +393,34 @@ async def run_agent_workflow_with_tracing(question: str) -> dict:
             )
             logger.error("agent_workflow_failed", error=str(e), duration_s=duration)
             raise
+
+
+async def _run_evaluations(parent_run, question: str, result: dict) -> None:
+    evaluators = get_production_evaluators()
+    if not evaluators:
+        return
+
+    try:
+        from langsmith.schemas import Run as LangSmithRun
+
+        mock_run = LangSmithRun(
+            id=parent_run.id if parent_run else "00000000-0000-0000-0000-000000000000",
+            name="hras_agent_workflow",
+            run_type="chain",
+            inputs={"question": question},
+            outputs=result,
+        )
+
+        for evaluator in evaluators:
+            try:
+                eval_result = evaluator.evaluate_run(mock_run)
+                logger.debug(
+                    "evaluation_completed",
+                    evaluator=eval_result.key,
+                    score=eval_result.score,
+                    comment=eval_result.comment,
+                )
+            except Exception as e:
+                logger.warning("evaluator_failed", evaluator=type(evaluator).__name__, error=str(e))
+    except Exception as e:
+        logger.warning("evaluation_setup_failed", error=str(e))

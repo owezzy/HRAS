@@ -14,3 +14,4 @@ data:
   use_langsmith_tracing: "true"
   langsmith_project: "hras-development"
   langsmith_endpoint: "https://api.smith.langchain.com"
+  enable_production_evaluations: "true"

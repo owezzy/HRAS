@@ -32,6 +32,12 @@ services:
       USE_POSTGRES: "true"
       DEBUG: "false"
       APP_ENV: "production"
+      # LangSmith Tracing & Evaluation
+      USE_LANGSMITH_TRACING: ${USE_LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-hras-production}
+      LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-https://api.smith.langchain.com}
+      ENABLE_PRODUCTION_EVALUATIONS: ${ENABLE_PRODUCTION_EVALUATIONS:-false}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:

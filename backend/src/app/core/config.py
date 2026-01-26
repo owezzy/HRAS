@@ -111,6 +111,12 @@ class Settings(BaseSettings):
     use_langsmith_tracing: bool = False
 
     # ==========================================================================
+    # LangSmith Evaluation Settings - Phase 2
+    # ==========================================================================
+    enable_production_evaluations: bool = False
+    weekly_evaluation_enabled: bool = False
+
+    # ==========================================================================
     # Validators
     # ==========================================================================
     @field_validator("app_env")

@@ -126,6 +126,12 @@ spec:
                   name: langsmith-credentials
                   key: api_key
                   optional: true
+            - name: ENABLE_PRODUCTION_EVALUATIONS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: enable_production_evaluations
+                  optional: true
 
           volumeMounts:
             - name: data

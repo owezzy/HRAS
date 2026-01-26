@@ -31,6 +31,8 @@ from src.app.core.metrics import (
 try:
     from src.app.core.tracing import (
         TracingConfig,
+        create_child_run,
+        end_child_run,
         should_trace,
         trace_llm_call,
     )
@@ -44,6 +46,12 @@ except ImportError:
         return False
 
     async def trace_llm_call(*args, **kwargs) -> None:
+        pass
+
+    def create_child_run(*args, **kwargs) -> Any:  # noqa: ARG001
+        return None
+
+    async def end_child_run(*args, **kwargs) -> None:
         pass
 
     class TracingConfig:
@@ -224,7 +232,7 @@ async def instrumented_vector_search(
     search_func: Any,
     query: str,
     k: int = 5,
-    trace_metadata: dict[str, Any] | None = None,  # noqa: ARG001
+    trace_metadata: dict[str, Any] | None = None,
 ) -> list[Any]:
     """Perform vector search with automatic metrics and tracing.
 
@@ -242,36 +250,68 @@ async def instrumented_vector_search(
     """
     start_time = time.perf_counter()
 
-    try:
-        # Sanitize query if LangSmith tracing is enabled
+    child_run = None
+    if LANGSMITH_AVAILABLE and should_trace():
+        sanitized_query = TracingConfig.sanitize_input(query)
+        child_run = create_child_run(
+            name="vector_search",
+            run_type="retriever",
+            inputs={
+                "query": sanitized_query,
+                "k": k,
+            },
+            metadata=trace_metadata,
+        )
+    else:
         sanitized_query = query
-        if LANGSMITH_AVAILABLE and should_trace():
-            sanitized_query = TracingConfig.sanitize_input(query)
 
-        # Perform the search
+    try:
         results = await search_func(sanitized_query, k=k)
         duration = time.perf_counter() - start_time
+        duration_ms = duration * 1000
 
-        # Record Prometheus metrics
         record_vector_search_metrics(duration=duration, success=True, num_results=len(results))
 
-        # TODO: Add LangSmith vector search tracing in Phase 3
-        # This would trace vector store operations with the RAG pipeline
+        if child_run is not None:
+            top_scores: list[float] = []
+            countries_found: set[str] = set()
+            mechanisms_found: set[str] = set()
+
+            for result in results:
+                if hasattr(result, "metadata"):
+                    if "score" in result.metadata:
+                        top_scores.append(result.metadata["score"])
+                    if "country" in result.metadata:
+                        countries_found.add(result.metadata["country"])
+                    if "mechanism" in result.metadata:
+                        mechanisms_found.add(result.metadata["mechanism"])
+
+            outputs = {
+                "num_results": len(results),
+                "duration_ms": duration_ms,
+                "top_scores": top_scores[:5],
+                "countries_found": list(countries_found),
+                "mechanisms_found": list(mechanisms_found),
+            }
+            await end_child_run(child_run, outputs=outputs)
 
         return results
 
-    except Exception:
+    except Exception as e:
         duration = time.perf_counter() - start_time
 
-        # Record failure metrics
         record_vector_search_metrics(duration=duration, success=False)
+
+        if child_run is not None:
+            await end_child_run(child_run, error=str(e))
+
         raise
 
 
-def instrumented_embeddings_generate(
+async def instrumented_embeddings_generate(
     embed_func: Any,
     texts: list[str],
-    trace_metadata: dict[str, Any] | None = None,  # noqa: ARG001
+    trace_metadata: dict[str, Any] | None = None,
 ) -> list[list[float]]:
     """Generate embeddings with automatic metrics recording.
 
@@ -286,24 +326,45 @@ def instrumented_embeddings_generate(
     Raises:
         Exception: Re-raises any exception after recording metrics.
     """
+    settings = get_settings()
+    start_time = time.perf_counter()
+
+    child_run = None
+    sanitized_texts = texts
+    if LANGSMITH_AVAILABLE and should_trace():
+        sanitized_texts = [TracingConfig.sanitize_input(text) for text in texts]
+        avg_text_length = sum(len(t) for t in texts) / len(texts) if texts else 0
+        child_run = create_child_run(
+            name="embeddings_generate",
+            run_type="embedding",
+            inputs={
+                "text_count": len(texts),
+                "avg_text_length": avg_text_length,
+                "model": settings.ollama_embedding_model,
+            },
+            metadata=trace_metadata,
+        )
+
     try:
-        # Sanitize texts if tracing is enabled
-        sanitized_texts = texts
-        if LANGSMITH_AVAILABLE and should_trace():
-            sanitized_texts = [TracingConfig.sanitize_input(text) for text in texts]
-
-        # Generate embeddings
         embeddings = embed_func(sanitized_texts)
+        duration_ms = (time.perf_counter() - start_time) * 1000
 
-        # Record metrics
         record_embeddings_generated(count=len(texts))
 
-        # TODO: Add LangSmith embeddings tracing in Phase 3
+        if child_run is not None:
+            vector_dimensions = len(embeddings[0]) if embeddings else 0
+            outputs = {
+                "embeddings_generated": len(embeddings),
+                "vector_dimensions": vector_dimensions,
+                "duration_ms": duration_ms,
+            }
+            await end_child_run(child_run, outputs=outputs)
 
         return embeddings
 
-    except Exception:
-        # Note: No failure metric for embeddings yet, could be added
+    except Exception as e:
+        if child_run is not None:
+            await end_child_run(child_run, error=str(e))
         raise
 
 
