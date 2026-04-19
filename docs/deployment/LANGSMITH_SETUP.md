@@ -17,7 +17,7 @@ LangSmith provides monitoring, tracing, and evaluation capabilities for the mult
 ### 1. Create LangSmith Account
 
 1. Visit [LangSmith](https://smith.langchain.com) and create an account
-2. Create a new project named `hras-production`
+2. Create a new project named `HRAS` (or use your preferred production project name)
 3. Generate an API key from Account Settings
 
 ### 2. Add GitHub Secret
@@ -26,22 +26,28 @@ Add the LangSmith API key as a GitHub secret:
 
 ```bash
 # In GitHub repository settings > Secrets and variables > Actions
-LANGSMITH_API_KEY=ls-xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+LANGSMITH_API_KEY=lsv2_pt_xxxxx_xxxxx
+LANGSMITH_PROJECT=HRAS
+USE_LANGSMITH_TRACING=true
+ENABLE_PRODUCTION_EVALUATIONS=true
 ```
 
 **Required GitHub Secrets for LangSmith:**
 
 | Secret | Description | Example |
 |--------|-------------|---------|
-| `LANGSMITH_API_KEY` | LangSmith API key | `ls-xxxxx-xxxx-xxxx...` |
+| `LANGSMITH_API_KEY` | LangSmith API key | `lsv2_pt_xxxxx_xxxxx` |
+| `LANGSMITH_PROJECT` | Production project name | `HRAS` |
+| `USE_LANGSMITH_TRACING` | Enable tracing in production | `true` |
+| `ENABLE_PRODUCTION_EVALUATIONS` | Enable production evaluators | `true` |
 
 ### 3. Deployment
 
 The CI/CD pipeline automatically configures LangSmith for production:
 
 - **Enabled**: `USE_LANGSMITH_TRACING=true`
-- **Project**: `hras-production`
-- **Sampling Rate**: 10% (cost control)
+- **Project**: `HRAS`
+- **Evaluations**: `ENABLE_PRODUCTION_EVALUATIONS=true`
 - **Privacy**: Automatic input sanitization enabled
 
 ## Development Setup
@@ -53,7 +59,7 @@ The CI/CD pipeline automatically configures LangSmith for production:
 USE_LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=ls-xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 LANGSMITH_PROJECT=hras-development
-LANGSMITH_SAMPLING_RATE=0.5  # 50% for development
+ENABLE_PRODUCTION_EVALUATIONS=false
 ```
 
 ### 2. Install Dependencies
@@ -81,9 +87,9 @@ tail -f logs/app.log | grep langsmith
 |----------|---------|-------------|
 | `USE_LANGSMITH_TRACING` | `false` | Enable/disable tracing |
 | `LANGSMITH_API_KEY` | `None` | LangSmith API key |
-| `LANGSMITH_PROJECT` | `hras-production` | Project name |
+| `LANGSMITH_PROJECT` | `HRAS` | Project name |
 | `LANGSMITH_ENDPOINT` | `https://api.smith.langchain.com` | API endpoint |
-| `LANGSMITH_SAMPLING_RATE` | `0.1` | Sampling rate (0.0-1.0) |
+| `ENABLE_PRODUCTION_EVALUATIONS` | `false` | Enable production evaluators |
 
 ### Privacy Controls
 
@@ -101,7 +107,7 @@ LangSmith tracing is controlled by feature flags for safe rollout:
 ```python
 # Gradual rollout
 USE_LANGSMITH_TRACING=false  # Disabled by default
-LANGSMITH_SAMPLING_RATE=0.1  # 10% sampling when enabled
+ENABLE_PRODUCTION_EVALUATIONS=false
 ```
 
 ## Usage
@@ -157,10 +163,16 @@ if tracer:
 curl http://localhost:8000/health | jq '.langsmith'
 ```
 
+**Live production verification:**
+
+```bash
+curl https://hetzner-api.hras.owezzy.tech/health | jq '.langsmith'
+```
+
 ### Dashboard Access
 
 1. **LangSmith Console**: https://smith.langchain.com
-2. **Project Dashboard**: Navigate to `hras-production` project
+2. **Project Dashboard**: Navigate to your production project (for example `HRAS`)
 3. **Traces**: View individual request traces and agent workflows
 4. **Evaluations**: Review automated quality assessments
 
@@ -178,25 +190,12 @@ LangSmith **complements** existing Prometheus/Grafana monitoring:
 
 ## Cost Management
 
-### Sampling Strategy
-
-- **Production**: 10% sampling (`LANGSMITH_SAMPLING_RATE=0.1`)
-- **Development**: 50% sampling for testing
-- **Debugging**: 100% sampling (temporary)
-
-### Usage Estimation
-
-For ~1000 requests/day with 10% sampling:
-- **Traces**: ~100 traces/day
-- **Cost**: ~$5-10/month (varies by trace complexity)
-- **Storage**: ~1GB/month
-
 ### Cost Controls
 
 1. **Feature Flag**: Can be disabled instantly if needed
-2. **Sampling Rate**: Adjustable via environment variable
-3. **Input Sanitization**: Reduces data volume
-4. **Session Grouping**: Efficient trace organization
+2. **Input Sanitization**: Reduces sensitive data exposure
+3. **Session Grouping**: Efficient trace organization
+4. **Production Evaluations**: Can be toggled independently with `ENABLE_PRODUCTION_EVALUATIONS`
 
 ## Troubleshooting
 
@@ -220,21 +219,11 @@ For ~1000 requests/day with 10% sampling:
    curl -H "x-api-key: $LANGSMITH_API_KEY" https://api.smith.langchain.com/info
    ```
 
-3. **High Costs**
+3. **Production Evaluators Too Expensive**
    ```bash
-   # Reduce sampling rate
-   echo "LANGSMITH_SAMPLING_RATE=0.05" >> .env  # 5% sampling
+   # Disable evaluators while keeping tracing enabled
+   echo "ENABLE_PRODUCTION_EVALUATIONS=false" >> .env
    ```
-
-### Debug Mode
-
-Enable verbose tracing for debugging:
-
-```bash
-# Temporary 100% sampling
-LANGSMITH_SAMPLING_RATE=1.0
-USE_LANGSMITH_TRACING=true
-```
 
 ## Security Considerations
 

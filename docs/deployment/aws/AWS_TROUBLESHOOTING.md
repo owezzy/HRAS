@@ -129,7 +129,7 @@ env:
 # Verify NEXT_PUBLIC_API_URL is correct
 
 # Test API directly
-curl -X POST https://api.hras.owezzy.tech/api/v1/chat \
+curl -X POST https://hetzner-api.hras.owezzy.tech/api/v1/chat \
   -H "Content-Type: application/json" \
   -H "Origin: https://hras.owezzy.tech" \
   -d '{"message": "test"}'
@@ -144,7 +144,7 @@ CORS_ORIGINS=["https://hras.owezzy.tech", "https://www.hras.owezzy.tech"]
 docker compose -f zarf/docker/compose/docker-compose.yml restart backend
 
 # Update Amplify environment variables
-NEXT_PUBLIC_API_URL = https://api.hras.owezzy.tech
+NEXT_PUBLIC_API_URL = https://hetzner-api.hras.owezzy.tech
 ```
 
 ## Monitoring Issues
