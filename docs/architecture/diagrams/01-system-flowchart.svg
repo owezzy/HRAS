@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2952.900000000001 1451" width="2952.900000000001" height="1451" style="--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="4.8" refX="8" refY="2.4" orient="auto">
+    <polygon points="0 0, 8 2.4, 0 4.8" fill="var(--_arrow)" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="4.8" refX="0" refY="2.4" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.4, 8 4.8" fill="var(--_arrow)" />
+  </marker>
+</defs>
+<rect x="40" y="40" width="309.9000000000003" height="892" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="40" y="40" width="309.9000000000003" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="52" y="54" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;Frontend Layer (Next.js 15)&quot;</text>
+<rect x="1422.7750000000005" y="352" width="855.0125000000003" height="268" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="1422.7750000000005" y="352" width="855.0125000000003" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="1434.7750000000005" y="366" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;API Layer (FastAPI)&quot;</text>
+<rect x="1189.1375000000007" y="664" width="1595.6" height="112" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="1189.1375000000007" y="664" width="1595.6" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="1201.1375000000007" y="678" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;Service Layer&quot;</text>
+<rect x="2297.787500000001" y="196" width="615.1125000000002" height="424" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="2297.787500000001" y="196" width="615.1125000000002" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="2309.787500000001" y="210" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;Multi-Agent System (LangGraph)&quot;</text>
+<rect x="369.9000000000003" y="508" width="873.2000000000005" height="112" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="369.9000000000003" y="508" width="873.2000000000005" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="381.9000000000003" y="522" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;Agent Tools&quot;</text>
+<rect x="1146.4500000000007" y="820" width="245.48749999999995" height="268" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="1146.4500000000007" y="820" width="245.48749999999995" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="1158.4500000000007" y="834" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;RAG Pipeline&quot;</text>
+<rect x="1920.512500000001" y="976" width="384.0374999999999" height="268" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="1920.512500000001" y="976" width="384.0374999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="1932.512500000001" y="990" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;AI/ML Layer&quot;</text>
+<rect x="1049.9125000000008" y="1288" width="1855.1125000000004" height="123" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="1049.9125000000008" y="1288" width="1855.1125000000004" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="1061.9125000000008" y="1302" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;Data Storage&quot;</text>
+<rect x="1411.9375000000007" y="820" width="197.55000000000018" height="268" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="1411.9375000000007" y="820" width="197.55000000000018" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="1423.9375000000007" y="834" dy="0.35em" font-size="12" font-weight="600" fill="var(--_text-sec)">&quot;External Data&quot;</text>
+<polyline points="217.8250000000002,132 217.8250000000002,152 261.8500000000002,152 261.8500000000002,252" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="261.8500000000002,288 261.8500000000002,426 1868.3625000000006,426" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1920.1125000000006,444 1920.1125000000006,464 1847.1500000000008,464 1847.1500000000008,564" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1920.1125000000006,444 1920.1125000000006,464 1514.4000000000005,464 1514.4000000000005,564" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1920.1125000000006,444 1920.1125000000006,464 2035.4250000000009,464 2035.4250000000009,564" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1920.1125000000006,444 1920.1125000000006,464 2205.825000000001,464 2205.825000000001,564" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1847.1500000000008,600 1847.1500000000008,738 2213.8625000000006,738" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1514.4000000000005,600 1514.4000000000005,720" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2272.7625000000007,720 2272.7625000000007,700 2764.7375000000006,700 2764.7375000000006,270 2562.787500000001,270" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2272.7625000000007,756 2272.7625000000007,776 1249.1375000000007,776 1249.1375000000007,876" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2493.162500000001,288 2493.162500000001,308 2387.625000000001,308 2387.625000000001,408" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2493.162500000001,288 2493.162500000001,308 2475.6750000000006,308 2475.6750000000006,582 2429.6250000000005,582" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2493.162500000001,288 2493.162500000001,308 2680.2625000000007,308 2680.2625000000007,408" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2387.625000000001,444 2387.625000000001,464 2495.6750000000006,464 2495.6750000000006,564" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2680.2625000000007,444 2680.2625000000007,582 2561.725000000001,582" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2387.625000000001,444 2387.625000000001,582 581.2000000000004,582" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2680.2625000000007,444 2680.2625000000007,464 2431.650000000001,464 2431.650000000001,582 581.2000000000004,582" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1126.4500000000007,600 1126.4500000000007,1367.5 1951.1125000000009,1367.5" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1249.1375000000007,912 1249.1375000000007,932 1296.7375000000006,932 1296.7375000000006,1032" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1249.1375000000007,912 1249.1375000000007,932 1201.5375000000006,932 1201.5375000000006,1367.5 1951.1125000000009,1367.5" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1296.7375000000006,1068 1296.7375000000006,1108 1983.4750000000008,1108 1983.4750000000008,1206 1942.512500000001,1206" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2680.2625000000007,444 2680.2625000000007,464 2877.087500000001,464 2877.087500000001,796 2197.562500000001,796 2197.562500000001,1032" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2197.562500000001,1068 2197.562500000001,1088 2107.000000000001,1088 2107.000000000001,1206 2110.362500000001,1206" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2197.562500000001,1068 2197.562500000001,1088 2207.562500000001,1088 2207.562500000001,1188" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2207.562500000001,1224 2207.562500000001,1367.5 2133.2625000000007,1367.5" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1514.4000000000005,756 1514.4000000000005,776 1510.7125000000008,776 1510.7125000000008,876" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1510.7125000000008,912 1510.7125000000008,1032" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="1514.4000000000005,756 1514.4000000000005,776 2033.525000000001,776 2033.525000000001,796 2324.5500000000006,796 2324.5500000000006,1367.5 2133.2625000000007,1367.5" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2272.7625000000007,756 2272.7625000000007,776 2224.712500000001,776 2224.712500000001,796 2434.0500000000006,796 2434.0500000000006,1344" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2272.7625000000007,756 2272.7625000000007,776 2477.350000000001,776 2477.350000000001,796 2824.1250000000014,796 2824.1250000000014,1344" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2495.6750000000006,600 2495.6750000000006,738 2331.662500000001,738" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="2272.7625000000007,756 2272.7625000000007,776 1229.1375000000007,776 1229.1375000000007,796 111.9,796 111.9,894 62.000000000000085,894" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<polyline points="163.8000000000001,876 163.8000000000001,856 173.8000000000001,856 173.8000000000001,114 155.3500000000002,114" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)" />
+<rect x="155.3500000000002" y="96" width="124.95" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="195.80000000000018" y="252" width="132.10000000000002" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="62.000000000000085" y="876" width="203.60000000000002" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1868.3625000000006" y="408" width="103.5" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1781.1000000000008" y="564" width="132.10000000000002" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1444.7750000000005" y="564" width="139.25" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1937.200000000001" y="564" width="196.45000000000002" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2157.650000000001" y="564" width="96.35000000000001" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2213.8625000000006" y="720" width="117.80000000000001" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1419.7500000000005" y="720" width="189.3" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2423.537500000001" y="252" width="139.25" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2321.5750000000007" y="408" width="132.10000000000002" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2429.6250000000005" y="564" width="132.10000000000002" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2617.787500000001" y="408" width="124.95" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="391.90000000000043" y="564" width="189.3" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="605.2000000000005" y="564" width="225.05" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="854.2500000000006" y="564" width="153.55" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1031.8000000000006" y="564" width="189.3" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1200.9625000000008" y="876" width="96.35000000000001" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1223.5375000000006" y="1032" width="146.4" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2120.787500000001" y="1032" width="153.55" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1942.512500000001" y="1188" width="167.85000000000002" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2134.362500000001" y="1188" width="146.4" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1951.1125000000009" y="1351" width="182.15" height="33" fill="var(--_node-fill)" stroke="none" />
+<line x1="1951.1125000000009" y1="1351" x2="1951.1125000000009" y2="1384" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<line x1="2133.2625000000007" y1="1351" x2="2133.2625000000007" y2="1384" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<ellipse cx="2042.187500000001" cy="1384" rx="91.075" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<ellipse cx="2042.187500000001" cy="1351" rx="91.075" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2350.1250000000005" y="1351" width="167.85000000000002" height="33" fill="var(--_node-fill)" stroke="none" />
+<line x1="2350.1250000000005" y1="1351" x2="2350.1250000000005" y2="1384" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<line x1="2517.9750000000004" y1="1351" x2="2517.9750000000004" y2="1384" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<ellipse cx="2434.0500000000006" cy="1384" rx="83.92500000000001" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<ellipse cx="2434.0500000000006" cy="1351" rx="83.92500000000001" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="2765.2250000000013" y="1351" width="117.80000000000001" height="33" fill="var(--_node-fill)" stroke="none" />
+<line x1="2765.2250000000013" y1="1351" x2="2765.2250000000013" y2="1384" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<line x1="2883.0250000000015" y1="1351" x2="2883.0250000000015" y2="1384" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<ellipse cx="2824.1250000000014" cy="1384" rx="58.900000000000006" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<ellipse cx="2824.1250000000014" cy="1351" rx="58.900000000000006" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1433.9375000000007" y="876" width="153.55" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="1451.8125000000007" y="1032" width="117.80000000000001" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<text x="217.8250000000002" y="114" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Web Interface</text>
+<text x="261.8500000000002" y="270" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Chat Component</text>
+<text x="163.8000000000001" y="894" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Source Citations Display</text>
+<text x="1920.1125000000006" y="426" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">API Router</text>
+<text x="1847.1500000000008" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">&quot;/api/v1/chat&quot;</text>
+<text x="1514.4000000000005" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">&quot;/api/v1/admin&quot;</text>
+<text x="2035.4250000000009" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">&quot;/api/v1/conversations&quot;</text>
+<text x="2205.825000000001" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">&quot;/health&quot;</text>
+<text x="2272.7625000000007" y="738" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Chat Service</text>
+<text x="1514.4000000000005" y="738" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Data Ingestion Service</text>
+<text x="2493.162500000001" y="270" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Supervisor Node</text>
+<text x="2387.625000000001" y="426" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Research Agent</text>
+<text x="2495.6750000000006" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Advisory Agent</text>
+<text x="2680.2625000000007" y="426" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Compare Agent</text>
+<text x="486.5500000000004" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">search_recommendations</text>
+<text x="717.7250000000005" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">get_country_recommendations</text>
+<text x="931.0250000000005" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">compare_countries</text>
+<text x="1126.4500000000007" y="582" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">get_mechanism_overview</text>
+<text x="1249.1375000000007" y="894" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">RAG Chain</text>
+<text x="1296.7375000000006" y="1050" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Prompt Templates</text>
+<text x="2197.562500000001" y="1050" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Ollama LLM Server</text>
+<text x="2026.437500000001" y="1206" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Nemotron 3 Nano 30B</text>
+<text x="2207.562500000001" y="1206" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">nomic-embed-text</text>
+<text x="2042.187500000001" y="1367.5" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">ChromaDB Vector Store</text>
+<text x="2434.0500000000006" y="1367.5" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">PostgreSQL Database</text>
+<text x="2824.1250000000014" y="1367.5" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">SQLite - Dev</text>
+<text x="1510.7125000000008" y="894" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">UHRI Data Sources</text>
+<text x="1510.7125000000008" y="1050" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">UN Documents</text>
+</svg>

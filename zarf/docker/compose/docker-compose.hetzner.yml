@@ -1,0 +1,252 @@
+name: hras
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: hras-caddy
+    environment:
+      DOMAIN: ${DOMAIN}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ../caddy/Caddyfile.hetzner:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - full
+    healthcheck:
+      test: ['CMD', 'caddy', 'version']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: hras-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hras}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-hras}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-hras} -d ${POSTGRES_DB:-hras}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    profiles:
+      - full
+
+  ollama:
+    image: alpine/ollama:latest
+    container_name: hras-ollama
+    ports:
+      - '127.0.0.1:11434:11434'
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    profiles:
+      - full
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ollama-init:
+    image: alpine/ollama:latest
+    container_name: hras-ollama-init
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '-c']
+    command: >-
+      set -eu;
+      echo "Waiting for Ollama API...";
+      until ollama list >/dev/null 2>&1; do sleep 3; done;
+      ollama pull "${OLLAMA_EMBEDDING_MODEL}";
+      ollama pull "${OLLAMA_MODEL}";
+    restart: 'no'
+    profiles:
+      - full
+
+  backend:
+    build:
+      context: ../../..
+      dockerfile: zarf/docker/dockerfile.backend
+      args:
+        - BUILD_ENV=production
+    container_name: hras-backend
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      DEBUG: ${DEBUG:-false}
+      DATABASE_URL: ${DATABASE_URL}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-nemotron-3-nano:30b-cloud}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT:-180}
+      CHROMA_PERSIST_DIRECTORY: ${CHROMA_PERSIST_DIRECTORY:-/app/chroma_db}
+      USE_POSTGRES: ${USE_POSTGRES:-true}
+      USE_ASYNC_TOOLS: ${USE_ASYNC_TOOLS:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS}
+      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      HEALTH_CHECK_TOKEN: ${HEALTH_CHECK_TOKEN:-}
+      USE_LANGSMITH_TRACING: ${USE_LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-hras-production}
+      LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-https://api.smith.langchain.com}
+      ENABLE_PRODUCTION_EVALUATIONS: ${ENABLE_PRODUCTION_EVALUATIONS:-false}
+    volumes:
+      - chroma_data:/app/chroma_db
+      - ../../../backend/config:/app/config:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    profiles:
+      - full
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.5'
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hras-prometheus
+    ports:
+      - '127.0.0.1:${PROMETHEUS_PORT:-9090}:9090'
+    volumes:
+      - ../../../zarf/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../../../zarf/monitoring/alerts:/etc/prometheus/alerts:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-admin-api'
+    depends_on:
+      - backend
+    restart: unless-stopped
+    profiles:
+      - monitoring
+      - full
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hras-grafana
+    ports:
+      - '127.0.0.1:${GRAFANA_PORT:-3001}:3000'
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+    volumes:
+      - ../../../zarf/monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ../../../zarf/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../../zarf/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+    restart: unless-stopped
+    profiles:
+      - monitoring
+      - full
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: hras-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-hras}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-hras}?sslmode=disable
+    ports:
+      - '127.0.0.1:9187:9187'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - monitoring
+      - full
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: hras-loki
+    user: '0'
+    ports:
+      - '127.0.0.1:${LOKI_PORT:-3100}:3100'
+    volumes:
+      - ../../../zarf/docker/monitoring/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: ['CMD-SHELL', 'wget --quiet --tries=1 --output-document=- http://localhost:3100/ready | grep -q ready || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    profiles:
+      - monitoring
+      - full
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: hras-promtail
+    volumes:
+      - ../../../zarf/docker/monitoring/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/log:/var/log:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - monitoring
+      - full
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  chroma_data:
+  ollama_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:

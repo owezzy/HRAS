@@ -1,0 +1,25 @@
+[Unit]
+Description=HRAS - Human Rights Advisory System (Hetzner)
+Documentation=https://github.com/owezzy/HRAS
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/hras
+EnvironmentFile=/opt/hras/.env.hetzner
+
+ExecStartPre=/usr/bin/docker compose --env-file /opt/hras/.env.hetzner -f zarf/docker/compose/docker-compose.hetzner.yml config -q
+ExecStart=/usr/bin/docker compose --env-file /opt/hras/.env.hetzner -f zarf/docker/compose/docker-compose.hetzner.yml --profile full up -d --build --remove-orphans
+ExecStop=/usr/bin/docker compose --env-file /opt/hras/.env.hetzner -f zarf/docker/compose/docker-compose.hetzner.yml --profile full down
+ExecReload=/usr/bin/docker compose --env-file /opt/hras/.env.hetzner -f zarf/docker/compose/docker-compose.hetzner.yml --profile full up -d --build --force-recreate --remove-orphans
+
+Restart=on-failure
+RestartSec=30
+TimeoutStartSec=600
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

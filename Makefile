@@ -4,7 +4,8 @@
 	kind-create kind-delete kind-load kind-load-fast kind-deploy kind-dev-up kind-deploy-backend kind-deploy-postgres kind-status kind-logs kind-logs-backend kind-clean \
 	k3s-setup k3s-deploy k3s-status k3s-logs k3s-teardown \
 	monitoring-deploy monitoring-undeploy monitoring-status monitoring-logs monitoring-port-forward monitoring-grafana monitoring-prometheus \
-	deploy-setup deploy-ssl deploy-production deploy-rollback deploy-backup deploy-health-check deploy-monitoring deploy-status deploy-logs
+	deploy-setup deploy-ssl deploy-production deploy-rollback deploy-backup deploy-health-check deploy-monitoring deploy-status deploy-logs \
+	deploy-hetzner-setup deploy-hetzner-production deploy-hetzner-rollback deploy-hetzner-health-check deploy-hetzner-status deploy-hetzner-logs
 
 # Default target
 help:
@@ -101,6 +102,14 @@ help:
 	@echo "  deploy-monitoring    Set up production monitoring stack"
 	@echo "  deploy-status        Show production deployment status"
 	@echo "  deploy-logs          View production application logs"
+	@echo ""
+	@echo "Hetzner Production Deployment:"
+	@echo "  deploy-hetzner-setup         Prepare a Hetzner host for HRAS"
+	@echo "  deploy-hetzner-production    Deploy HRAS to Hetzner with Caddy"
+	@echo "  deploy-hetzner-rollback      Roll back the latest Hetzner deployment"
+	@echo "  deploy-hetzner-health-check  Run Hetzner deployment health checks"
+	@echo "  deploy-hetzner-status        Show Hetzner Docker Compose status"
+	@echo "  deploy-hetzner-logs          Tail Hetzner deployment logs"
 
 # =============================================================================
 # Development
@@ -677,6 +686,54 @@ prod-deploy-full:
 		exit 1; \
 	fi
 	./zarf/scripts/deploy.sh deploy --postgres --monitoring --ssl-init
+
+# =============================================================================
+# Hetzner Production Deployment
+# =============================================================================
+
+deploy-hetzner-setup:
+	@echo "Setting up Hetzner host for HRAS deployment..."
+	@if [ ! -f ".env.hetzner" ]; then \
+		echo "Error: .env.hetzner not found. Please copy .env.hetzner.example and configure it."; \
+		exit 1; \
+	fi
+	chmod +x zarf/scripts/*.sh
+	./zarf/scripts/setup-server-hetzner.sh
+
+deploy-hetzner-production:
+	@echo "Deploying HRAS to Hetzner..."
+	@if [ ! -f ".env.hetzner" ]; then \
+		echo "Error: .env.hetzner not found. Please copy .env.hetzner.example and configure it."; \
+		exit 1; \
+	fi
+	chmod +x zarf/scripts/*.sh
+	./zarf/scripts/deploy-hetzner.sh deploy
+
+deploy-hetzner-rollback:
+	@echo "Rolling back the latest Hetzner deployment..."
+	chmod +x zarf/scripts/*.sh
+	./zarf/scripts/deploy-hetzner.sh rollback
+
+deploy-hetzner-health-check:
+	@echo "Running Hetzner deployment health checks..."
+	chmod +x zarf/scripts/*.sh
+	./zarf/scripts/health-check-hetzner.sh
+
+deploy-hetzner-status:
+	@echo "Checking Hetzner deployment status..."
+	@if [ ! -f ".env.hetzner" ]; then \
+		echo "Error: .env.hetzner not found. Please copy .env.hetzner.example and configure it."; \
+		exit 1; \
+	fi
+	docker compose --env-file .env.hetzner -f zarf/docker/compose/docker-compose.hetzner.yml --profile full ps
+
+deploy-hetzner-logs:
+	@echo "Tailing Hetzner deployment logs..."
+	@if [ ! -f ".env.hetzner" ]; then \
+		echo "Error: .env.hetzner not found. Please copy .env.hetzner.example and configure it."; \
+		exit 1; \
+	fi
+	docker compose --env-file .env.hetzner -f zarf/docker/compose/docker-compose.hetzner.yml --profile full logs -f
 
 prod-ssl-init:
 	@echo "Initializing SSL certificates..."

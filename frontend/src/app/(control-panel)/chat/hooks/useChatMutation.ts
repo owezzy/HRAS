@@ -1,7 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import type { ChatRequest, ChatResponse } from '../types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL =
+	process.env.NEXT_PUBLIC_API_URL ||
+	(process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://hetzner-api.hras.owezzy.tech');
 
 export class ChatError extends Error {
 	code: string;
@@ -28,7 +30,7 @@ async function sendChatMessage(request: ChatRequest): Promise<ChatResponse> {
 		// Network errors (connection refused, timeout, etc.)
 		if (error instanceof TypeError && error.message.includes('fetch')) {
 			throw new ChatError(
-				'Unable to connect to the server. Please ensure the backend is running on port 8000.',
+				`Unable to connect to the API endpoint at ${API_URL}. Please verify the backend is reachable.`,
 				'CONNECTION_ERROR'
 			);
 		}
