@@ -4,7 +4,6 @@
 
 {$DOMAIN} {
 	reverse_proxy backend:8000 {
-		header_up Host {upstream_hostport}
 		header_up X-Real-IP {remote_host}
 	}
 
