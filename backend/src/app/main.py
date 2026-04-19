@@ -62,9 +62,9 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 def create_app() -> FastAPI:
     settings = get_settings()
 
-    docs_url = "/docs" if settings.docs_enabled and not settings.is_production else None
-    redoc_url = "/redoc" if settings.docs_enabled and not settings.is_production else None
-    openapi_url = "/openapi.json" if settings.docs_enabled and not settings.is_production else None
+    docs_url = "/docs" if settings.docs_enabled else None
+    redoc_url = "/redoc" if settings.docs_enabled else None
+    openapi_url = "/openapi.json" if settings.docs_enabled else None
 
     app = FastAPI(
         title=settings.app_name,

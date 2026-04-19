@@ -213,9 +213,9 @@ CORS_ORIGINS=["http://localhost:3000"]
 - OpenAPI JSON: http://localhost:8000/openapi.json
 
 **Production:**
-- Base URL: https://api.hras.owezzy.tech
-- Swagger UI: https://api.hras.owezzy.tech/docs
-- Health Check: https://api.hras.owezzy.tech/health
+- Base URL: https://hetzner-api.hras.owezzy.tech
+- Swagger UI: https://hetzner-api.hras.owezzy.tech/docs
+- Health Check: https://hetzner-api.hras.owezzy.tech/health
 
 **Note**: Production API is served through Caddy reverse proxy with automatic HTTPS via Let's Encrypt.
 

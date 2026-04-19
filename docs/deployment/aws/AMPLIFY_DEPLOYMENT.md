@@ -16,7 +16,7 @@ Complete guide for deploying HRAS Next.js frontend to AWS Amplify with custom do
 Create `frontend/.env.production`:
 ```env
 # Production API endpoint (via Caddy with Let's Encrypt TLS)
-NEXT_PUBLIC_API_URL=https://api.hras.owezzy.tech
+NEXT_PUBLIC_API_URL=https://hetzner-api.hras.owezzy.tech
 ```
 
 ### 1.2 Configure Next.js for Amplify
@@ -218,7 +218,7 @@ aws route53 change-resource-record-sets \
    - Add the following:
 
 ```
-NEXT_PUBLIC_API_URL = https://api.hras.owezzy.tech
+NEXT_PUBLIC_API_URL = https://hetzner-api.hras.owezzy.tech
 NODE_ENV = production
 AMPLIFY_MONOREPO_APP_ROOT = frontend
 ```
@@ -260,9 +260,9 @@ Source: https://www.hras.owezzy.tech/<*>
 Target: https://hras.owezzy.tech/<*>
 Type: 301 (Permanent Redirect)
 
-# API proxy (optional - direct calls to api.hras.owezzy.tech recommended)
+# API proxy (optional - direct calls to hetzner-api.hras.owezzy.tech recommended)
 # Source: /api/<*>
-# Target: https://api.hras.owezzy.tech/<*>
+# Target: https://hetzner-api.hras.owezzy.tech/<*>
 # Type: 200 (Rewrite)
 
 # SPA fallback
@@ -302,7 +302,7 @@ feature branches → https://pr-123.d1234567890.amplifyapp.com
 
 Set different API URLs per branch:
 ```
-Production (main):     NEXT_PUBLIC_API_URL = https://api.hras.owezzy.tech
+Production (main):     NEXT_PUBLIC_API_URL = https://hetzner-api.hras.owezzy.tech
 Development (develop): NEXT_PUBLIC_API_URL = http://localhost:8000  # or dev domain if available
 ```
 

@@ -23,15 +23,15 @@ curl http://localhost:8000/api/v1/admin/stats
 **Production:**
 ```bash
 # Health check
-curl https://api.hras.owezzy.tech/health
+curl https://hetzner-api.hras.owezzy.tech/health
 
 # Ask a question
-curl -X POST https://api.hras.owezzy.tech/api/v1/chat \
+curl -X POST https://hetzner-api.hras.owezzy.tech/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "What human rights issues exist in Kenya?"}'
 
 # Check data ingestion status
-curl https://api.hras.owezzy.tech/api/v1/admin/stats
+curl https://hetzner-api.hras.owezzy.tech/api/v1/admin/stats
 ```
 
 ---
@@ -41,7 +41,7 @@ curl https://api.hras.owezzy.tech/api/v1/admin/stats
 | Component | Details |
 |-----------|---------|
 | **Base URL (Development)** | `http://localhost:8000` |
-| **Base URL (Production)** | `https://api.hras.owezzy.tech` |
+| **Base URL (Production)** | `https://hetzner-api.hras.owezzy.tech` |
 | **Version** | v1 (all endpoints under `/api/v1/`) |
 | **Format** | JSON request/response |
 | **Authentication** | None required (internal use) |
@@ -362,8 +362,8 @@ wait
 - **ReDoc**: http://localhost:8000/redoc
 
 **Production:**
-- **Swagger UI**: https://api.hras.owezzy.tech/docs
-- **ReDoc**: https://api.hras.owezzy.tech/redoc
+- **Swagger UI**: https://hetzner-api.hras.owezzy.tech/docs
+- **ReDoc**: https://hetzner-api.hras.owezzy.tech/redoc
 
 These interfaces let you test endpoints directly from your browser and see real-time examples.
 

@@ -57,9 +57,9 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 3. Run `make dev` and visit http://localhost:3000
 
 ### I want to deploy HRAS in production
-**Current production uses AWS Amplify + EC2:**
-1. Review [Deployment Overview](deployment/DEPLOYMENT.md#aws-production-deployment)
-2. Deploy backend: [EC2 Deployment](deployment/aws/EC2_DEPLOYMENT.md)
+**Current production uses AWS Amplify + Hetzner:**
+1. Review [Deployment Overview](deployment/DEPLOYMENT.md#hetzner-production-deployment)
+2. Deploy backend: [Deployment Overview](deployment/DEPLOYMENT.md#hetzner-production-deployment)
 3. Deploy frontend: [Amplify Deployment](deployment/aws/AMPLIFY_DEPLOYMENT.md)
 4. Set up monitoring: [Monitoring Setup](deployment/aws/MONITORING_SETUP.md)
 5. Verify: [Troubleshooting](operations/TROUBLESHOOTING.md)
@@ -80,8 +80,8 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 AWS Amplify (Frontend)
   https://hras.owezzy.tech
         ↓ HTTPS API calls
-AWS EC2 (Backend)
-  https://api.hras.owezzy.tech
+Hetzner (Backend)
+  https://hetzner-api.hras.owezzy.tech
   • Caddy reverse proxy (Let's Encrypt TLS)
   • FastAPI backend (Docker)
   • PostgreSQL database
@@ -91,11 +91,11 @@ AWS EC2 (Backend)
 
 **Production URLs:**
 - Frontend: https://hras.owezzy.tech
-- API: https://api.hras.owezzy.tech
-- API Docs: https://api.hras.owezzy.tech/docs
+- API: https://hetzner-api.hras.owezzy.tech
+- API Docs: https://hetzner-api.hras.owezzy.tech/docs
 - Monitoring: SSH tunnel only (secure)
 
-**Monthly Cost: ~$25** (EC2 + Amplify free tier)
+**Monthly Cost: ~$10-20** (Hetzner + Amplify free tier)
 
 ---
 

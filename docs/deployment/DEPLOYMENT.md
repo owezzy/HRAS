@@ -16,12 +16,12 @@ HRAS can be deployed in multiple configurations:
 
 ## Current Production Architecture
 
-**HRAS is currently deployed on AWS with:**
+**HRAS is currently deployed with AWS Amplify + Hetzner:**
 
 ```
 Frontend: AWS Amplify (Next.js 15)
   ↓ HTTPS
-Backend: EC2 + Caddy + Docker
+Backend: Hetzner + Caddy + Docker
   • Caddy reverse proxy with Let's Encrypt TLS
   • FastAPI backend in Docker
   • PostgreSQL database
@@ -31,10 +31,10 @@ Backend: EC2 + Caddy + Docker
 
 **Production URLs:**
 - Frontend: https://hras.owezzy.tech
-- API: https://api.hras.owezzy.tech
+- API: https://hetzner-api.hras.owezzy.tech
 - Monitoring: SSH tunnel only (secure)
 
-**See: [AWS Production Deployment](#aws-production-deployment)**
+**See: [Hetzner Production Deployment](#hetzner-production-deployment)**
 
 ---
 
@@ -181,7 +181,7 @@ zarf/k8s/
 
 ## AWS Production Deployment
 
-**Current production setup** with Amplify frontend + EC2 backend.
+Legacy production path with Amplify frontend + EC2 backend.
 
 ### Architecture Overview
 
@@ -237,6 +237,68 @@ zarf/k8s/
 
 ---
 
+## Hetzner Production Deployment
+
+Hetzner is supported as a monolith API deployment using Docker Compose, Caddy, and the GitHub Actions workflow in `.github/workflows/deploy-hetzner.yml`.
+
+### Architecture Overview
+
+```text
+AWS Amplify (Frontend)
+  https://hras.owezzy.tech
+        ↓ HTTPS API calls
+Hetzner (Backend)
+  https://hetzner-api.hras.owezzy.tech
+  • Caddy reverse proxy (Let's Encrypt TLS)
+  • Docker Compose monolith API stack
+  • FastAPI backend + PostgreSQL + Ollama
+  • Prometheus + Grafana + Loki
+```
+
+### Deployment Steps
+
+1. Copy `.env.hetzner.example` to `.env.hetzner`
+2. Fill in required secrets and domain values
+3. Keep list fields as valid JSON arrays:
+
+```env
+CORS_ORIGINS=["https://hras.owezzy.tech"]
+TRUSTED_HOSTS=["localhost","127.0.0.1","backend","backend:8000","hetzner-api.hras.example.com"]
+```
+
+4. Prepare the server:
+
+```bash
+make deploy-hetzner-setup
+```
+
+5. Deploy the API stack:
+
+```bash
+make deploy-hetzner-production
+```
+
+6. Verify the deployment:
+
+```bash
+curl https://hetzner-api.hras.owezzy.tech/health
+curl https://hetzner-api.hras.owezzy.tech/docs
+curl https://hetzner-api.hras.owezzy.tech/redoc
+curl https://hetzner-api.hras.owezzy.tech/api/v1/admin/stats
+curl -X POST https://hetzner-api.hras.owezzy.tech/api/v1/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Hello, test deployment"}'
+```
+
+### CI/CD Notes
+
+- `.github/workflows/deploy-hetzner.yml` now generates `.env.hetzner` on the GitHub runner, validates `CORS_ORIGINS` and `TRUSTED_HOSTS` as JSON arrays, and only then copies the file to `/opt/hras/.env.hetzner`.
+- `zarf/scripts/deploy-hetzner.sh` performs the same JSON validation before `docker compose` starts the stack.
+- Production OpenAPI docs are enabled through `DOCS_ENABLED=true`, so `/docs`, `/redoc`, and `/openapi.json` are available on the live Hetzner API.
+- LangSmith production tracing is active when `USE_LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` is present in the Hetzner environment.
+- If those values are malformed, FastAPI startup fails with `pydantic_settings.exceptions.SettingsError` while parsing `cors_origins`.
+
+---
 ## K3s Production (Alternative)
 
 Lightweight Kubernetes for production (alternative to current Caddy+Docker setup).
@@ -343,7 +405,7 @@ curl http://localhost:8000/health
 curl http://localhost:8000/api/v1/admin/stats
 
 # Production
-curl https://api.hras.owezzy.tech/health
+curl https://hetzner-api.hras.owezzy.tech/health
 ```
 
 ### Service Status

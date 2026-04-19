@@ -100,6 +100,30 @@ validate_environment() {
         fi
     done
 
+    python3 - <<'PY'
+import json
+import os
+import sys
+
+for key in ("CORS_ORIGINS", "TRUSTED_HOSTS"):
+    value = os.environ.get(key, "")
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as exc:
+        print(f"{key} must be valid JSON: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    if not isinstance(parsed, list) or not all(isinstance(item, str) for item in parsed):
+        print(f"{key} must be a JSON array of strings", file=sys.stderr)
+        sys.exit(1)
+
+use_langsmith_tracing = os.environ.get("USE_LANGSMITH_TRACING", "false").strip().lower() == "true"
+langsmith_api_key = os.environ.get("LANGSMITH_API_KEY", "").strip()
+
+if use_langsmith_tracing and not langsmith_api_key:
+    print("LANGSMITH_API_KEY must be set when USE_LANGSMITH_TRACING=true", file=sys.stderr)
+    sys.exit(1)
+PY
     if ! command -v docker >/dev/null 2>&1; then
         log_error "Docker is not installed"
         exit 1
