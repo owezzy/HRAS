@@ -53,7 +53,7 @@ docs/
 
 ### I'm an Operator/DevOps
 - **[Deployment Overview](deployment/DEPLOYMENT.md)** - **Start here** for all deployment options
-- **[AWS EC2 Guide](deployment/aws/EC2_DEPLOYMENT.md)** - Current production backend
+- **[AWS EC2 Guide](deployment/aws/EC2_DEPLOYMENT.md)** - Legacy AWS backend guide
 - **[AWS Amplify Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md)** - Current production frontend
 - **[Monitoring Setup](deployment/aws/MONITORING_SETUP.md)** - Prometheus + Grafana (SSH tunnel)
 - [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) - Alternative Docker deployment
@@ -90,23 +90,23 @@ docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d
 
 ## Production Deployment
 
-**Current production uses AWS Amplify (frontend) + EC2 (backend):**
+**Current production uses AWS Amplify (frontend) + Hetzner (backend):**
 
-- **Backend**: EC2 with Caddy reverse proxy, Docker, PostgreSQL, Ollama
+- **Backend**: Hetzner with Caddy reverse proxy, Docker, PostgreSQL, Ollama
 - **Frontend**: AWS Amplify with auto-deploy from GitHub
 - **Monitoring**: Prometheus + Grafana (SSH tunnel access only)
 
 **See:**
 - [Deployment Overview](deployment/DEPLOYMENT.md) - All deployment options
-- [EC2 Deployment Guide](deployment/aws/EC2_DEPLOYMENT.md) - Production backend
+- [Deployment Overview](deployment/DEPLOYMENT.md#hetzner-production-deployment) - Production backend
 - [Amplify Deployment Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md) - Production frontend
 - [Monitoring Setup](deployment/aws/MONITORING_SETUP.md) - Observability
 
-**Monthly Cost**: ~$25 (EC2 t3.small + Amplify free tier)
+**Monthly Cost**: ~$10-20 (Hetzner + Amplify free tier)
 
 **Production URLs:**
 - Frontend: https://hras.owezzy.tech
-- API: https://api.hras.owezzy.tech
+- API: https://hetzner-api.hras.owezzy.tech
 - Monitoring: SSH tunnel only (secure)
 
 ## Getting Help

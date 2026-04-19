@@ -7,9 +7,9 @@ AI-powered advisory system for UN human rights officers. Uses RAG (Retrieval-Aug
 | Resource | URL |
 |----------|-----|
 | **Application** | https://hras.owezzy.tech |
-| **API** | https://api.hras.owezzy.tech |
-| **API Documentation** | https://api.hras.owezzy.tech/docs |
-| **Health Check** | https://api.hras.owezzy.tech/health |
+| **API** | https://hetzner-api.hras.owezzy.tech |
+| **API Documentation** | https://hetzner-api.hras.owezzy.tech/docs |
+| **Health Check** | https://hetzner-api.hras.owezzy.tech/health |
 | **Repository** | https://github.com/owezzy/HRAS |
 
 **Monitoring** (via SSH tunnel):
@@ -38,13 +38,13 @@ AI-powered advisory system for UN human rights officers. Uses RAG (Retrieval-Aug
 | 3 | Set up local environment | Follow [Quick Start](#quick-start-local-development) below |
 | 4 | Explore Backend | [Backend README](./backend/README.md) - API, testing, agents |
 | 5 | Explore Frontend | [Frontend README](./frontend/README.md) - UI, components, styling |
-| 6 | Understand Deployment | [Deployment Guide](./docs/deployment/DEPLOYMENT.md) - AWS setup |
+| 6 | Understand Deployment | [Deployment Guide](./docs/deployment/DEPLOYMENT.md) - Hetzner + Amplify production setup |
 
 ### For DevOps / Operators
 
 | Task | Documentation |
 |------|---------------|
-| Deploy Backend (EC2) | [EC2 Deployment](./docs/deployment/aws/EC2_DEPLOYMENT.md) |
+| Deploy Backend (Hetzner) | [Deployment Guide](./docs/deployment/DEPLOYMENT.md#hetzner-production-deployment) |
 | Deploy Frontend (Amplify) | [Amplify Deployment](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md) |
 | Set up Monitoring | [Monitoring Setup](./docs/deployment/aws/MONITORING_SETUP.md) |
 | Configure CI/CD | See [CI/CD Pipeline](#cicd-pipeline) section below |
@@ -61,7 +61,7 @@ HRAS enables human rights officers to ask natural language questions about UN hu
 - RAG pipeline with semantic search across UHRI documents
 - Multi-agent system for retrieval, generation, and validation
 - Source attribution for every response
-- Production-ready deployment on AWS
+- Production-ready deployment on AWS Amplify + Hetzner
 
 ## Tech Stack
 
@@ -134,8 +134,8 @@ make db-stats
                          │ HTTPS API calls
                          ▼
 ┌──────────────────────────────────────────────────────────┐
-│ AWS EC2 (Backend + Monitoring)                           │
-│ https://api.hras.owezzy.tech                             │
+│ Hetzner (Backend + Monitoring)                           │
+│ https://hetzner-api.hras.owezzy.tech                     │
 │ • Caddy reverse proxy (TLS via Let's Encrypt)           │
 │ • FastAPI backend (Docker)                               │
 │ • PostgreSQL database                                    │
@@ -178,12 +178,10 @@ Automated deployment via GitHub Actions on push to `main` branch:
 | `DOMAIN` | API domain (e.g., `api.hras.owezzy.tech`) |
 | `LETSENCRYPT_EMAIL` | Email for Let's Encrypt SSL certificates |
 
-### Monthly Cost: ~$25
+### Monthly Cost: ~$10-20
 
-- EC2 t3.small: $15.18
-- EBS (20GB): $2.00
-- Elastic IP: $3.65
-- Data transfer: $2-5
+- Hetzner VPS: $8-15
+- Snapshots/backups: $1-5
 - AWS Amplify: Free tier
 - LLM inference: $0 (local Ollama)
 
