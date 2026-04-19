@@ -40,6 +40,10 @@ WORKDIR /app
 # Copy application source
 COPY --chown=appuser:appuser backend/src/ ./src/
 
+# Copy Alembic migration configuration and scripts
+COPY --chown=appuser:appuser backend/alembic.ini ./alembic.ini
+COPY --chown=appuser:appuser backend/alembic/ ./alembic/
+
 # Environment configuration
 ENV PATH="/app/.venv/bin:$PATH"
 ENV HOME=/home/appuser
