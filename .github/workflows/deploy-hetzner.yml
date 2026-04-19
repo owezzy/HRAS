@@ -124,7 +124,7 @@ jobs:
 
       - name: Create Hetzner environment file
         run: |
-          ssh ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} "cat > /opt/hras/.env.hetzner <<'EOF'
+          ssh ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} 'cat > /opt/hras/.env.hetzner' <<'ENVEOF'
           DOMAIN=${{ secrets.HETZNER_DOMAIN }}
           LETSENCRYPT_EMAIL=${{ secrets.HETZNER_LETSENCRYPT_EMAIL }}
           FRONTEND_DOMAIN=${{ secrets.HETZNER_FRONTEND_DOMAIN }}
@@ -167,7 +167,7 @@ jobs:
           LANGSMITH_ENDPOINT=https://api.smith.langchain.com
           GRAFANA_ADMIN_PASSWORD=${{ secrets.HETZNER_GRAFANA_ADMIN_PASSWORD }}
           NOTIFICATION_WEBHOOK=${{ secrets.SLACK_WEBHOOK_URL }}
-          EOF"
+          ENVEOF
 
       - name: Install and reload systemd service
         run: |
