@@ -147,8 +147,8 @@ jobs:
           HEALTH_CHECK_TOKEN=${{ secrets.HETZNER_HEALTH_CHECK_TOKEN }}
           ALLOWED_SSH_CIDR=${{ secrets.HETZNER_ALLOWED_SSH_CIDR }}
           SWAP_SIZE_GB=8
-          CORS_ORIGINS='["${{ secrets.HETZNER_FRONTEND_DOMAIN }}","https://hras.owezzy.tech"]'
-          TRUSTED_HOSTS='["localhost","127.0.0.1","backend","backend:8000","${{ secrets.HETZNER_DOMAIN }}"]'
+          CORS_ORIGINS=["${{ secrets.HETZNER_FRONTEND_DOMAIN }}","https://hras.owezzy.tech","https://hetzner-api.hras.owezzy.tech"]
+          TRUSTED_HOSTS=["localhost","127.0.0.1","backend","backend:8000","${{ secrets.HETZNER_DOMAIN }}"]
           USE_POSTGRES=true
           USE_ASYNC_TOOLS=true
           USE_LANGSMITH_TRACING=${{ secrets.USE_LANGSMITH_TRACING || 'true' }}
