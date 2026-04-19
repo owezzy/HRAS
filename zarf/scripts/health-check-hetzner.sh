@@ -63,12 +63,11 @@ check_ssl() {
 check_docker_services() {
     local failed=0
     local services=(caddy postgres ollama backend prometheus grafana postgres-exporter loki promtail)
+    local running_services
+    running_services=$(compose ps --services --status running 2>/dev/null || true)
 
     for service in "${services[@]}"; do
-        local status
-        status=$(compose ps --format json 2>/dev/null | jq -r --arg service "${service}" '.[] | select(.Service == $service) | .State' | head -n 1)
-
-        if [[ "${status}" == "running" ]]; then
+        if printf '%s\n' "${running_services}" | grep -Fxq "${service}"; then
             log_success "${service} is running"
         else
             log_error "${service} is not running"
