@@ -89,7 +89,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ### Production (.env.production)
 ```env
-NEXT_PUBLIC_API_URL=https://api.hras.owezzy.tech
+NEXT_PUBLIC_API_URL=https://hetzner-api.hras.owezzy.tech
 ```
 
 ## Code Style
