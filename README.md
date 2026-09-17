@@ -6,25 +6,17 @@ AI-powered advisory system for UN human rights officers. Uses RAG (Retrieval-Aug
 
 | Resource | URL |
 |----------|-----|
-| **Application** | https://hras.owezzy.tech |
-| **API** | https://hetzner-api.hras.owezzy.tech |
-| **API Documentation** | https://hetzner-api.hras.owezzy.tech/docs |
-| **Health Check** | https://hetzner-api.hras.owezzy.tech/health |
+| **Application** | https://hras.owenadirah.com |
+| **API** | https://backend-production-f15e.up.railway.app |
+| **API Documentation** | https://backend-production-f15e.up.railway.app/docs |
+| **Health Check** | https://backend-production-f15e.up.railway.app/health |
 | **Repository** | https://github.com/owezzy/HRAS |
-
-**Monitoring** (via SSH tunnel):
-
-| Service | Local URL | SSH Tunnel Command |
-|---------|-----------|-------------------|
-| **Grafana** | http://localhost:3001 | `ssh -L 3001:localhost:3001 ubuntu@<EC2_HOST>` |
-| **Prometheus** | http://localhost:9090 | `ssh -L 9090:localhost:9090 ubuntu@<EC2_HOST>` |
-| **Loki** | http://localhost:3100 | `ssh -L 3100:localhost:3100 ubuntu@<EC2_HOST>` |
 
 ## 📚 Onboarding Guide
 
 ### For New Users (Non-Technical)
 
-1. **Access the Application**: Visit https://hras.owezzy.tech
+1. **Access the Application**: Visit https://hras.owenadirah.com
 2. **Start a Conversation**: Navigate to the Chat interface
 3. **Ask Questions**: Type natural language questions about UN human rights recommendations
 4. **View Sources**: Each response includes citations from UHRI documents
@@ -38,16 +30,14 @@ AI-powered advisory system for UN human rights officers. Uses RAG (Retrieval-Aug
 | 3 | Set up local environment | Follow [Quick Start](#quick-start-local-development) below |
 | 4 | Explore Backend | [Backend README](./backend/README.md) - API, testing, agents |
 | 5 | Explore Frontend | [Frontend README](./frontend/README.md) - UI, components, styling |
-| 6 | Understand Deployment | [Deployment Guide](./docs/deployment/DEPLOYMENT.md) - Hetzner + Amplify production setup |
+| 6 | Understand Deployment | [Deployment Guide](./docs/deployment/DEPLOYMENT.md) - Railway production setup |
 
 ### For DevOps / Operators
 
 | Task | Documentation |
 |------|---------------|
-| Deploy Backend (Hetzner) | [Deployment Guide](./docs/deployment/DEPLOYMENT.md#hetzner-production-deployment) |
-| Deploy Frontend (Amplify) | [Amplify Deployment](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md) |
-| Set up Monitoring | [Monitoring Setup](./docs/deployment/aws/MONITORING_SETUP.md) |
-| Configure CI/CD | See [CI/CD Pipeline](#cicd-pipeline) section below |
+| Deploy | Push to `main` - Railway builds and deploys automatically |
+| Configure Secrets | Set service variables in the Railway dashboard |
 | Troubleshoot Issues | [Troubleshooting Guide](./docs/operations/TROUBLESHOOTING.md) |
 
 ---
@@ -61,7 +51,7 @@ HRAS enables human rights officers to ask natural language questions about UN hu
 - RAG pipeline with semantic search across UHRI documents
 - Multi-agent system for retrieval, generation, and validation
 - Source attribution for every response
-- Production-ready deployment on AWS Amplify + Hetzner
+- Production-ready deployment on Railway
 
 ## Tech Stack
 
@@ -69,12 +59,12 @@ HRAS enables human rights officers to ask natural language questions about UN hu
 |-----------|------------|
 | **Frontend** | Next.js 15, React 19, MUI 7, TailwindCSS 4 |
 | **Backend** | Python 3.12+, FastAPI, LangChain, LangGraph |
-| **AI/LLM** | Ollama + Nemotron 3 Nano (30B cloud model) |
-| **Embeddings** | nomic-embed-text (via Ollama) |
+| **AI/LLM** | DeepSeek (`deepseek-flash`) via an OpenAI-compatible API |
+| **Embeddings** | Cloudflare Workers AI (`@cf/baai/bge-small-en-v1.5`) |
 | **Vector Store** | ChromaDB |
 | **Database** | PostgreSQL (production) / SQLite (development) |
-| **Monitoring** | Prometheus + Grafana + Loki |
-| **CI/CD** | GitHub Actions |
+| **Monitoring** | LangSmith tracing |
+| **CI/CD** | Railway (builds from the repository on push) |
 
 ## Quick Start (Local Development)
 
@@ -124,66 +114,50 @@ make db-stats
 
 ### Architecture
 
-```
-┌──────────────────────────────────────────────────────────┐
-│ AWS Amplify (Frontend)                                   │
-│ https://hras.owezzy.tech                                 │
-│ • Next.js SSR with auto-scaling CDN                      │
-│ • www redirect: www.hras.owezzy.tech → hras.owezzy.tech │
-└──────────────────────────────────────────────────────────┘
-                         │ HTTPS API calls
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│ Hetzner (Backend + Monitoring)                           │
-│ https://hetzner-api.hras.owezzy.tech                     │
-│ • Caddy reverse proxy (TLS via Let's Encrypt)           │
-│ • FastAPI backend (Docker)                               │
-│ • PostgreSQL database                                    │
-│ • Ollama local LLM (no API costs)                        │
-│ • ChromaDB vector store                                  │
-│ • Prometheus + Grafana + Loki (SSH tunnel access)       │
-└──────────────────────────────────────────────────────────┘
-```
+| Service | Host | Notes |
+|---------|------|-------|
+| **Frontend** | https://hras.owenadirah.com | Next.js standalone (`Dockerfile.multi-stage`), TLS via Let's Encrypt |
+| **Backend** | https://backend-production-f15e.up.railway.app | FastAPI (`Dockerfile`), ChromaDB on a persistent volume |
 
-**Note**: Monitoring dashboards are accessed via SSH tunnel for security.
+**Backend providers:** DeepSeek (`deepseek-flash`) for chat, Cloudflare Workers AI
+(`@cf/baai/bge-small-en-v1.5`) for embeddings, LangSmith for tracing.
 
-### Deployment Guides
+### Deployment
 
-1. **[EC2 Backend Deployment](./docs/deployment/aws/EC2_DEPLOYMENT.md)** - Backend setup with Caddy, Docker, PostgreSQL
-2. **[Amplify Frontend Deployment](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md)** - Next.js frontend with custom domain
-3. **[Monitoring Setup](./docs/deployment/aws/MONITORING_SETUP.md)** - Prometheus + Grafana configuration
+Both services build from this repository on push to `main`.
+
+| Service | Root Directory | Dockerfile |
+|---------|----------------|------------|
+| Frontend | `frontend` | `Dockerfile.multi-stage` |
+| Backend | `backend` | `Dockerfile` |
+
+**Required service variables:**
+
+| Variable | Service | Description |
+|----------|---------|-------------|
+| `LLM_API_KEY` | backend | DeepSeek API key |
+| `EMBEDDING_BASE_URL` | backend | Host serving the embedding model |
+| `EMBEDDING_API_KEY` | backend | Key for that host |
+| `AUTH_SECRET` | frontend | NextAuth session secret |
 
 ### CI/CD Pipeline
 
-Automated deployment via GitHub Actions on push to `main` branch:
+Deployment runs automatically on push to `main`:
 
 ```
-.github/workflows/deploy-production-docker.yml
+Railway (repository integration)
 ```
 
-**Pipeline Stages:**
-1. **Quality Gates** - Lint, build, and test frontend/backend
-2. **Deploy to EC2** - Rsync code, rebuild Docker containers
-3. **Health Verification** - API health checks with automatic rollback on failure
-4. **Post-Deployment Tests** - Verify chat endpoint and admin stats
+**Pipeline:** Railway detects the push, builds each service image, and rolls out
+the new version. A failed build leaves the previous deployment running.
 
-**Required GitHub Secrets:**
+### Monthly Cost
 
-| Secret | Description |
-|--------|-------------|
-| `EC2_SSH_KEY` | SSH private key for EC2 access |
-| `EC2_HOST` | EC2 instance public IP or hostname |
-| `EC2_USER` | SSH user (e.g., `ubuntu`) |
-| `DB_PASSWORD` | PostgreSQL database password |
-| `DOMAIN` | API domain (e.g., `api.hras.owezzy.tech`) |
-| `LETSENCRYPT_EMAIL` | Email for Let's Encrypt SSL certificates |
-
-### Monthly Cost: ~$10-20
-
-- Hetzner VPS: $8-15
-- Snapshots/backups: $1-5
-- AWS Amplify: Free tier
-- LLM inference: $0 (local Ollama)
+- Railway: usage-based, no fixed server cost
+- LLM inference: pay-per-token (DeepSeek)
+- Embeddings: pay-per-token (Cloudflare Workers AI)
+- Stale `zarf/`, `nginx/`, and `docs/deployment/aws/` directories remain for
+  reference only and are not part of the current deployment path.
 
 ## Configuration
 
@@ -199,11 +173,15 @@ DEBUG=true
 # Database (SQLite for dev, PostgreSQL for production)
 DATABASE_URL=sqlite+aiosqlite:///./hras.db
 
-# Ollama Configuration
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=nemotron-3-nano:30b-cloud
-OLLAMA_EMBEDDING_MODEL=nomic-embed-text
-OLLAMA_TIMEOUT=180
+# Chat LLM (OpenAI-compatible: deepseek | openai | openrouter | ollama | custom)
+LLM_PROVIDER=deepseek
+LLM_API_KEY=
+LLM_MODEL=deepseek-flash
+
+# Embeddings (configured independently of chat)
+EMBEDDING_BASE_URL=
+EMBEDDING_API_KEY=
+EMBEDDING_MODEL=@cf/baai/bge-small-en-v1.5
 
 # Vector Store
 CHROMA_PERSIST_DIRECTORY=./chroma_db
@@ -236,14 +214,14 @@ AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
 ```
 
-Production variables are set in AWS Amplify Console or `frontend/.env.production`.
+Production variables are set as Railway service variables.
 
 ## Documentation
 
 | Category | Key Documents |
 |----------|---------------|
 | **Development** | [Backend README](./backend/README.md) · [Frontend README](./frontend/README.md) · [Dev Guide](./docs/development/DEVELOPMENT.md) |
-| **Deployment** | [EC2 Guide](./docs/deployment/aws/EC2_DEPLOYMENT.md) · [Amplify Guide](./docs/deployment/aws/AMPLIFY_DEPLOYMENT.md) · [Monitoring](./docs/deployment/aws/MONITORING_SETUP.md) |
+| **Deployment** | [Deployment Guide](./docs/deployment/DEPLOYMENT.md) · [Backend README](./backend/README.md) |
 | **Architecture** | [System Architecture](./docs/architecture/ARCHITECTURE.md) · [AI/ML Pipeline](./docs/architecture/AI_ML.md) |
 | **Reference** | [API Documentation](./docs/reference/API.md) · [Docs Index](./docs/00-INDEX.md) · [Troubleshooting](./docs/operations/TROUBLESHOOTING.md) |
 
@@ -310,7 +288,7 @@ HRAS/
 │   ├── development/           # Developer guides
 │   ├── operations/            # Operations docs
 │   └── reference/             # API reference
-├── zarf/                      # Deployment configs
+├── zarf/                      # Legacy deployment configs (not in the deploy path)
 │   ├── docker/                # Dockerfiles & Docker Compose
 │   │   ├── compose/           # Docker Compose configurations
 │   │   ├── caddy/             # Caddy reverse proxy config
