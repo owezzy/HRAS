@@ -107,7 +107,7 @@ async def detailed_health_check() -> DetailedHealthResponse:
 
     # Overall system status
     overall_status = "healthy"
-    if checks["instrumentation"]["status"] == "error":
+    if checks["instrumentation"].get("status") == "error":
         overall_status = "degraded"
 
     return DetailedHealthResponse(
