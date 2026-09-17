@@ -85,16 +85,29 @@ async def detailed_health_check() -> DetailedHealthResponse:
         "langsmith_tracing": settings.use_langsmith_tracing,
     }
 
-    # Add Ollama status
-    checks["ollama"] = {
-        "base_url": settings.ollama_base_url,
-        "model": settings.ollama_model,
-        "embedding_model": settings.ollama_embedding_model,
+    try:
+        checks["llm"] = {
+            "status": "configured",
+            "provider": settings.llm_provider,
+            "base_url": settings.resolved_llm_base_url,
+            "model": settings.resolved_llm_model,
+        }
+    except ValueError as exc:
+        checks["llm"] = {
+            "status": "misconfigured",
+            "provider": settings.llm_provider,
+            "error": str(exc),
+        }
+
+    checks["embeddings"] = {
+        "status": "configured" if settings.embedding_base_url else "misconfigured",
+        "base_url": settings.embedding_base_url,
+        "model": settings.embedding_model,
     }
 
     # Overall system status
     overall_status = "healthy"
-    if checks["instrumentation"]["status"] == "error":
+    if checks["instrumentation"].get("status") == "error":
         overall_status = "degraded"
 
     return DetailedHealthResponse(

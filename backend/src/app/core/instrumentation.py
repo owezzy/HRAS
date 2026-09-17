@@ -190,7 +190,7 @@ async def instrumented_llm_invoke(
         Exception: Re-raises any exception from the LLM call after recording metrics.
     """
     settings = get_settings()
-    fallback_model = model_name or settings.ollama_model
+    fallback_model = model_name or settings.resolved_llm_model
 
     start_time = time.perf_counter()
 
@@ -340,7 +340,7 @@ async def instrumented_embeddings_generate(
             inputs={
                 "text_count": len(texts),
                 "avg_text_length": avg_text_length,
-                "model": settings.ollama_embedding_model,
+                "model": settings.embedding_model,
             },
             metadata=trace_metadata,
         )

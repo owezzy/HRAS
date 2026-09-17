@@ -6,6 +6,8 @@ import os
 
 os.environ["USE_LANGSMITH_TRACING"] = "false"
 
+os.environ.setdefault("LLM_API_KEY", "test-key")
+
 from collections.abc import AsyncGenerator
 from typing import Any
 from unittest.mock import MagicMock, patch
