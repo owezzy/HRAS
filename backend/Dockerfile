@@ -5,14 +5,10 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-RUN --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=README.md,target=README.md \
-    uv sync --frozen --no-install-project --no-dev
+COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --frozen --no-install-project --no-dev
 
 COPY src/ ./src/
-COPY pyproject.toml uv.lock README.md ./
-
 RUN uv sync --frozen --no-dev --no-editable
 
 FROM python:3.12-slim-bookworm
