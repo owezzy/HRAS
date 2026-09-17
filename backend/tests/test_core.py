@@ -1,6 +1,8 @@
 import os
 from unittest.mock import patch
 
+import pytest
+
 from src.app.core.async_utils import (
     async_wrap,
     gather_with_limit,
@@ -30,12 +32,72 @@ class TestSettings:
         assert settings.use_postgres is False
         assert settings.use_async_tools is False
 
-    def test_ollama_defaults(self):
-        settings = Settings()
+    def test_provider_defaults(self):
+        with patch.dict(os.environ, {}, clear=True):
+            settings = Settings(_env_file=None)
 
-        assert settings.ollama_base_url == "http://localhost:11434"
-        assert settings.ollama_model == "nemotron-3-nano:30b-cloud"
-        assert settings.ollama_embedding_model == "nomic-embed-text"
+        assert settings.llm_provider == "deepseek"
+        assert settings.embedding_model == "nomic-embed-text-v1.5"
+
+    def test_deepseek_preset_resolution(self):
+        settings = Settings(_env_file=None, llm_provider="deepseek")
+
+        assert settings.resolved_llm_base_url == "https://api.deepseek.com"
+        assert settings.resolved_llm_model == "deepseek-flash"
+
+    def test_explicit_values_override_preset(self):
+        settings = Settings(
+            _env_file=None,
+            llm_provider="deepseek",
+            llm_base_url="https://example.test/v1",
+            llm_model="some-other-model",
+        )
+
+        assert settings.resolved_llm_base_url == "https://example.test/v1"
+        assert settings.resolved_llm_model == "some-other-model"
+
+    def test_openrouter_requires_explicit_model(self):
+        settings = Settings(_env_file=None, llm_provider="openrouter")
+
+        with pytest.raises(ValueError, match="llm_model must be set"):
+            _ = settings.resolved_llm_model
+
+    def test_unknown_provider_is_rejected(self):
+        settings = Settings(_env_file=None, llm_provider="not-a-provider")
+
+        with pytest.raises(ValueError, match="Unknown llm_provider"):
+            _ = settings.resolved_llm_base_url
+
+    def test_ollama_preset_supplies_placeholder_api_key(self):
+        with patch.dict(os.environ, {}, clear=True):
+            settings = Settings(_env_file=None, llm_provider="ollama")
+
+        assert settings.resolved_llm_api_key == "ollama"
+        assert settings.resolved_llm_base_url == "http://localhost:11434/v1"
+
+    def test_hosted_provider_requires_api_key(self):
+        settings = Settings(_env_file=None, llm_provider="deepseek", llm_api_key="")
+
+        with pytest.raises(ValueError, match="llm_api_key must be set"):
+            _ = settings.resolved_llm_api_key
+
+    def test_embeddings_default_to_local_ollama(self):
+        with patch.dict(os.environ, {}, clear=True):
+            settings = Settings(_env_file=None)
+
+        assert settings.embedding_base_url == "http://localhost:11434/v1"
+        assert settings.embedding_model == "nomic-embed-text-v1.5"
+        assert settings.resolved_embedding_api_key == "ollama"
+
+    def test_hosted_embeddings_require_api_key(self):
+        settings = Settings(
+            _env_file=None,
+            embedding_base_url="https://api.example.test/v1",
+            embedding_api_key="",
+        )
+
+        with pytest.raises(ValueError, match="embedding_api_key must be set"):
+            _ = settings.resolved_embedding_api_key
 
     def test_cors_origins_default(self):
         settings = Settings()

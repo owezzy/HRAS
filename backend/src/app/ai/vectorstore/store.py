@@ -7,7 +7,7 @@ from chromadb.config import Settings as ChromaSettings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
-from langchain_ollama import OllamaEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 from src.app.core.async_utils import run_in_thread
 from src.app.core.config import get_settings
@@ -15,11 +15,21 @@ from src.app.core.instrumentation import record_embeddings_generated, record_vec
 
 
 def get_embeddings() -> Embeddings:
-    """Get Ollama embeddings."""
+    """Get embeddings from the configured OpenAI-compatible provider."""
     settings = get_settings()
-    return OllamaEmbeddings(
-        base_url=settings.ollama_base_url,
-        model=settings.ollama_embedding_model,
+    kwargs: dict[str, object] = {}
+    if settings.embedding_dimensions is not None:
+        kwargs["dimensions"] = settings.embedding_dimensions
+    return OpenAIEmbeddings(
+        base_url=settings.embedding_base_url,
+        api_key=settings.resolved_embedding_api_key,
+        model=settings.embedding_model,
+        timeout=settings.embedding_timeout,
+        max_retries=settings.embedding_max_retries,
+        # tiktoken context-length chunking assumes OpenAI tokenizers and mangles
+        # text sent to non-OpenAI models such as nomic-embed-text.
+        check_embedding_ctx_length=False,
+        **kwargs,
     )
 
 
@@ -36,7 +46,7 @@ class VectorStoreManager:
         """Initialize the vector store manager.
 
         Args:
-            embeddings: Embedding model to use. Defaults to OpenAI embeddings.
+            embeddings: Embedding model to use. Defaults to the configured provider.
             persist_directory: Directory to persist ChromaDB. Defaults to config value.
         """
         settings = get_settings()
