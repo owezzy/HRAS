@@ -1,5 +1,8 @@
 # HRAS Deployment Guide
 
+> **Superseded.** Production now runs on Railway — see [RAILWAY.md](./RAILWAY.md).
+> This document is retained for local development, Docker and Kubernetes options.
+
 Complete guide for deploying HRAS in local development, Docker, Kubernetes, and AWS production environments.
 
 ## Overview
@@ -16,17 +19,16 @@ HRAS can be deployed in multiple configurations:
 
 ## Current Production Architecture
 
-**HRAS is currently deployed with AWS Amplify + Hetzner:**
+**HRAS is deployed on Railway — see [RAILWAY.md](./RAILWAY.md).**
 
 ```
-Frontend: AWS Amplify (Next.js 15)
+Frontend: Railway (Next.js standalone)
   ↓ HTTPS
-Backend: Hetzner + Caddy + Docker
-  • Caddy reverse proxy with Let's Encrypt TLS
+Backend: Railway (FastAPI + Docker)
   • FastAPI backend in Docker
-  • PostgreSQL database
-  • Ollama local LLM
-  • Prometheus + Grafana (SSH tunnel access)
+  • ChromaDB on a persistent volume
+  • DeepSeek chat + Cloudflare Workers AI embeddings
+  • LangSmith tracing
 ```
 
 **Production URLs:**

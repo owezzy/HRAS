@@ -26,11 +26,10 @@ docs/
 │   │   └── DOCKER-COMPOSE-EC2-DEPLOYMENT.md
 │   ├── kubernetes/
 │   │   └── KUBERNETES.md          # Kind & K3s deployment
-│   └── aws/
-│       ├── EC2_DEPLOYMENT.md      # Backend on EC2
-│       ├── AMPLIFY_DEPLOYMENT.md  # Frontend on Amplify
-│       ├── MONITORING_SETUP.md    # Prometheus & Grafana
-│       └── AWS_TROUBLESHOOTING.md # AWS-specific issues
+  │   └── aws/
+  │       ├── EC2_DEPLOYMENT.md      # Legacy: backend on EC2
+  │       ├── MONITORING_SETUP.md    # Legacy: Prometheus & Grafana
+  │       └── AWS_TROUBLESHOOTING.md # Legacy: AWS-specific issues
 │
 ├── operations/                    # For operators
 │   ├── TROUBLESHOOTING.md         # Common issues & solutions
@@ -51,13 +50,12 @@ docs/
 - [Architecture](architecture/ARCHITECTURE.md) - System design overview
 - [API Reference](reference/API.md) - REST endpoints
 
-### I'm an Operator/DevOps
-- **[Deployment Overview](deployment/DEPLOYMENT.md)** - **Start here** for all deployment options
-- **[AWS EC2 Guide](deployment/aws/EC2_DEPLOYMENT.md)** - Legacy AWS backend guide
-- **[AWS Amplify Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md)** - Current production frontend
-- **[Monitoring Setup](deployment/aws/MONITORING_SETUP.md)** - Prometheus + Grafana (SSH tunnel)
-- [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) - Alternative Docker deployment
-- [Kubernetes](deployment/kubernetes/KUBERNETES.md) - Alternative K8s (Kind/K3s)
+  ### I'm an Operator/DevOps
+  - **[Railway Deployment](deployment/RAILWAY.md)** - **Start here** for the current setup
+  - [Deployment Overview](deployment/DEPLOYMENT.md) - Legacy deployment options
+  - [EC2 Guide](deployment/aws/EC2_DEPLOYMENT.md) - Legacy AWS backend guide
+  - [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) - Legacy Docker deployment
+  - [Kubernetes](deployment/kubernetes/KUBERNETES.md) - Alternative K8s (Kind/K3s)
 - [Troubleshooting](operations/TROUBLESHOOTING.md) - Common issues
 - [Security Checklist](operations/SECURITY_CHECKLIST.md) - Production hardening
 
@@ -90,24 +88,19 @@ docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d
 
 ## Production Deployment
 
-**Current production uses AWS Amplify (frontend) + Hetzner (backend):**
+**Production runs on Railway and deploys automatically on push to `main`.**
 
-- **Backend**: Hetzner with Caddy reverse proxy, Docker, PostgreSQL, Ollama
-- **Frontend**: AWS Amplify with auto-deploy from GitHub
-- **Monitoring**: Prometheus + Grafana (SSH tunnel access only)
+- **Backend**: FastAPI container, ChromaDB on a persistent volume
+- **Frontend**: Next.js standalone container
+- **AI**: DeepSeek for chat, Cloudflare Workers AI for embeddings
+- **Observability**: LangSmith tracing
 
-**See:**
-- [Deployment Overview](deployment/DEPLOYMENT.md) - All deployment options
-- [Deployment Overview](deployment/DEPLOYMENT.md#hetzner-production-deployment) - Production backend
-- [Amplify Deployment Guide](deployment/aws/AMPLIFY_DEPLOYMENT.md) - Production frontend
-- [Monitoring Setup](deployment/aws/MONITORING_SETUP.md) - Observability
-
-**Monthly Cost**: ~$10-20 (Hetzner + Amplify free tier)
+**See:** [Railway Deployment Guide](deployment/RAILWAY.md)
 
 **Production URLs:**
-- Frontend: https://hras.owezzy.tech
-- API: https://hetzner-api.hras.owezzy.tech
-- Monitoring: SSH tunnel only (secure)
+
+- Frontend: https://hras.owenadirah.com
+- API: https://backend-production-f15e.up.railway.app
 
 ## Getting Help
 

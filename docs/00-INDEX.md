@@ -28,18 +28,15 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 ### Deployment
 | Document | Description |
 |----------|-------------|
-| [Deployment Overview](deployment/DEPLOYMENT.md) | **Start here** - All deployment options |
-| [AWS EC2 (Production)](deployment/aws/EC2_DEPLOYMENT.md) | Current production backend deployment |
-| [AWS Amplify (Production)](deployment/aws/AMPLIFY_DEPLOYMENT.md) | Current production frontend deployment |
-| [Monitoring Setup](deployment/aws/MONITORING_SETUP.md) | Prometheus + Grafana (SSH tunnel access) |
-| [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) | Alternative Docker deployment |
+| [Railway Deployment](deployment/RAILWAY.md) | **Start here** - Current production setup |
+| [Deployment Overview](deployment/DEPLOYMENT.md) | Legacy deployment options |
+| [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) | Legacy Docker deployment |
 | [Kubernetes (Kind/K3s)](deployment/kubernetes/KUBERNETES.md) | Alternative K8s deployment |
 
 ### Operations
 | Document | Description |
 |----------|-------------|
 | [Troubleshooting](operations/TROUBLESHOOTING.md) | Common issues, debugging, recovery |
-| [AWS Troubleshooting](deployment/aws/AWS_TROUBLESHOOTING.md) | AWS-specific issues |
 | [Security Checklist](operations/SECURITY_CHECKLIST.md) | Production security hardening |
 
 ### Reference
@@ -57,12 +54,11 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 3. Run `make dev` and visit http://localhost:3000
 
 ### I want to deploy HRAS in production
-**Current production uses AWS Amplify + Hetzner:**
-1. Review [Deployment Overview](deployment/DEPLOYMENT.md#hetzner-production-deployment)
-2. Deploy backend: [Deployment Overview](deployment/DEPLOYMENT.md#hetzner-production-deployment)
-3. Deploy frontend: [Amplify Deployment](deployment/aws/AMPLIFY_DEPLOYMENT.md)
-4. Set up monitoring: [Monitoring Setup](deployment/aws/MONITORING_SETUP.md)
-5. Verify: [Troubleshooting](operations/TROUBLESHOOTING.md)
+**Production runs on Railway and deploys on push to `main`.**
+1. Read [Railway Deployment](deployment/RAILWAY.md)
+2. Set the required service variables
+3. Push to `main` - Railway builds and deploys both services
+4. Verify: [Troubleshooting](operations/TROUBLESHOOTING.md)
 
 ### I want to contribute code
 1. Read [Development Setup](development/DEVELOPMENT.md)
@@ -77,25 +73,23 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 ## Current Production Architecture
 
 ```
-AWS Amplify (Frontend)
-  https://hras.owezzy.tech
+Railway (Frontend)
+  https://hras.owenadirah.com
         ↓ HTTPS API calls
-Hetzner (Backend)
-  https://hetzner-api.hras.owezzy.tech
-  • Caddy reverse proxy (Let's Encrypt TLS)
+Railway (Backend)
+  https://backend-production-f15e.up.railway.app
   • FastAPI backend (Docker)
-  • PostgreSQL database
-  • Ollama local LLM
-  • Prometheus + Grafana (SSH tunnel)
+  • ChromaDB on a persistent volume
+  • DeepSeek chat + Cloudflare Workers AI embeddings
+  • LangSmith tracing
 ```
 
 **Production URLs:**
-- Frontend: https://hras.owezzy.tech
-- API: https://hetzner-api.hras.owezzy.tech
-- API Docs: https://hetzner-api.hras.owezzy.tech/docs
-- Monitoring: SSH tunnel only (secure)
+- Frontend: https://hras.owenadirah.com
+- API: https://backend-production-f15e.up.railway.app
+- API Docs: https://backend-production-f15e.up.railway.app/docs
 
-**Monthly Cost: ~$10-20** (Hetzner + Amplify free tier)
+**Monthly Cost:** usage-based (Railway + per-token LLM and embedding calls)
 
 ---
 
