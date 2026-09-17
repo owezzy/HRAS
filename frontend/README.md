@@ -89,7 +89,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ### Production (.env.production)
 ```env
-NEXT_PUBLIC_API_URL=https://hetzner-api.hras.owezzy.tech
+NEXT_PUBLIC_API_URL=https://backend-production-f15e.up.railway.app
 ```
 
 ## Code Style
@@ -229,11 +229,11 @@ function ChatInput() {
 
 ## Production Deployment
 
-The frontend is deployed to AWS Amplify with automatic builds on push to main branch.
+The frontend is deployed on Railway, which builds and deploys on push to `main`.
 
-**Production URL**: https://hras.owezzy.tech
+**Production URL**: https://hras.owenadirah.com
 
-See [Amplify Deployment Guide](../docs/deployment/aws/AMPLIFY_DEPLOYMENT.md) for details.
+Set `AUTH_SECRET` and the `NEXT_PUBLIC_*` variables as Railway service variables.
 
 ## Development Tips
 
