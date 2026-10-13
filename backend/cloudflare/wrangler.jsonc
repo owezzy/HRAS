@@ -1,0 +1,38 @@
+{
+	// HRAS FastAPI backend as a Cloudflare Container behind a Worker.
+	// Deploy from this directory: npm ci && npx wrangler deploy
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "hras-backend",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-09-01",
+	"observability": { "enabled": true },
+	"routes": [{ "pattern": "hras-api.owenadirah.com", "custom_domain": true }],
+	"containers": [
+		{
+			"class_name": "HrasBackend",
+			"image": "../Dockerfile",
+			"image_build_context": "..",
+			"instance_type": "basic",
+			"max_instances": 1
+		}
+	],
+	"durable_objects": {
+		"bindings": [{ "name": "HRAS_BACKEND", "class_name": "HrasBackend" }]
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["HrasBackend"] }],
+	// Non-secret settings. Secrets (wrangler secret put): LLM_API_KEY,
+	// CLOUDFLARE_API_TOKEN (Vectorize Edit + Workers AI Read), AUTH token for
+	// embeddings defaults to CLOUDFLARE_API_TOKEN.
+	"vars": {
+		"APP_ENV": "production",
+		"DOCS_ENABLED": "true",
+		"LLM_PROVIDER": "deepseek",
+		"LLM_MODEL": "deepseek-flash",
+		"EMBEDDING_MODEL": "@cf/baai/bge-small-en-v1.5",
+		"VECTOR_STORE_BACKEND": "vectorize",
+		"VECTORIZE_INDEX_NAME": "hras-uhri",
+		"CLOUDFLARE_ACCOUNT_ID": "",
+		"CORS_ORIGINS": "[\"https://hras.owenadirah.com\"]",
+		"TRUSTED_HOSTS": "[\"hras-api.owenadirah.com\"]"
+	}
+}
