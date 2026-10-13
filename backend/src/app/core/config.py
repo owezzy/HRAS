@@ -1,6 +1,7 @@
 """Application configuration using pydantic-settings."""
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -127,7 +128,15 @@ class Settings(BaseSettings):
     # ==========================================================================
     # Vector Store
     # ==========================================================================
+    # "chroma" keeps vectors on local disk; "vectorize" uses Cloudflare
+    # Vectorize, for hosts without a persistent volume (Cloudflare Containers).
+    vector_store_backend: Literal["chroma", "vectorize"] = "chroma"
     chroma_persist_directory: str = "./chroma_db"
+    cloudflare_account_id: str = ""
+    cloudflare_api_token: str = ""  # needs Vectorize Edit
+    vectorize_index_name: str = "hras-uhri"
+    vectorize_api_base_url: str = "https://api.cloudflare.com/client/v4"
+    vectorize_timeout: int = 30  # seconds
 
     # ==========================================================================
     # UHRI API

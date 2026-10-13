@@ -1,4 +1,4 @@
-"""ChromaDB vector store for UHRI documents."""
+"""Vector store for UHRI documents: ChromaDB on local disk, or Cloudflare Vectorize."""
 
 import time
 
@@ -7,8 +7,10 @@ from chromadb.config import Settings as ChromaSettings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
+from langchain_core.vectorstores import VectorStore
 from langchain_openai import OpenAIEmbeddings
 
+from src.app.ai.vectorstore.vectorize import CloudflareVectorize
 from src.app.core.async_utils import run_in_thread
 from src.app.core.config import get_settings
 from src.app.core.instrumentation import record_embeddings_generated, record_vector_search_metrics
@@ -34,7 +36,7 @@ def get_embeddings() -> Embeddings:
 
 
 class VectorStoreManager:
-    """Manages the ChromaDB vector store for UHRI documents."""
+    """Manages the vector store (ChromaDB or Cloudflare Vectorize) for UHRI documents."""
 
     COLLECTION_NAME = "uhri_recommendations"
 
@@ -50,27 +52,40 @@ class VectorStoreManager:
             persist_directory: Directory to persist ChromaDB. Defaults to config value.
         """
         settings = get_settings()
+        self.backend = settings.vector_store_backend
         self.persist_directory = persist_directory or settings.chroma_persist_directory
 
         self.embeddings = embeddings or get_embeddings()
 
-        # Initialize ChromaDB client
-        self._chroma_client = chromadb.PersistentClient(
-            path=self.persist_directory,
-            settings=ChromaSettings(anonymized_telemetry=False),
-        )
+        self._chroma_client = None
+        if self.backend == "chroma":
+            self._chroma_client = chromadb.PersistentClient(
+                path=self.persist_directory,
+                settings=ChromaSettings(anonymized_telemetry=False),
+            )
 
-        self._vectorstore: Chroma | None = None
+        self._vectorstore: VectorStore | None = None
 
     @property
-    def vectorstore(self) -> Chroma:
-        """Get or create the Chroma vector store."""
+    def vectorstore(self) -> VectorStore:
+        """Get or create the configured vector store."""
         if self._vectorstore is None:
-            self._vectorstore = Chroma(
-                client=self._chroma_client,
-                collection_name=self.COLLECTION_NAME,
-                embedding_function=self.embeddings,
-            )
+            if self.backend == "vectorize":
+                settings = get_settings()
+                self._vectorstore = CloudflareVectorize(
+                    embedding=self.embeddings,
+                    account_id=settings.cloudflare_account_id,
+                    api_token=settings.cloudflare_api_token,
+                    index_name=settings.vectorize_index_name,
+                    base_url=settings.vectorize_api_base_url,
+                    timeout=settings.vectorize_timeout,
+                )
+            else:
+                self._vectorstore = Chroma(
+                    client=self._chroma_client,
+                    collection_name=self.COLLECTION_NAME,
+                    embedding_function=self.embeddings,
+                )
         return self._vectorstore
 
     def add_documents(self, documents: list[Document]) -> list[str]:
@@ -157,6 +172,8 @@ class VectorStoreManager:
         Returns:
             Dictionary with collection statistics.
         """
+        if self.backend == "vectorize":
+            return {"name": self.vectorstore.index_name, "count": self.vectorstore.count()}
         collection = self._chroma_client.get_or_create_collection(self.COLLECTION_NAME)
         return {
             "name": self.COLLECTION_NAME,
@@ -165,6 +182,9 @@ class VectorStoreManager:
 
     def clear_collection(self) -> None:
         """Clear all documents from the collection."""
+        if self.backend == "vectorize":
+            self.vectorstore.clear()
+            return
         try:
             self._chroma_client.delete_collection(self.COLLECTION_NAME)
             self._vectorstore = None

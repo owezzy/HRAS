@@ -29,26 +29,9 @@ const nextConfig: NextConfig = {
 
 	// Webpack optimizations for non-Turbopack builds
 	...(!isTurbopack && {
-		webpack: (config, { dev, isServer }) => {
-			// Optimization for production builds
-			if (!dev) {
-				config.optimization = {
-					...config.optimization,
-					// Enable parallel processing
-					minimize: true,
-					// Split chunks for better caching
-					splitChunks: {
-						chunks: 'all',
-						cacheGroups: {
-							vendor: {
-								test: /[\\/]node_modules[\\/]/,
-								name: 'vendors',
-								chunks: 'all',
-							},
-						},
-					},
-				};
-			}
+		webpack: (config) => {
+			// Next's default chunk splitting is kept: a single forced "vendors" chunk breaks
+			// chunk loading in the OpenNext Cloudflare Worker ("Unknown chunk").
 
 			// Add custom rules
 			if (config.module && config.module.rules) {
@@ -65,3 +48,9 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// Lets `next dev` read Cloudflare bindings and vars from wrangler.jsonc.
+if (process.env.NODE_ENV === 'development') {
+	void import('@opennextjs/cloudflare').then(({ initOpenNextCloudflareForDev }) => initOpenNextCloudflareForDev());
+}
+
