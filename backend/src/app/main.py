@@ -55,6 +55,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     )
 
     # Initialize vectorstore document count metric from actual store
+    seed_task: asyncio.Task[None] | None = None
     try:
         from src.app.ai.vectorstore.store import get_vector_store
 
@@ -62,14 +63,11 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         stats = vector_store.get_collection_stats()
         VECTORSTORE_DOCUMENTS.set(stats["count"])
         logger.info("vectorstore_metrics_initialized", document_count=stats["count"])
+        # Seed in the background so the port opens immediately; chat reports an empty store until it finishes.
+        if settings.auto_ingest_on_empty and stats["count"] == 0:
+            seed_task = asyncio.create_task(_seed_vector_store())
     except Exception as e:
-        stats = None
         logger.warning("vectorstore_metrics_init_failed", error=str(e))
-
-    # Seed in the background so the port opens immediately; chat reports an empty store until it finishes.
-    seed_task: asyncio.Task[None] | None = None
-    if settings.auto_ingest_on_empty and stats is not None and stats["count"] == 0:
-        seed_task = asyncio.create_task(_seed_vector_store())
 
     yield
 

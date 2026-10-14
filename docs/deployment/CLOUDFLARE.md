@@ -52,8 +52,7 @@ service directory:
 | frontend | `AUTH_SECRET` | NextAuth session secret |
 
 The other settings are `vars` in each `wrangler.jsonc`. The backend Worker
-passes only the keys listed in `FORWARDED_ENV` (`backend/cloudflare/src/index.ts`)
-to the container. Add a key there before you set a new backend variable.
+passes every var and secret to the container as an environment variable.
 
 ## Storage
 
