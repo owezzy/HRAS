@@ -128,6 +128,8 @@ class Settings(BaseSettings):
     # Vector Store
     # ==========================================================================
     chroma_persist_directory: str = "./chroma_db"
+    # Seed the sample UHRI data at startup when the collection is empty (ephemeral-disk hosts)
+    auto_ingest_on_empty: bool = False
 
     # ==========================================================================
     # UHRI API

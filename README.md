@@ -7,9 +7,9 @@ AI-powered advisory system for UN human rights officers. Uses RAG (Retrieval-Aug
 | Resource | URL |
 |----------|-----|
 | **Application** | https://hras.owenadirah.com |
-| **API** | https://backend-production-f15e.up.railway.app |
-| **API Documentation** | https://backend-production-f15e.up.railway.app/docs |
-| **Health Check** | https://backend-production-f15e.up.railway.app/health |
+| **API** | https://hras-api.owenadirah.com |
+| **API Documentation** | https://hras-api.owenadirah.com/docs |
+| **Health Check** | https://hras-api.owenadirah.com/health |
 | **Repository** | https://github.com/owezzy/HRAS |
 
 ## 📚 Onboarding Guide
@@ -30,14 +30,14 @@ AI-powered advisory system for UN human rights officers. Uses RAG (Retrieval-Aug
 | 3 | Set up local environment | Follow [Quick Start](#quick-start-local-development) below |
 | 4 | Explore Backend | [Backend README](./backend/README.md) - API, testing, agents |
 | 5 | Explore Frontend | [Frontend README](./frontend/README.md) - UI, components, styling |
-| 6 | Understand Deployment | [Deployment Guide](./docs/deployment/DEPLOYMENT.md) - Railway production setup |
+| 6 | Understand Deployment | [Cloudflare Deployment](./docs/deployment/CLOUDFLARE.md) - production setup |
 
 ### For DevOps / Operators
 
 | Task | Documentation |
 |------|---------------|
-| Deploy | Push to `main` - Railway builds and deploys automatically |
-| Configure Secrets | Set service variables in the Railway dashboard |
+| Deploy | `npm run deploy` in `backend/cloudflare` and `frontend` ([guide](./docs/deployment/CLOUDFLARE.md)) |
+| Configure Secrets | `npx wrangler secret put <NAME>` per service |
 | Troubleshoot Issues | [Troubleshooting Guide](./docs/operations/TROUBLESHOOTING.md) |
 
 ---
@@ -51,7 +51,7 @@ HRAS enables human rights officers to ask natural language questions about UN hu
 - RAG pipeline with semantic search across UHRI documents
 - Multi-agent system for retrieval, generation, and validation
 - Source attribution for every response
-- Production-ready deployment on Railway
+- Production deployment on Cloudflare Workers and Containers
 
 ## Tech Stack
 
@@ -64,7 +64,7 @@ HRAS enables human rights officers to ask natural language questions about UN hu
 | **Vector Store** | ChromaDB |
 | **Database** | PostgreSQL (production) / SQLite (development) |
 | **Monitoring** | LangSmith tracing |
-| **CI/CD** | Railway (builds from the repository on push) |
+| **Hosting** | Cloudflare Workers (frontend) + Containers (backend), deployed with Wrangler |
 
 ## Quick Start (Local Development)
 
@@ -117,7 +117,7 @@ make db-stats
 | Service | Host | Notes |
 |---------|------|-------|
 | **Frontend** | https://hras.owenadirah.com | Next.js standalone (`Dockerfile.multi-stage`), TLS via Let's Encrypt |
-| **Backend** | https://backend-production-f15e.up.railway.app | FastAPI (`Dockerfile`), ChromaDB on a persistent volume |
+| **Backend** | https://hras-api.owenadirah.com | FastAPI (`Dockerfile`), ChromaDB on a persistent volume |
 
 **Backend providers:** DeepSeek (`deepseek-flash`) for chat, Cloudflare Workers AI
 (`@cf/baai/bge-small-en-v1.5`) for embeddings, LangSmith for tracing.
@@ -140,20 +140,20 @@ Both services build from this repository on push to `main`.
 | `EMBEDDING_API_KEY` | backend | Key for that host |
 | `AUTH_SECRET` | frontend | NextAuth session secret |
 
-### CI/CD Pipeline
+### Deployment
 
-Deployment runs automatically on push to `main`:
+There is no deploy-on-push. Deploy each service with Wrangler:
 
+```bash
+cd backend/cloudflare && npm ci && npm run deploy   # needs Docker running
+cd frontend && npm ci && npm run deploy
 ```
-Railway (repository integration)
-```
 
-**Pipeline:** Railway detects the push, builds each service image, and rolls out
-the new version. A failed build leaves the previous deployment running.
+See the [Cloudflare Deployment guide](./docs/deployment/CLOUDFLARE.md).
 
 ### Monthly Cost
 
-- Railway: usage-based, no fixed server cost
+- Cloudflare: Workers Paid plan plus Container usage
 - LLM inference: pay-per-token (DeepSeek)
 - Embeddings: pay-per-token (Cloudflare Workers AI)
 - Stale `zarf/`, `nginx/`, and `docs/deployment/aws/` directories remain for
@@ -214,7 +214,7 @@ AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
 ```
 
-Production variables are set as Railway service variables.
+Production variables are `vars` in each `wrangler.jsonc`; secrets are set with `npx wrangler secret put`.
 
 ## Documentation
 

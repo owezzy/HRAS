@@ -223,3 +223,39 @@ class TestOpenAPIDocumentation:
         response = await client.get("/redoc")
 
         assert response.status_code == 200
+
+
+class TestStartupSeeding:
+    """Lifespan seeds the vector store when AUTO_INGEST_ON_EMPTY is set."""
+
+    async def _run_lifespan(self, auto_ingest: bool, count: int) -> AsyncMock:
+        import asyncio
+
+        from src.app.main import lifespan
+
+        settings = MagicMock(auto_ingest_on_empty=auto_ingest, app_env="test", is_production=False)
+        vector_store = MagicMock()
+        vector_store.get_collection_stats.return_value = {"count": count}
+        ingestion = MagicMock()
+        ingestion.ingest = AsyncMock(return_value={"documents_added": 10})
+
+        with (
+            patch("src.app.main.get_settings", return_value=settings),
+            patch("src.app.ai.vectorstore.store.get_vector_store", return_value=vector_store),
+            patch("src.app.services.chat_service.get_ingestion_service", return_value=ingestion),
+        ):
+            async with lifespan(MagicMock()):
+                await asyncio.sleep(0)
+        return ingestion.ingest
+
+    async def test_seeds_empty_store(self):
+        ingest = await self._run_lifespan(auto_ingest=True, count=0)
+        ingest.assert_awaited_once()
+
+    async def test_skips_populated_store(self):
+        ingest = await self._run_lifespan(auto_ingest=True, count=5)
+        ingest.assert_not_called()
+
+    async def test_skips_when_disabled(self):
+        ingest = await self._run_lifespan(auto_ingest=False, count=0)
+        ingest.assert_not_called()

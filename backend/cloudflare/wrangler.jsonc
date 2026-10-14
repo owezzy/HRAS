@@ -1,0 +1,47 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "hras-backend",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-01",
+	"routes": [{ "pattern": "hras-api.owenadirah.com", "custom_domain": true }],
+	"observability": {
+		"enabled": true
+	},
+	"containers": [
+		{
+			"class_name": "Backend",
+			"image": "../Dockerfile",
+			"instance_type": "standard-1",
+			"max_instances": 1
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "Backend",
+				"name": "BACKEND"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"new_sqlite_classes": ["Backend"],
+			"tag": "v1"
+		}
+	],
+	// Secrets (`npx wrangler secret put <NAME>`): LLM_API_KEY, EMBEDDING_API_KEY, EMBEDDING_BASE_URL, LANGSMITH_API_KEY
+	"vars": {
+		"APP_ENV": "production",
+		"AUTO_INGEST_ON_EMPTY": "true",
+		"CORS_ORIGINS": "[\"https://hras.owenadirah.com\"]",
+		"DOCS_ENABLED": "true",
+		"EMBEDDING_MODEL": "@cf/baai/bge-small-en-v1.5",
+		"LANGSMITH_ENDPOINT": "https://api.smith.langchain.com",
+		"LANGSMITH_PROJECT": "hras-development",
+		"LLM_MODEL": "deepseek-flash",
+		"LLM_PROVIDER": "deepseek",
+		"TRUSTED_HOSTS": "[\"hras-api.owenadirah.com\"]",
+		"USE_ASYNC_TOOLS": "true",
+		"USE_LANGSMITH_TRACING": "true"
+	}
+}

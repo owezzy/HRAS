@@ -28,7 +28,8 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 ### Deployment
 | Document | Description |
 |----------|-------------|
-| [Railway Deployment](deployment/RAILWAY.md) | **Start here** - Current production setup |
+| [Cloudflare Deployment](deployment/CLOUDFLARE.md) | **Start here** - Current production setup |
+| [Railway Deployment](deployment/RAILWAY.md) | Legacy (retired) Railway setup |
 | [Deployment Overview](deployment/DEPLOYMENT.md) | Legacy deployment options |
 | [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) | Legacy Docker deployment |
 | [Kubernetes (Kind/K3s)](deployment/kubernetes/KUBERNETES.md) | Alternative K8s deployment |
@@ -54,10 +55,10 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 3. Run `make dev` and visit http://localhost:3000
 
 ### I want to deploy HRAS in production
-**Production runs on Railway and deploys on push to `main`.**
-1. Read [Railway Deployment](deployment/RAILWAY.md)
-2. Set the required service variables
-3. Push to `main` - Railway builds and deploys both services
+**Production runs on Cloudflare (Workers + Containers) and deploys with Wrangler.**
+1. Read [Cloudflare Deployment](deployment/CLOUDFLARE.md)
+2. Set the required secrets with `npx wrangler secret put`
+3. Run `npm run deploy` in `backend/cloudflare` and `frontend`
 4. Verify: [Troubleshooting](operations/TROUBLESHOOTING.md)
 
 ### I want to contribute code
@@ -73,23 +74,23 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 ## Current Production Architecture
 
 ```
-Railway (Frontend)
+Cloudflare Worker (Frontend, OpenNext)
   https://hras.owenadirah.com
         ↓ HTTPS API calls
-Railway (Backend)
-  https://backend-production-f15e.up.railway.app
+Cloudflare Worker + Container (Backend)
+  https://hras-api.owenadirah.com
   • FastAPI backend (Docker)
-  • ChromaDB on a persistent volume
+  • ChromaDB on ephemeral disk, seeded on cold start
   • DeepSeek chat + Cloudflare Workers AI embeddings
   • LangSmith tracing
 ```
 
 **Production URLs:**
 - Frontend: https://hras.owenadirah.com
-- API: https://backend-production-f15e.up.railway.app
-- API Docs: https://backend-production-f15e.up.railway.app/docs
+- API: https://hras-api.owenadirah.com
+- API Docs: https://hras-api.owenadirah.com/docs
 
-**Monthly Cost:** usage-based (Railway + per-token LLM and embedding calls)
+**Monthly Cost:** usage-based (Cloudflare Workers Paid + per-token LLM and embedding calls)
 
 ---
 

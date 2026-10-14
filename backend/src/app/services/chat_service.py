@@ -10,6 +10,7 @@ from src.app.ai.agents.graph import run_agent_workflow, run_agent_workflow_with_
 from src.app.ai.chains.rag_chain import RAGChain, get_rag_chain
 from src.app.ai.vectorstore.document_loader import UHRIDocumentLoader
 from src.app.ai.vectorstore.store import VectorStoreManager, get_vector_store
+from src.app.core.async_utils import run_in_thread
 from src.app.core.config import get_settings
 
 # Check if tracing is available
@@ -218,7 +219,7 @@ class DataIngestionService:
 
             documents = await self.loader.load()
 
-            doc_ids = self.vector_store.add_documents(documents)
+            doc_ids = await run_in_thread(self.vector_store.add_documents, documents)
 
             stats = self.vector_store.get_collection_stats()
 

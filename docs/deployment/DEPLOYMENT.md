@@ -1,6 +1,7 @@
 # HRAS Deployment Guide
 
-> **Superseded.** Production now runs on Railway — see [RAILWAY.md](./RAILWAY.md).
+> **Retired.** Production now runs on Cloudflare — see [CLOUDFLARE.md](./CLOUDFLARE.md).
+
 > This document is retained for local development, Docker and Kubernetes options.
 
 Complete guide for deploying HRAS in local development, Docker, Kubernetes, and AWS production environments.
@@ -19,12 +20,12 @@ HRAS can be deployed in multiple configurations:
 
 ## Current Production Architecture
 
-**HRAS is deployed on Railway — see [RAILWAY.md](./RAILWAY.md).**
+**HRAS is deployed on Cloudflare — see [CLOUDFLARE.md](./CLOUDFLARE.md).**
 
 ```
-Frontend: Railway (Next.js standalone)
+Frontend: Cloudflare Worker (Next.js via OpenNext)
   ↓ HTTPS
-Backend: Railway (FastAPI + Docker)
+Backend: Cloudflare Container (FastAPI + Docker)
   • FastAPI backend in Docker
   • ChromaDB on a persistent volume
   • DeepSeek chat + Cloudflare Workers AI embeddings

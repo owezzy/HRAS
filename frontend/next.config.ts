@@ -30,8 +30,8 @@ const nextConfig: NextConfig = {
 	// Webpack optimizations for non-Turbopack builds
 	...(!isTurbopack && {
 		webpack: (config, { dev, isServer }) => {
-			// Optimization for production builds
-			if (!dev) {
+			// Client-only: a custom server chunk layout breaks chunk loading on Cloudflare Workers
+			if (!dev && !isServer) {
 				config.optimization = {
 					...config.optimization,
 					// Enable parallel processing

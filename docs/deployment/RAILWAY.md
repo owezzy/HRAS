@@ -1,5 +1,7 @@
 # Railway Deployment
 
+> **Retired.** Production now runs on Cloudflare — see [CLOUDFLARE.md](./CLOUDFLARE.md).
+
 Both services run on Railway and build from this repository.
 
 ## Services

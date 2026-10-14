@@ -64,3 +64,8 @@ amplifytools.xcconfig
 
 # Local Netlify folder
 .netlify
+
+# cloudflare
+/.open-next/
+/.wrangler/
+.dev.vars*
