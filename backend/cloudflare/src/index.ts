@@ -1,41 +1,10 @@
 import { Container, getContainer } from '@cloudflare/containers';
 
-interface Env {
-	HRAS_BACKEND: DurableObjectNamespace<HrasBackend>;
-	[key: string]: unknown;
-}
-
-// Settings the FastAPI app reads from its environment (see backend/src/app/core/config.py).
-const PASSTHROUGH = [
-	'APP_ENV',
-	'DOCS_ENABLED',
-	'LLM_PROVIDER',
-	'LLM_MODEL',
-	'LLM_BASE_URL',
-	'LLM_API_KEY',
-	'EMBEDDING_MODEL',
-	'EMBEDDING_BASE_URL',
-	'EMBEDDING_API_KEY',
-	'VECTOR_STORE_BACKEND',
-	'VECTORIZE_INDEX_NAME',
-	'CLOUDFLARE_ACCOUNT_ID',
-	'CLOUDFLARE_API_TOKEN',
-	'CORS_ORIGINS',
-	'TRUSTED_HOSTS',
-	'LANGSMITH_API_KEY',
-	'USE_LANGSMITH_TRACING'
-];
-
+// Every Worker var and secret is a string; bindings (like BACKEND) are objects and stay behind.
 function containerEnv(env: Env): Record<string, string> {
-	const vars: Record<string, string> = { PORT: '8000' };
-
-	for (const key of PASSTHROUGH) {
-		const value = env[key];
-
-		if (typeof value === 'string' && value !== '') {
-			vars[key] = value;
-		}
-	}
+	const vars = Object.fromEntries(
+		Object.entries(env).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1] !== '')
+	);
 
 	// Embeddings come from Workers AI's OpenAI-compatible endpoint unless overridden.
 	if (!vars.EMBEDDING_BASE_URL && vars.CLOUDFLARE_ACCOUNT_ID) {
@@ -49,20 +18,19 @@ function containerEnv(env: Env): Record<string, string> {
 	return vars;
 }
 
-export class HrasBackend extends Container<Env> {
+export class Backend extends Container<Env> {
 	defaultPort = 8000;
-	// Sleep after 10 idle minutes so an unused demo costs almost nothing.
-	sleepAfter = '10m';
+	sleepAfter = '30m';
 
-	constructor(ctx: DurableObjectState<Env>, env: Env) {
+	constructor(ctx: DurableObjectState<{}>, env: Env) {
 		super(ctx, env);
 		this.envVars = containerEnv(env);
 	}
 }
 
 export default {
+	// One named instance: the vector store lives on that container's disk, so every request must reach it.
 	async fetch(request: Request, env: Env): Promise<Response> {
-		// One instance: the app keeps in-memory chat state, so requests must not be spread.
-		return getContainer(env.HRAS_BACKEND).fetch(request);
+		return getContainer(env.BACKEND).fetch(request);
 	}
-} satisfies ExportedHandler<Env>;
+};

@@ -1,6 +1,6 @@
 # Railway Deployment
 
-> Superseded by [CLOUDFLARE.md](CLOUDFLARE.md). Railway stopped serving both services in October 2026.
+> **Retired.** Production now runs on Cloudflare — see [CLOUDFLARE.md](./CLOUDFLARE.md).
 
 Both services run on Railway and build from this repository.
 

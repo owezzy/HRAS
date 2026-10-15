@@ -51,7 +51,8 @@ docs/
 - [API Reference](reference/API.md) - REST endpoints
 
   ### I'm an Operator/DevOps
-  - **[Railway Deployment](deployment/RAILWAY.md)** - **Start here** for the current setup
+  - **[Cloudflare Deployment](deployment/CLOUDFLARE.md)** - **Start here** for the current setup
+  - [Railway Deployment](deployment/RAILWAY.md) - Legacy (retired)
   - [Deployment Overview](deployment/DEPLOYMENT.md) - Legacy deployment options
   - [EC2 Guide](deployment/aws/EC2_DEPLOYMENT.md) - Legacy AWS backend guide
   - [Docker Compose](deployment/docker/DOCKER-COMPOSE-EC2-DEPLOYMENT.md) - Legacy Docker deployment
@@ -88,19 +89,19 @@ docker compose -f zarf/docker/compose/docker-compose.yml --profile full up -d
 
 ## Production Deployment
 
-**Production runs on Railway and deploys automatically on push to `main`.**
+**Production runs on Cloudflare and deploys with Wrangler.**
 
-- **Backend**: FastAPI container, ChromaDB on a persistent volume
-- **Frontend**: Next.js standalone container
+- **Backend**: FastAPI in a Cloudflare Container, ChromaDB seeded on cold start
+- **Frontend**: Next.js on a Cloudflare Worker (OpenNext)
 - **AI**: DeepSeek for chat, Cloudflare Workers AI for embeddings
 - **Observability**: LangSmith tracing
 
-**See:** [Railway Deployment Guide](deployment/RAILWAY.md)
+**See:** [Cloudflare Deployment Guide](deployment/CLOUDFLARE.md)
 
 **Production URLs:**
 
 - Frontend: https://hras.owenadirah.com
-- API: https://backend-production-f15e.up.railway.app
+- API: https://hras-api.owenadirah.com
 
 ## Getting Help
 

@@ -137,6 +137,8 @@ class Settings(BaseSettings):
     vectorize_index_name: str = "hras-uhri"
     vectorize_api_base_url: str = "https://api.cloudflare.com/client/v4"
     vectorize_timeout: int = 30  # seconds
+    # Seed the sample UHRI data at startup when the collection is empty (ephemeral-disk hosts)
+    auto_ingest_on_empty: bool = False
 
     # ==========================================================================
     # UHRI API

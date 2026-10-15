@@ -1,5 +1,6 @@
 """HRAS FastAPI Application."""
 
+import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -17,6 +18,16 @@ from src.app.middleware.metrics import PrometheusMiddleware
 from src.app.middleware.security import SecurityHeadersMiddleware
 
 logger = get_logger(__name__)
+
+
+async def _seed_vector_store() -> None:
+    from src.app.services.chat_service import get_ingestion_service
+
+    try:
+        result = await get_ingestion_service().ingest()
+        logger.info("vectorstore_seeded", documents_added=result["documents_added"])
+    except Exception as e:
+        logger.error("vectorstore_seed_failed", error=str(e))
 
 
 @asynccontextmanager
@@ -44,6 +55,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     )
 
     # Initialize vectorstore document count metric from actual store
+    seed_task: asyncio.Task[None] | None = None
     try:
         from src.app.ai.vectorstore.store import get_vector_store
 
@@ -51,10 +63,16 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         stats = vector_store.get_collection_stats()
         VECTORSTORE_DOCUMENTS.set(stats["count"])
         logger.info("vectorstore_metrics_initialized", document_count=stats["count"])
+        # Seed in the background so the port opens immediately; chat reports an empty store until it finishes.
+        if settings.auto_ingest_on_empty and stats["count"] == 0:
+            seed_task = asyncio.create_task(_seed_vector_store())
     except Exception as e:
         logger.warning("vectorstore_metrics_init_failed", error=str(e))
 
     yield
+
+    if seed_task is not None and not seed_task.done():
+        seed_task.cancel()
 
     logger.info("application_shutdown")
 

@@ -1,20 +1,26 @@
 {
-	// HRAS frontend on Cloudflare Workers via OpenNext.
-	// Build and deploy from this directory: npm run deploy
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "hras-frontend",
 	"main": ".open-next/worker.js",
-	"compatibility_date": "2026-09-01",
+	"compatibility_date": "2026-10-01",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
 	},
-	"services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "hras-frontend" }],
 	"routes": [{ "pattern": "hras.owenadirah.com", "custom_domain": true }],
-	"observability": { "enabled": true },
-	// Secret (wrangler secret put): AUTH_SECRET
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "hras-frontend"
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	// AUTH_SECRET is a secret: `npx wrangler secret put AUTH_SECRET`
 	"vars": {
+		"AUTH_URL": "https://hras.owenadirah.com",
 		"NEXT_PUBLIC_BASE_URL": "https://hras.owenadirah.com"
 	}
 }
