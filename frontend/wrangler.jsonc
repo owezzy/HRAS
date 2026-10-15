@@ -20,6 +20,7 @@
 	},
 	// AUTH_SECRET is a secret: `npx wrangler secret put AUTH_SECRET`
 	"vars": {
-		"AUTH_URL": "https://hras.owenadirah.com"
+		"AUTH_URL": "https://hras.owenadirah.com",
+		"NEXT_PUBLIC_BASE_URL": "https://hras.owenadirah.com"
 	}
 }

@@ -65,6 +65,38 @@ lost when the container stops or redeploys.
   `POST /api/v1/admin/ingest` is lost on the next stop.
 - **Conversations:** SQLite under `/app`, which is also ephemeral.
 
+### Optional: persistent vectors with Vectorize
+
+To keep ingested data across restarts, store vectors in Cloudflare Vectorize
+instead of ChromaDB. Create the index and the metadata indexes the agent tools
+filter on:
+
+```bash
+cd backend/cloudflare
+npx wrangler vectorize create hras-uhri --dimensions=384 --metric=cosine
+for p in country mechanism theme; do
+  npx wrangler vectorize create-metadata-index hras-uhri --property-name=$p --type=string
+done
+```
+
+Create an API token with **Vectorize: Edit** and **Workers AI: Read** and set it
+with `npx wrangler secret put CLOUDFLARE_API_TOKEN`. In the backend
+`wrangler.jsonc` `vars`, set `VECTOR_STORE_BACKEND` to `vectorize` and
+`CLOUDFLARE_ACCOUNT_ID` to your account ID. When `EMBEDDING_BASE_URL` and
+`EMBEDDING_API_KEY` are not set, the Worker derives them from those two values
+(Workers AI).
+
+The startup seed then runs only while the index is empty. Vector IDs are
+derived from the document text, so a repeated ingest overwrites instead of
+duplicating.
+
+## Health
+
+```
+GET /health           liveness, no dependency checks
+GET /health/detailed  reports the active chat, embedding and tracing providers
+```
+
 ## Custom domains
 
 Wrangler creates the DNS record for each custom domain. It refuses when the
