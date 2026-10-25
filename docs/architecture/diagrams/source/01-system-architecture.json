@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "HRAS system architecture",
+    "locale": "en",
+    "output": "docs/architecture/diagrams/01-system-architecture.html",
+    "quality_profile": "showcase",
+    "repository": { "url": "https://github.com/owezzy/HRAS.git", "provider": "github", "link_mode": "web", "revision": "84e983f2e40c0361ceaf8571e3a3b08080ce1d11" }
+  },
+  "components": [
+    { "id": "browser", "type": "external", "label": "Officer's browser", "sublabel": "React chat UI", "pos": [40, 220], "size": [160, 64],
+      "sources": [{ "path": "frontend/src/app/(control-panel)/chat/hooks/useChatMutation.ts", "line": 4, "end_line": 31, "label": "fetch /api/v1/chat" }] },
+    { "id": "frontend", "type": "frontend", "label": "hras-frontend", "sublabel": "Next.js 15 on OpenNext Worker", "pos": [40, 40], "size": [160, 64],
+      "sources": [{ "path": "frontend/wrangler.jsonc", "line": 1, "end_line": 26 }] },
+    { "id": "edge", "type": "cloud", "label": "hras-backend Worker", "sublabel": "forwards to one container", "pos": [340, 220], "size": [160, 64],
+      "sources": [{ "path": "backend/cloudflare/src/index.ts", "line": 21, "end_line": 36 }, { "path": "backend/cloudflare/wrangler.jsonc", "line": 1, "end_line": 47 }] },
+    { "id": "api", "type": "backend", "label": "FastAPI container", "sublabel": "ChatService :8000", "pos": [640, 220], "size": [160, 64],
+      "sources": [{ "path": "backend/src/app/main.py", "line": 80, "end_line": 128 }, { "path": "backend/src/app/services/chat_service.py", "line": 64, "end_line": 144 }] },
+    { "id": "agents", "type": "backend", "label": "LangGraph agents", "sublabel": "supervisor + 3 agents", "pos": [940, 220], "size": [160, 64],
+      "sources": [{ "path": "backend/src/app/ai/agents/graph.py", "line": 198, "end_line": 256 }] },
+    { "id": "llm", "type": "external", "label": "Chat LLM", "sublabel": "DeepSeek, OpenAI-compatible", "pos": [1240, 220], "size": [160, 64],
+      "sources": [{ "path": "backend/src/app/core/llm.py", "line": 9, "end_line": 27 }, { "path": "backend/src/app/core/config.py", "line": 9, "end_line": 17 }] },
+    { "id": "uhri", "type": "external", "label": "OHCHR UHRI", "sublabel": "full JSON export", "pos": [640, 40], "size": [160, 64],
+      "sources": [{ "path": "backend/src/app/ai/tools/uhri_client.py", "line": 12, "end_line": 40 }] },
+    { "id": "vectors", "type": "database", "label": "Vector store", "sublabel": "ChromaDB or Vectorize", "pos": [940, 400], "size": [160, 64],
+      "sources": [{ "path": "backend/src/app/ai/vectorstore/store.py", "line": 38, "end_line": 89 }, { "path": "backend/src/app/ai/tools/agent_tools.py", "line": 9, "end_line": 66 }] },
+    { "id": "embed", "type": "cloud", "label": "Embeddings", "sublabel": "Workers AI bge-small", "pos": [1240, 400], "size": [160, 64],
+      "sources": [{ "path": "backend/src/app/ai/vectorstore/store.py", "line": 19, "end_line": 35 }, { "path": "backend/cloudflare/src/index.ts", "line": 9, "end_line": 17 }] }
+  ],
+  "connections": [
+    { "id": "load-ui", "from": "browser", "to": "frontend", "label": "load app", "fromSide": "top", "toSide": "bottom" },
+    { "id": "post-chat", "from": "browser", "to": "edge", "label": "POST /api/v1/chat", "variant": "emphasis" },
+    { "id": "forward", "from": "edge", "to": "api", "label": "forward request", "variant": "emphasis" },
+    { "id": "run-graph", "from": "api", "to": "agents", "label": "run workflow", "variant": "emphasis" },
+    { "id": "complete", "from": "agents", "to": "llm", "label": "chat completion", "variant": "emphasis" },
+    { "id": "search", "from": "agents", "to": "vectors", "label": "similarity search", "fromSide": "bottom", "toSide": "top" },
+    { "id": "embed-text", "from": "vectors", "to": "embed", "label": "embed text" },
+    { "id": "fetch-uhri", "from": "api", "to": "uhri", "label": "full export", "variant": "dashed", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Hosting", "items": ["Both services run on Cloudflare and deploy with Wrangler", "The backend Worker keeps one container instance; it sleeps after 30 minutes idle"] },
+    { "dot": "emerald", "title": "Request path", "items": ["The browser calls the API directly with NEXT_PUBLIC_API_URL", "If the agent graph fails, ChatService falls back to the single RAG chain"] },
+    { "dot": "amber", "title": "Data", "items": ["On a cold start with an empty store, AUTO_INGEST_ON_EMPTY seeds sample UHRI data", "The full UHRI export is used only when use_sample is false", "Chat history stays in memory; the conversations API needs USE_POSTGRES"] }
+  ]
+}

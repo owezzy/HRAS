@@ -1,0 +1,232 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Multi-agent workflow (LangGraph)",
+    "locale": "en",
+    "output": "docs/architecture/diagrams/04-multi-agent-workflow.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/owezzy/HRAS.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "84e983f2e40c0361ceaf8571e3a3b08080ce1d11"
+    }
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "ChatService"
+    },
+    {
+      "id": "research-lane",
+      "label": "Research"
+    },
+    {
+      "id": "route",
+      "label": "Orchestration"
+    },
+    {
+      "id": "comparison",
+      "label": "Comparison"
+    }
+  ],
+  "phases": [
+    {
+      "id": "classify",
+      "label": "Classify",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "gather",
+      "label": "Gather evidence",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "answer-phase",
+      "label": "Answer",
+      "fromCol": 3,
+      "toCol": 4
+    }
+  ],
+  "mainPath": [
+    "question",
+    "supervisor",
+    "research",
+    "advisory",
+    "answer"
+  ],
+  "nodes": [
+    {
+      "id": "question",
+      "lane": "entry",
+      "col": 0,
+      "type": "external",
+      "label": "Question",
+      "sublabel": "AgentState.question",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/graph.py",
+          "line": 268,
+          "end_line": 280
+        }
+      ]
+    },
+    {
+      "id": "supervisor",
+      "lane": "route",
+      "col": 1,
+      "type": "backend",
+      "label": "Supervisor",
+      "sublabel": "LLM sets query_type",
+      "tag": "unparsed \u2192 research",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/graph.py",
+          "line": 142,
+          "end_line": 195
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "lane": "research-lane",
+      "col": 2,
+      "type": "backend",
+      "label": "Research",
+      "sublabel": "vector search k=8",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/nodes.py",
+          "line": 49,
+          "end_line": 134
+        }
+      ],
+      "tag": "+ per-country search"
+    },
+    {
+      "id": "compare",
+      "lane": "comparison",
+      "col": 2,
+      "type": "backend",
+      "label": "Compare",
+      "sublabel": "compare_countries",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/nodes.py",
+          "line": 204,
+          "end_line": 258
+        }
+      ],
+      "tag": "5 records per country"
+    },
+    {
+      "id": "advisory",
+      "lane": "route",
+      "col": 3,
+      "type": "backend",
+      "label": "Advisory",
+      "sublabel": "final UN-style answer",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/nodes.py",
+          "line": 137,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "answer",
+      "lane": "entry",
+      "col": 4,
+      "type": "frontend",
+      "label": "Answer + sources",
+      "sublabel": "final_response",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/graph.py",
+          "line": 296,
+          "end_line": 301
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "ask",
+      "from": "question",
+      "to": "supervisor",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-research",
+      "from": "supervisor",
+      "to": "research",
+      "label": "research",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-compare",
+      "from": "supervisor",
+      "to": "compare",
+      "label": "compare",
+      "role": "branch"
+    },
+    {
+      "id": "to-advisory",
+      "from": "supervisor",
+      "to": "advisory",
+      "label": "advisory",
+      "role": "branch",
+      "variant": "dashed"
+    },
+    {
+      "id": "summary",
+      "from": "research",
+      "to": "advisory",
+      "label": "summary",
+      "variant": "emphasis"
+    },
+    {
+      "id": "comparison",
+      "from": "compare",
+      "to": "advisory",
+      "label": "comparison"
+    },
+    {
+      "id": "final",
+      "from": "advisory",
+      "to": "answer",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Routing",
+      "items": [
+        "requires_comparison or query_type compare \u2192 Compare",
+        "advisory \u2192 Advisory directly, with no retrieval",
+        "Anything else, or an unparsable reply \u2192 Research"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Retrieval",
+      "items": [
+        "Research and Compare call the agent tools, which query the vector store with country, mechanism or theme filters",
+        "Research keeps the top 10 records as citations"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Fallback",
+      "items": [
+        "If the graph raises, ChatService answers with the single RAG chain"
+      ]
+    }
+  ]
+}

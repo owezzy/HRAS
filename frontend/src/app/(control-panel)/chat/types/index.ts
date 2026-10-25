@@ -6,10 +6,13 @@ export interface ChatMessage {
 }
 
 export interface ChatSource {
-	title: string;
-	url?: string;
+	country: string;
+	mechanism: string;
+	year: string;
+	theme: string;
+	status: string;
 	snippet: string;
-	metadata: Record<string, unknown>;
+	relevance_score?: number;
 }
 
 export interface ChatRequest {

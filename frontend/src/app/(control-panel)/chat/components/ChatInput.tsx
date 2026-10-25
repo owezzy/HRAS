@@ -10,11 +10,12 @@ import { useTranslation } from 'react-i18next';
 interface ChatInputProps {
 	onSend: (message: string) => void;
 	disabled?: boolean;
+	initialMessage?: string;
 }
 
-function ChatInput({ onSend, disabled = false }: ChatInputProps) {
+function ChatInput({ onSend, disabled = false, initialMessage = '' }: ChatInputProps) {
 	const { t } = useTranslation('chatPage');
-	const [message, setMessage] = useState('');
+	const [message, setMessage] = useState(initialMessage);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();

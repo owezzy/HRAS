@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "UHRI ingestion pipeline",
+    "locale": "en",
+    "output": "docs/architecture/diagrams/05-data-ingestion-pipeline.html",
+    "quality_profile": "showcase",
+    "repository": { "url": "https://github.com/owezzy/HRAS.git", "provider": "github", "link_mode": "web", "revision": "84e983f2e40c0361ceaf8571e3a3b08080ce1d11" }
+  },
+  "stages": [ { "label": "Sources" }, { "label": "Load" }, { "label": "Embed" }, { "label": "Store" }, { "label": "Use" } ],
+  "nodes": [
+    { "id": "sample", "type": "backend", "label": "Sample data", "sublabel": "SAMPLE_UHRI_DATA", "stage": 0, "row": 0, "tag": "default",
+      "sources": [{ "path": "backend/src/app/ai/tools/uhri_client.py", "line": 58, "end_line": 169 }] },
+    { "id": "uhri", "type": "external", "label": "OHCHR UHRI", "sublabel": "full JSON export", "stage": 0, "row": 2, "tag": "use_sample=false",
+      "sources": [{ "path": "backend/src/app/ai/tools/uhri_client.py", "line": 12, "end_line": 40 }] },
+    { "id": "loader", "type": "backend", "label": "Document loader", "sublabel": "one Document per record", "stage": 1, "row": 1,
+      "sources": [{ "path": "backend/src/app/ai/vectorstore/document_loader.py", "line": 24, "end_line": 145 }] },
+    { "id": "embed", "type": "cloud", "label": "Embeddings", "sublabel": "OpenAI-compatible API", "stage": 2, "row": 0,
+      "sources": [{ "path": "backend/src/app/ai/vectorstore/store.py", "line": 19, "end_line": 35 }] },
+    { "id": "store", "type": "database", "label": "Vector store", "sublabel": "ChromaDB or Vectorize", "stage": 3, "row": 1, "tag": "uhri_recommendations",
+      "sources": [{ "path": "backend/src/app/ai/vectorstore/store.py", "line": 38, "end_line": 101 }, { "path": "backend/src/app/ai/vectorstore/vectorize.py", "line": 83, "end_line": 115 }] },
+    { "id": "tools", "type": "backend", "label": "Agent tools", "sublabel": "filtered search", "stage": 4, "row": 0,
+      "sources": [{ "path": "backend/src/app/ai/tools/agent_tools.py", "line": 9, "end_line": 66 }] },
+    { "id": "stats", "type": "backend", "label": "Stats + chat guard", "sublabel": "document count", "stage": 4, "row": 2,
+      "sources": [{ "path": "backend/src/app/api/routes/admin.py", "line": 61, "end_line": 73 }, { "path": "backend/src/app/services/chat_service.py", "line": 75, "end_line": 87 }] }
+  ],
+  "flows": [
+    { "id": "sample-records", "from": "sample", "to": "loader", "label": "sample records", "variant": "emphasis" },
+    { "id": "export-records", "from": "uhri", "to": "loader", "label": "export records" },
+    { "id": "doc-text", "from": "loader", "to": "embed", "label": "document text", "variant": "emphasis" },
+    { "id": "doc-meta", "from": "loader", "to": "store", "label": "metadata" },
+    { "id": "vectors", "from": "embed", "to": "store", "label": "vectors", "variant": "emphasis" },
+    { "id": "search", "from": "store", "to": "tools", "label": "top-k records" },
+    { "id": "count", "from": "store", "to": "stats", "label": "count" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Triggers", "items": ["POST /api/v1/admin/ingest, optionally with clear_existing", "On startup when AUTO_INGEST_ON_EMPTY is true and the store is empty"] },
+    { "dot": "amber", "title": "Metadata kept", "items": ["country, mechanism, cycle, year, theme, status, recommending_state", "Records are not chunked: each one becomes a single vector"] },
+    { "dot": "slate", "title": "Embedding model", "items": ["Workers AI @cf/baai/bge-small-en-v1.5 on Cloudflare (384 dimensions)", "Changing the model means a full re-ingestion"] }
+  ]
+}

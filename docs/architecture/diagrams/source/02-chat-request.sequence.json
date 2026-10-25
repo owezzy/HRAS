@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Chat request: research path",
+    "locale": "en",
+    "output": "docs/architecture/diagrams/02-chat-request-sequence.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/owezzy/HRAS.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "84e983f2e40c0361ceaf8571e3a3b08080ce1d11"
+    }
+  },
+  "participants": [
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Chat UI",
+      "sublabel": "ChatView",
+      "sources": [
+        {
+          "path": "frontend/src/app/(control-panel)/chat/components/views/ChatView.tsx",
+          "line": 47,
+          "end_line": 92
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "ChatService",
+      "sublabel": "POST /api/v1/chat",
+      "sources": [
+        {
+          "path": "backend/src/app/api/routes/chat.py",
+          "line": 35,
+          "end_line": 60
+        },
+        {
+          "path": "backend/src/app/services/chat_service.py",
+          "line": 64,
+          "end_line": 144
+        }
+      ]
+    },
+    {
+      "id": "supervisor",
+      "type": "backend",
+      "label": "Supervisor",
+      "sublabel": "classify + route",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/graph.py",
+          "line": 142,
+          "end_line": 195
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "type": "backend",
+      "label": "Research agent",
+      "sublabel": "retrieve + summarise",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/nodes.py",
+          "line": 49,
+          "end_line": 134
+        }
+      ]
+    },
+    {
+      "id": "advisory",
+      "type": "backend",
+      "label": "Advisory agent",
+      "sublabel": "final answer",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/agents/nodes.py",
+          "line": 137,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "vectors",
+      "type": "database",
+      "label": "Vector store",
+      "sublabel": "UHRI records",
+      "sources": [
+        {
+          "path": "backend/src/app/ai/tools/agent_tools.py",
+          "line": 9,
+          "end_line": 102
+        }
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "Chat LLM",
+      "sublabel": "DeepSeek",
+      "sources": [
+        {
+          "path": "backend/src/app/core/llm.py",
+          "line": 9,
+          "end_line": 27
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 276,
+      "label": "Store check"
+    },
+    {
+      "from": 305,
+      "to": 423,
+      "label": "Classify"
+    },
+    {
+      "from": 460,
+      "to": 616,
+      "label": "Research"
+    },
+    {
+      "from": 618,
+      "to": 760,
+      "label": "Advise + reply"
+    }
+  ],
+  "messages": [
+    {
+      "id": "post-chat",
+      "from": "ui",
+      "to": "api",
+      "y": 172,
+      "label": "POST /api/v1/chat",
+      "variant": "emphasis"
+    },
+    {
+      "id": "count",
+      "from": "api",
+      "to": "vectors",
+      "y": 200,
+      "label": "count documents"
+    },
+    {
+      "id": "count-result",
+      "from": "vectors",
+      "to": "api",
+      "y": 228,
+      "label": "count > 0",
+      "variant": "return",
+      "note": "Empty store: the reply asks you to run ingestion."
+    },
+    {
+      "id": "run-graph",
+      "from": "api",
+      "to": "supervisor",
+      "y": 317,
+      "label": "run_agent_workflow",
+      "variant": "emphasis"
+    },
+    {
+      "id": "classify",
+      "from": "supervisor",
+      "to": "llm",
+      "y": 345,
+      "label": "classify question"
+    },
+    {
+      "id": "classified",
+      "from": "llm",
+      "to": "supervisor",
+      "y": 373,
+      "label": "query_type, countries",
+      "variant": "return",
+      "note": "compare goes to Compare; advisory skips to Advisory."
+    },
+    {
+      "id": "route",
+      "from": "supervisor",
+      "to": "research",
+      "y": 472,
+      "label": "route: research",
+      "variant": "emphasis"
+    },
+    {
+      "id": "search",
+      "from": "research",
+      "to": "vectors",
+      "y": 500,
+      "label": "search k=8 + per country"
+    },
+    {
+      "id": "docs",
+      "from": "vectors",
+      "to": "research",
+      "y": 528,
+      "label": "matching records",
+      "variant": "return"
+    },
+    {
+      "id": "summarise",
+      "from": "research",
+      "to": "llm",
+      "y": 556,
+      "label": "summarise findings"
+    },
+    {
+      "id": "summary",
+      "from": "llm",
+      "to": "research",
+      "y": 584,
+      "label": "research summary",
+      "variant": "return"
+    },
+    {
+      "id": "handoff",
+      "from": "research",
+      "to": "advisory",
+      "y": 612,
+      "label": "summary + sources",
+      "variant": "emphasis"
+    },
+    {
+      "id": "draft",
+      "from": "advisory",
+      "to": "llm",
+      "y": 640,
+      "label": "write final answer"
+    },
+    {
+      "id": "answer",
+      "from": "llm",
+      "to": "advisory",
+      "y": 668,
+      "label": "final response",
+      "variant": "return"
+    },
+    {
+      "id": "result",
+      "from": "advisory",
+      "to": "api",
+      "y": 696,
+      "label": "answer + sources",
+      "variant": "return",
+      "note": "If the agent graph raises, ChatService answers with the single RAG chain instead."
+    },
+    {
+      "id": "reply",
+      "from": "api",
+      "to": "ui",
+      "y": 752,
+      "label": "ChatResponse JSON",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 172,
+      "to": 752,
+      "type": "backend"
+    },
+    {
+      "participant": "vectors",
+      "from": 196,
+      "to": 232,
+      "type": "database"
+    },
+    {
+      "participant": "supervisor",
+      "from": 317,
+      "to": 472,
+      "type": "backend"
+    },
+    {
+      "participant": "llm",
+      "from": 341,
+      "to": 377,
+      "type": "external"
+    },
+    {
+      "participant": "research",
+      "from": 472,
+      "to": 612,
+      "type": "backend"
+    },
+    {
+      "participant": "vectors",
+      "from": 496,
+      "to": 532,
+      "type": "database"
+    },
+    {
+      "participant": "llm",
+      "from": 552,
+      "to": 588,
+      "type": "external"
+    },
+    {
+      "participant": "advisory",
+      "from": 612,
+      "to": 696,
+      "type": "backend"
+    },
+    {
+      "participant": "llm",
+      "from": 636,
+      "to": 672,
+      "type": "external"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Three LLM calls",
+      "items": [
+        "Supervisor classifies, Research summarises, Advisory writes the answer",
+        "The supervisor uses temperature 0 for a stable route"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Sources",
+      "items": [
+        "Research keeps the top 10 records as citations",
+        "Each citation carries country, mechanism, year, theme, status and a snippet"
+      ]
+    }
+  ]
+}
