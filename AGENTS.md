@@ -248,10 +248,49 @@ refactor: extract embedding logic
 test: add unit tests for advisor agent
 ```
 
-**Branch Names (git-flow):**
-```
-feature/rag-pipeline
-bugfix/auth-session-timeout
-release/v0.1.0
-hotfix/critical-fix
-```
+### Branching (trunk-based)
+
+`main` is the only long-lived branch. There is no `develop` branch.
+
+1. Create a short-lived branch from `origin/main`. Name it `<type>/<short-description>`, where the type matches the commit type: `feature/`, `fix/`, `docs/`, `refactor/` or `chore/`.
+2. Open a pull request into `main`.
+3. Squash-merge the pull request. The merge commit takes the PR title, so write the title as a commit message (`feat: ...`).
+4. Delete the branch after the merge.
+
+Urgent fixes use the same flow with a `fix/` branch, followed by a patch release.
+
+### Releases
+
+Versions follow [Semantic Versioning](https://semver.org). Before 1.0, a minor bump (`0.x.0`) marks new features or breaking changes, and a patch bump (`0.x.y`) marks fixes only. Tags have no `v` prefix (`0.3.0`), to match the existing tags.
+
+The version is the backend version. It appears in four places. Change all of them in one commit:
+
+| File | What to change |
+|------|----------------|
+| `backend/pyproject.toml` | `version` |
+| `backend/src/app/core/config.py` | `app_version` |
+| `backend/uv.lock` | Run `uv lock` in `backend/` |
+| `docs/reference/API.md` | `version` in the `/health` example |
+
+`frontend/package.json` holds the Fuse template version. Do not change it.
+
+To make a release:
+
+1. Branch `chore/release-X.Y.Z` from `origin/main`. Bump the version, then commit `chore: bump version to X.Y.Z`.
+2. Open a pull request, then squash-merge it.
+3. Tag the merge commit on `main` and push the tag:
+
+   ```bash
+   git switch main && git pull
+   git tag -a X.Y.Z -m "Tagging version X.Y.Z"
+   git push origin X.Y.Z
+   ```
+
+4. Create the GitHub release. The notes list the pull requests merged since the previous tag:
+
+   ```bash
+   gh release create X.Y.Z --title X.Y.Z --generate-notes --notes-start-tag <previous-tag>
+   ```
+
+5. Deploy. Merging does not deploy, because there is no CI deploy. Run `npm run deploy` in `backend/cloudflare/` (only if the backend changed), then in `frontend/`. See [docs/deployment/CLOUDFLARE.md](docs/deployment/CLOUDFLARE.md).
+6. Check `https://hras-api.owenadirah.com/health` reports the new version.
