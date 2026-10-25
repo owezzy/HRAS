@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "API layer: middleware and routes",
+    "locale": "en",
+    "output": "docs/architecture/diagrams/06-api-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/owezzy/HRAS.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "84e983f2e40c0361ceaf8571e3a3b08080ce1d11"
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "browser or API tool",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "frontend/src/app/(control-panel)/chat/hooks/useChatMutation.ts",
+          "line": 19,
+          "end_line": 31
+        }
+      ]
+    },
+    {
+      "id": "cors",
+      "type": "security",
+      "label": "CORS",
+      "sublabel": "CORS_ORIGINS",
+      "pos": [
+        250,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/main.py",
+          "line": 107,
+          "end_line": 115
+        }
+      ]
+    },
+    {
+      "id": "trusted",
+      "type": "security",
+      "label": "Trusted host",
+      "sublabel": "production only",
+      "pos": [
+        450,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/main.py",
+          "line": 101,
+          "end_line": 105
+        }
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "request metrics",
+      "pos": [
+        650,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/middleware/metrics.py",
+          "line": 16,
+          "end_line": 81
+        }
+      ]
+    },
+    {
+      "id": "logging",
+      "type": "backend",
+      "label": "Request logging",
+      "sublabel": "X-Request-ID",
+      "pos": [
+        850,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/middleware/logging.py",
+          "line": 19,
+          "end_line": 83
+        }
+      ]
+    },
+    {
+      "id": "headers",
+      "type": "security",
+      "label": "Security headers",
+      "sublabel": "on every response",
+      "pos": [
+        1050,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/middleware/security.py",
+          "line": 13,
+          "end_line": 55
+        }
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "FastAPI router",
+      "sublabel": "create_app()",
+      "pos": [
+        650,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/main.py",
+          "line": 117,
+          "end_line": 124
+        }
+      ]
+    },
+    {
+      "id": "health",
+      "type": "backend",
+      "label": "Health",
+      "sublabel": "/health, /health/detailed",
+      "pos": [
+        250,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/api/routes/health.py",
+          "line": 20,
+          "end_line": 124
+        }
+      ]
+    },
+    {
+      "id": "chat",
+      "type": "backend",
+      "label": "Chat",
+      "sublabel": "POST /api/v1/chat",
+      "pos": [
+        450,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/api/routes/chat.py",
+          "line": 32,
+          "end_line": 60
+        }
+      ]
+    },
+    {
+      "id": "admin",
+      "type": "backend",
+      "label": "Admin",
+      "sublabel": "/admin/ingest, /stats",
+      "pos": [
+        650,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/api/routes/admin.py",
+          "line": 8,
+          "end_line": 73
+        }
+      ]
+    },
+    {
+      "id": "conversations",
+      "type": "backend",
+      "label": "Conversations",
+      "sublabel": "list, get, delete",
+      "pos": [
+        850,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "needs USE_POSTGRES",
+      "sources": [
+        {
+          "path": "backend/src/app/api/routes/conversations.py",
+          "line": 17,
+          "end_line": 100
+        }
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics",
+      "sublabel": "GET /metrics",
+      "pos": [
+        1050,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/src/app/main.py",
+          "line": 122,
+          "end_line": 123
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "FastAPI app (outermost middleware first)",
+      "wraps": [
+        "cors",
+        "trusted",
+        "prom",
+        "logging",
+        "headers",
+        "router",
+        "health",
+        "chat",
+        "admin",
+        "conversations",
+        "metrics"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-cors",
+      "from": "client",
+      "to": "cors",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cors-trusted",
+      "from": "cors",
+      "to": "trusted",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trusted-prom",
+      "from": "trusted",
+      "to": "prom",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prom-log",
+      "from": "prom",
+      "to": "logging",
+      "variant": "emphasis"
+    },
+    {
+      "id": "log-headers",
+      "from": "logging",
+      "to": "headers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "headers-router",
+      "from": "headers",
+      "to": "router",
+      "label": "dispatch",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "r-health",
+      "from": "router",
+      "to": "health",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-chat",
+      "from": "router",
+      "to": "chat",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-admin",
+      "from": "router",
+      "to": "admin",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-conv",
+      "from": "router",
+      "to": "conversations",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-metrics",
+      "from": "router",
+      "to": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Order",
+      "items": [
+        "Starlette runs the last-added middleware first, so CORS sees every request first",
+        "TrustedHost is added only when APP_ENV is production"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Prefixes",
+      "items": [
+        "Chat, admin and conversations mount under /api/v1",
+        "Health and / sit at the root; /metrics is a mounted Prometheus app"
+      ]
+    }
+  ]
+}

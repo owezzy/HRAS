@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Conversation storage schema",
+    "locale": "en",
+    "output": "docs/architecture/diagrams/03-conversation-erd.html",
+    "quality_profile": "showcase",
+    "repository": { "url": "https://github.com/owezzy/HRAS.git", "provider": "github", "link_mode": "web", "revision": "84e983f2e40c0361ceaf8571e3a3b08080ce1d11" }
+  },
+  "layout": { "mode": "grid", "gapX": 90, "gapY": 40 },
+  "entities": [
+    { "id": "conversations", "label": "conversations", "row": 0, "col": 0,
+      "sources": [{ "path": "backend/src/app/models/conversation.py", "line": 16, "end_line": 42 }],
+      "attributes": [
+        { "name": "id", "type": "varchar(36)", "key": "pk" },
+        { "name": "title", "type": "varchar(255)" },
+        { "name": "created_at", "type": "timestamptz" },
+        { "name": "updated_at", "type": "timestamptz" }
+      ] },
+    { "id": "messages", "label": "messages", "row": 0, "col": 1,
+      "sources": [{ "path": "backend/src/app/models/conversation.py", "line": 45, "end_line": 75 }],
+      "attributes": [
+        { "name": "id", "type": "varchar(36)", "key": "pk" },
+        { "name": "conversation_id", "type": "varchar(36)", "key": "fk", "references": "conversations.id" },
+        { "name": "role", "type": "varchar(20)" },
+        { "name": "content", "type": "text" },
+        { "name": "created_at", "type": "timestamptz" }
+      ] },
+    { "id": "message_sources", "label": "message_sources", "row": 0, "col": 2,
+      "sources": [{ "path": "backend/src/app/models/conversation.py", "line": 78, "end_line": 103 }],
+      "attributes": [
+        { "name": "id", "type": "varchar(36)", "key": "pk" },
+        { "name": "message_id", "type": "varchar(36)", "key": "fk", "references": "messages.id" },
+        { "name": "country", "type": "varchar(100)" },
+        { "name": "mechanism", "type": "varchar(100)" },
+        { "name": "year", "type": "varchar(10)" },
+        { "name": "theme", "type": "varchar(255)" },
+        { "name": "status", "type": "varchar(50)" },
+        { "name": "snippet", "type": "text" }
+      ] }
+  ],
+  "relationships": [
+    { "id": "message_conversation", "from": "messages", "to": "conversations", "label": "belongs to", "fromCardinality": "many", "toCardinality": "one", "fromOptional": true, "identifying": true },
+    { "id": "source_message", "from": "message_sources", "to": "messages", "label": "cites for", "fromCardinality": "many", "toCardinality": "one", "fromOptional": true, "identifying": true }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Behaviour", "items": ["Deleting a conversation cascades to its messages and their sources", "Only assistant messages get message_sources rows"] },
+    { "dot": "slate", "title": "When it is used", "items": ["Tables live in DATABASE_URL (SQLite by default, PostgreSQL when configured)", "The /api/v1/conversations routes return 503 unless USE_POSTGRES is true", "Vectors are not stored here; they live in ChromaDB or Vectorize"] }
+  ]
+}

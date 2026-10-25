@@ -1,518 +1,174 @@
 # HRAS System Diagrams
 
-This document contains visual diagrams explaining the HRAS (Human Rights Advisory System) architecture, data flow, and database structure.
+These diagrams show how HRAS (Human Rights Advisory System) is built, how a question becomes an answer, and where the data lives.
 
-> **SVG files are available in:** `docs/architecture/diagrams/`
+Each diagram comes in two forms:
 
----
+- **SVG image**: shown on this page. It follows your light or dark theme.
+- **Interactive HTML**: open it in a browser. You can focus a component, trace its connections, follow the source links into the code, and export PNG, SVG or WebM.
 
-## 1. System Flowchart
-
-This flowchart shows the high-level system architecture and how components interact.
-
-![System Flowchart](./diagrams/01-system-flowchart.svg)
-
-<details>
-<summary>View Mermaid Source</summary>
-
-```mermaid
-flowchart TB
-    subgraph Frontend["Frontend Layer (Next.js 15)"]
-        UI[Web Interface]
-        Chat[Chat Component]
-        Sources[Source Citations Display]
-    end
-
-    subgraph API["API Layer (FastAPI)"]
-        Router[API Router]
-        ChatRoute["/api/v1/chat"]
-        AdminRoute["/api/v1/admin"]
-        ConvRoute["/api/v1/conversations"]
-        HealthRoute["/health"]
-    end
-
-    subgraph Services["Service Layer"]
-        ChatService[Chat Service]
-        IngestionService[Data Ingestion Service]
-    end
-
-    subgraph MultiAgent["Multi-Agent System (LangGraph)"]
-        Supervisor[Supervisor Node]
-        Research[Research Agent]
-        Advisory[Advisory Agent]
-        Compare[Compare Agent]
-    end
-
-    subgraph Tools["Agent Tools"]
-        SearchTool[search_recommendations]
-        CountryTool[get_country_recommendations]
-        CompareTool[compare_countries]
-        MechanismTool[get_mechanism_overview]
-    end
-
-    subgraph RAG["RAG Pipeline"]
-        RAGChain[RAG Chain]
-        Prompt[Prompt Templates]
-    end
-
-    subgraph AI["AI/ML Layer"]
-        Ollama[Ollama LLM Server]
-        LLM[Nemotron 3 Nano 30B]
-        Embeddings[nomic-embed-text]
-    end
-
-    subgraph Storage["Data Storage"]
-        ChromaDB[(ChromaDB Vector Store)]
-        PostgreSQL[(PostgreSQL Database)]
-        SQLite[(SQLite - Dev)]
-    end
-
-    subgraph External["External Data"]
-        UHRI[UHRI Data Sources]
-        UNDocs[UN Documents]
-    end
-
-    UI --> Chat
-    Chat --> Router
-    Router --> ChatRoute
-    Router --> AdminRoute
-    Router --> ConvRoute
-    Router --> HealthRoute
-
-    ChatRoute --> ChatService
-    AdminRoute --> IngestionService
-
-    ChatService --> MultiAgent
-    ChatService --> RAGChain
-
-    Supervisor --> Research
-    Supervisor --> Advisory
-    Supervisor --> Compare
-    Research --> Advisory
-    Compare --> Advisory
-
-    Research --> Tools
-    Compare --> Tools
-    Tools --> ChromaDB
-
-    RAGChain --> Prompt
-    RAGChain --> ChromaDB
-    Prompt --> LLM
-
-    MultiAgent --> Ollama
-    Ollama --> LLM
-    Ollama --> Embeddings
-    Embeddings --> ChromaDB
-
-    IngestionService --> UHRI
-    UHRI --> UNDocs
-    IngestionService --> ChromaDB
-
-    ChatService --> PostgreSQL
-    ChatService --> SQLite
-
-    Advisory --> ChatService
-    ChatService --> Sources
-    Sources --> UI
-```
-
-</details>
+All diagrams are built with [Archify](https://github.com/tt-a1i/archify) from the JSON files in [`diagrams/source/`](./diagrams/source/). Every component cites the code it describes, pinned to commit `84e983f`.
 
 ---
 
-## 2. Sequence Diagram
+## 1. System architecture
 
-This sequence diagram shows the complete request/response flow when a user asks a question.
+The main path of a chat request, from the officer's browser to the language model, and the stores the agents read.
 
-![Sequence Diagram](./diagrams/02-sequence-diagram.svg)
+![HRAS system architecture](./diagrams/01-system-architecture.svg)
 
-<details>
-<summary>View Mermaid Source</summary>
+[Open the interactive diagram](./diagrams/01-system-architecture.html)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User
-    participant Frontend as Frontend (Next.js)
-    participant API as FastAPI Router
-    participant ChatSvc as Chat Service
-    participant Supervisor as Supervisor Agent
-    participant Research as Research Agent
-    participant Advisory as Advisory Agent
-    participant Tools as Agent Tools
-    participant VectorDB as ChromaDB
-    participant LLM as Ollama LLM
-    participant DB as PostgreSQL
+Things the picture does not say on its own:
 
-    User->>Frontend: Enter question
-    Frontend->>API: POST /api/v1/chat
-    Note over API: Validate ChatRequest
-
-    API->>ChatSvc: process_message(request)
-    ChatSvc->>VectorDB: get_collection_stats()
-    VectorDB-->>ChatSvc: {count: N}
-
-    alt Database is empty
-        ChatSvc-->>API: Database not initialized
-        API-->>Frontend: Error response
-        Frontend-->>User: Show error message
-    else Database has documents
-        ChatSvc->>Supervisor: run_agent_workflow(question)
-
-        Note over Supervisor: Classify query type
-
-        Supervisor->>LLM: Analyze question
-        LLM-->>Supervisor: {query_type, countries, themes}
-
-        alt Query type: research
-            Supervisor->>Research: Execute research
-            Research->>Tools: search_recommendations(query)
-            Tools->>VectorDB: similarity_search_with_score()
-            VectorDB-->>Tools: Relevant documents
-            Tools-->>Research: Formatted results
-
-            Research->>Tools: get_country_recommendations(country)
-            Tools->>VectorDB: similarity_search(filter: country)
-            VectorDB-->>Tools: Country documents
-            Tools-->>Research: Country results
-
-            Research->>LLM: Generate research summary
-            LLM-->>Research: Research summary
-            Research->>Advisory: Hand off to advisory
-
-        else Query type: compare
-            Supervisor->>Research: Compare Agent handles
-            Research->>Tools: compare_countries(countries)
-            Tools->>VectorDB: Multiple country queries
-            VectorDB-->>Tools: Comparison data
-            Tools-->>Research: Comparison results
-            Research->>LLM: Generate comparison
-            LLM-->>Research: Comparison analysis
-            Research->>Advisory: Hand off to advisory
-
-        else Query type: advisory
-            Supervisor->>Advisory: Direct to advisory
-        end
-
-        Advisory->>LLM: Generate final response
-        LLM-->>Advisory: Final response with citations
-
-        Advisory-->>ChatSvc: {answer, sources, query_type}
-
-        opt PostgreSQL enabled
-            ChatSvc->>DB: persist_messages()
-            DB-->>ChatSvc: Saved
-        end
-
-        ChatSvc-->>API: ChatResponse
-        API-->>Frontend: JSON response
-        Frontend-->>User: Display answer with sources
-    end
-```
-
-</details>
+- Both services run on Cloudflare. The frontend is a Next.js Worker (OpenNext). The backend Worker forwards every request to one container (`max_instances: 1`), which sleeps after 30 minutes without traffic.
+- The browser calls the API directly, using `NEXT_PUBLIC_API_URL`. The frontend Worker serves only the app.
+- If the agent graph raises an error, `ChatService` answers with the single RAG chain instead.
+- Chat history stays in the container's memory. The conversations API needs `USE_POSTGRES=true`.
 
 ---
 
-## 3. Entity Relationship Diagram
+## 2. Chat request sequence
 
-This ER diagram shows the database schema and relationships between entities.
+What happens, step by step, when someone asks a research question. This is the most common route.
 
-![Entity Relationship Diagram](./diagrams/03-entity-relationship.svg)
+![Chat request sequence](./diagrams/02-chat-request-sequence.svg)
 
-<details>
-<summary>View Mermaid Source</summary>
+[Open the interactive diagram](./diagrams/02-chat-request-sequence.html)
 
-```mermaid
-erDiagram
-    CONVERSATION ||--o{ MESSAGE : contains
-    MESSAGE ||--o{ MESSAGE_SOURCE : has
+A research question makes three LLM calls: the Supervisor classifies it, the Research agent summarises what it found, and the Advisory agent writes the answer. A compare question goes through the Compare agent instead of Research. An advisory question goes straight to the Advisory agent, with no retrieval.
 
-    CONVERSATION {
-        string id PK
-        string title
-        datetime created_at
-        datetime updated_at
-    }
+If the vector store is empty, the request stops at the first check. The reply tells you to run ingestion.
 
-    MESSAGE {
-        string id PK
-        string conversation_id FK
-        string role
-        text content
-        datetime created_at
-    }
+---
 
-    MESSAGE_SOURCE {
-        string id PK
-        string message_id FK
-        string country
-        string mechanism
-        string year
-        string theme
-        string status
-        text snippet
-    }
+## 3. Conversation storage schema
 
-    VECTOR_DOCUMENT {
-        string id PK
-        text content
-        vector embedding
-        string country
-        string mechanism
-        string year
-        string theme
-        string status
-        float relevance_score
-    }
+The relational tables that hold saved conversations.
 
-    MESSAGE_SOURCE }o--|| VECTOR_DOCUMENT : references
-```
+![Conversation storage schema](./diagrams/03-conversation-erd.svg)
 
-</details>
-
-### Database Schema Details
+[Open the interactive diagram](./diagrams/03-conversation-erd.html)
 
 | Table | Column | Type | Description |
 |-------|--------|------|-------------|
-| **CONVERSATION** | id | UUID | Primary key |
-| | title | VARCHAR(255) | Conversation title |
-| | created_at | TIMESTAMP | Creation time (with timezone) |
-| | updated_at | TIMESTAMP | Last update (auto-update) |
-| **MESSAGE** | id | UUID | Primary key |
-| | conversation_id | UUID (FK) | References CONVERSATION |
-| | role | VARCHAR(20) | "user" or "assistant" |
+| **conversations** | id | VARCHAR(36) | Primary key (UUID string) |
+| | title | VARCHAR(255) | First 50 characters of the opening question |
+| | created_at | TIMESTAMPTZ | Creation time |
+| | updated_at | TIMESTAMPTZ | Last update (set on change) |
+| **messages** | id | VARCHAR(36) | Primary key |
+| | conversation_id | VARCHAR(36) (FK) | References `conversations.id`, cascade delete |
+| | role | VARCHAR(20) | `user` or `assistant` |
 | | content | TEXT | Message text |
-| | created_at | TIMESTAMP | Creation time |
-| **MESSAGE_SOURCE** | id | UUID | Primary key |
-| | message_id | UUID (FK) | References MESSAGE |
+| | created_at | TIMESTAMPTZ | Creation time |
+| **message_sources** | id | VARCHAR(36) | Primary key |
+| | message_id | VARCHAR(36) (FK) | References `messages.id`, cascade delete |
 | | country | VARCHAR(100) | Country name |
-| | mechanism | VARCHAR(100) | UPR, CERD, CAT, etc. |
+| | mechanism | VARCHAR(100) | UPR, CERD, CAT and so on |
 | | year | VARCHAR(10) | Document year |
 | | theme | VARCHAR(255) | Human rights theme |
 | | status | VARCHAR(50) | Recommendation status |
 | | snippet | TEXT | Document excerpt |
 
+The tables use `DATABASE_URL` (SQLite by default). Vectors are not stored here. They live in ChromaDB or Cloudflare Vectorize.
+
 ---
 
-## 4. Multi-Agent Workflow Diagram
+## 4. Multi-agent workflow
 
-This diagram shows the LangGraph multi-agent orchestration workflow.
+How the LangGraph supervisor routes a question to the specialist agents.
 
-![Multi-Agent Workflow](./diagrams/04-multi-agent-workflow.svg)
+![Multi-agent workflow](./diagrams/04-multi-agent-workflow.svg)
 
-<details>
-<summary>View Mermaid Source</summary>
+[Open the interactive diagram](./diagrams/04-multi-agent-workflow.html)
 
-```mermaid
-stateDiagram-v2
-    [*] --> Supervisor: User Question
-
-    state Supervisor {
-        [*] --> Classify
-        Classify --> RouteDecision
-        RouteDecision --> [*]
-    }
-
-    Supervisor --> Research: query_type = research
-    Supervisor --> Compare: query_type = compare
-    Supervisor --> Advisory: query_type = advisory
-
-    state Research {
-        [*] --> SearchDocs
-        SearchDocs --> GetCountryRecs
-        GetCountryRecs --> GenerateSummary
-        GenerateSummary --> [*]
-    }
-
-    state Compare {
-        [*] --> CompareCountries
-        CompareCountries --> AnalyzePatterns
-        AnalyzePatterns --> [*]
-    }
-
-    state Advisory {
-        [*] --> AssembleContext
-        AssembleContext --> GenerateResponse
-        GenerateResponse --> FormatCitations
-        FormatCitations --> [*]
-    }
-
-    Research --> Advisory: research_summary
-    Compare --> Advisory: comparison_result
-
-    Advisory --> [*]: final_response
-```
-
-</details>
-
-### Agent Responsibilities
-
-| Agent | Role | Key Actions |
+| Agent | Role | Key actions |
 |-------|------|-------------|
-| **Supervisor** | Query classifier and router | Analyzes question, extracts countries/themes, routes to appropriate agent |
-| **Research Agent** | Document retrieval and summarization | Searches vector store, retrieves country-specific recommendations, generates research summary |
-| **Compare Agent** | Cross-country analysis | Compares recommendations across countries, identifies patterns |
-| **Advisory Agent** | Response generation | Synthesizes final response with citations, ensures professional UN-style language |
+| **Supervisor** | Classifier and router | Asks the LLM (temperature 0) for `query_type`, countries and themes. Routes to Compare when `requires_comparison` is true or the type is `compare`, to Advisory for `advisory`, and to Research for everything else, including a reply it cannot parse. |
+| **Research** | Retrieval and summary | Runs a vector search (k=8), then a country-filtered search (5 per country). Keeps the top 10 records as citations and summarises them. |
+| **Compare** | Cross-country analysis | Calls `compare_countries` (5 records per country), or a general search (k=10) when no countries were found. Writes a comparison. |
+| **Advisory** | Final answer | Combines the research summary or comparison with the top sources and writes the final UN-style response. |
 
 ---
 
-## 5. Data Ingestion Pipeline
+## 5. Data ingestion pipeline
 
-This flowchart shows how UN documents are ingested into the vector store.
+How UHRI recommendations become searchable vectors.
 
-![Data Ingestion Pipeline](./diagrams/05-data-ingestion-pipeline.svg)
+![UHRI ingestion pipeline](./diagrams/05-data-ingestion-pipeline.svg)
 
-<details>
-<summary>View Mermaid Source</summary>
+[Open the interactive diagram](./diagrams/05-data-ingestion-pipeline.html)
 
-```mermaid
-flowchart LR
-    subgraph Sources["Data Sources"]
-        UHRI[UHRI API]
-        Sample[Sample Data]
-    end
+Ingestion runs in two cases:
 
-    subgraph Loader["Document Loader"]
-        Fetch[Fetch Documents]
-        Parse[Parse Content]
-        Extract[Extract Metadata]
-    end
+1. You call `POST /api/v1/admin/ingest`. Pass `clear_existing: true` to empty the store first.
+2. The backend starts with `AUTO_INGEST_ON_EMPTY=true` and finds the store empty. It then seeds the sample data in the background. This is the default on Cloudflare.
 
-    subgraph Processing["Processing"]
-        Chunk[Text Chunking]
-        Embed[Generate Embeddings]
-    end
-
-    subgraph Storage["Vector Storage"]
-        Collection[uhri_recommendations Collection]
-        Index[Vector Index]
-        Meta[Metadata Store]
-    end
-
-    subgraph Verification["Verification"]
-        Stats[Collection Stats]
-        Validate[Validate Ingestion]
-    end
-
-    UHRI --> Fetch
-    Sample --> Fetch
-    Fetch --> Parse
-    Parse --> Extract
-    Extract --> Chunk
-    Chunk --> Embed
-    Embed --> Collection
-    Collection --> Index
-    Collection --> Meta
-    Index --> Stats
-    Meta --> Stats
-    Stats --> Validate
-```
-
-</details>
-
-### Ingestion Configuration
-
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| Chunk Size | 1024 tokens | Optimal size for retrieval |
-| Overlap | 20% | Prevents context loss at boundaries |
-| Embedding Model | nomic-embed-text | Via Ollama |
-| Vector Dimension | 768 | Embedding dimensions |
-| Distance Metric | Cosine similarity | For relevance ranking |
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| Unit of storage | One vector per UHRI record | Records are short, so they are not chunked |
+| Metadata | country, mechanism, cycle, year, theme, status, recommending_state | Used by the agent tools as filters |
+| Embedding model | `@cf/baai/bge-small-en-v1.5` on Cloudflare | Locally, any OpenAI-compatible embeddings endpoint |
+| Vector dimension | 384 on Cloudflare | Changing the model means a full re-ingestion |
+| Collection | `uhri_recommendations` (ChromaDB) or `hras-uhri` (Vectorize) | Set by `VECTOR_STORE_BACKEND` |
 
 ---
 
-## 6. API Architecture
+## 6. API layer
 
-This diagram shows the API layer structure and middleware stack.
+The middleware every request passes through, in order, and the route groups behind the router.
 
-![API Architecture](./diagrams/06-api-architecture.svg)
+![API layer: middleware and routes](./diagrams/06-api-architecture.svg)
 
-<details>
-<summary>View Mermaid Source</summary>
+[Open the interactive diagram](./diagrams/06-api-architecture.html)
 
-```mermaid
-flowchart TB
-    subgraph Client["Client"]
-        Browser[Web Browser]
-        API_Client[API Client]
-    end
-
-    subgraph Middleware["Middleware Stack"]
-        CORS[CORS Middleware]
-        Security[Security Headers]
-        Logging[Request Logging]
-        Metrics[Prometheus Metrics]
-        TrustedHost[Trusted Host]
-    end
-
-    subgraph Routes["API Routes"]
-        Health[/health]
-        Chat[/api/v1/chat]
-        Admin[/api/v1/admin]
-        Conv[/api/v1/conversations]
-        MetricsEnd[/metrics]
-    end
-
-    subgraph Handlers["Route Handlers"]
-        HealthCheck[Health Check]
-        ChatHandler[Chat Handler]
-        IngestHandler[Ingest Handler]
-        StatsHandler[Stats Handler]
-        ConvHandler[Conversation CRUD]
-    end
-
-    Browser --> CORS
-    API_Client --> CORS
-    CORS --> Security
-    Security --> Logging
-    Logging --> Metrics
-    Metrics --> TrustedHost
-    TrustedHost --> Routes
-
-    Health --> HealthCheck
-    Chat --> ChatHandler
-    Admin --> IngestHandler
-    Admin --> StatsHandler
-    Conv --> ConvHandler
-    MetricsEnd --> Metrics
-```
-
-</details>
-
-### API Endpoints Summary
+Starlette runs the last middleware added first, so CORS sees each request before the others. Trusted-host checking runs only when `APP_ENV=production`.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Health check and readiness probe |
-| `/api/v1/chat` | POST | Process chat message through RAG pipeline |
-| `/api/v1/admin/ingest` | POST | Ingest documents into vector store |
-| `/api/v1/admin/stats` | GET | Get vector store statistics |
-| `/api/v1/conversations` | GET | List all conversations |
-| `/api/v1/conversations/{id}` | GET/DELETE | Get or delete conversation |
-| `/metrics` | GET | Prometheus metrics endpoint |
+| `/health/detailed` | GET | Health of each dependency |
+| `/api/v1/chat` | POST | Answer a question through the agent workflow |
+| `/api/v1/admin/ingest` | POST | Load UHRI records into the vector store |
+| `/api/v1/admin/stats` | GET | Vector store name and document count |
+| `/api/v1/conversations` | GET | List saved conversations (needs `USE_POSTGRES`) |
+| `/api/v1/conversations/{id}` | GET, DELETE | Get or delete one conversation (needs `USE_POSTGRES`) |
+| `/metrics` | GET | Prometheus metrics |
 
 ---
 
-## File Locations
+## Updating a diagram
 
-All SVG diagram files are located in:
+1. Edit the JSON file in `diagrams/source/`. Update `meta.repository.revision` if you cite newer code.
+2. Run Archify's `finalize` command from the repository root:
+
+   ```bash
+   node <archify>/bin/archify.mjs finalize <type> \
+     docs/architecture/diagrams/source/<file>.json \
+     docs/architecture/diagrams/<name>.html \
+     --repo-root . --quality showcase
+   ```
+
+3. Open the HTML file, choose **Export → SVG**, and save it over `diagrams/<name>.svg`.
+
+## File locations
 
 ```
 docs/architecture/diagrams/
-├── 01-system-flowchart.svg
-├── 02-sequence-diagram.svg
-├── 03-entity-relationship.svg
-├── 04-multi-agent-workflow.svg
-├── 05-data-ingestion-pipeline.svg
-└── 06-api-architecture.svg
+├── 01-system-architecture.{html,svg}
+├── 02-chat-request-sequence.{html,svg}
+├── 03-conversation-erd.{html,svg}
+├── 04-multi-agent-workflow.{html,svg}
+├── 05-data-ingestion-pipeline.{html,svg}
+├── 06-api-architecture.{html,svg}
+└── source/          # Archify JSON for each diagram
 ```
 
 ---
 
-## Related Documentation
+## Related documentation
 
-- [Architecture Overview](./ARCHITECTURE.md) - Detailed system architecture
-- [AI/ML Pipeline](./AI_ML.md) - RAG and multi-agent details
-- [API Reference](../reference/API.md) - REST endpoint documentation
+- [Architecture Overview](./ARCHITECTURE.md): detailed system architecture
+- [AI/ML Pipeline](./AI_ML.md): RAG and multi-agent details
+- [API Reference](../reference/API.md): REST endpoint documentation
+- [User Guide](../getting-started/USER_GUIDE.md): how to use the app
