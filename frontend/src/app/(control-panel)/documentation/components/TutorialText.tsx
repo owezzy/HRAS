@@ -1,27 +1,18 @@
 import { ReactNode } from 'react';
 import Typography from '@mui/material/Typography';
+import clsx from 'clsx';
 
-export function Bullets({ items }: { items: ReactNode[] }) {
+export function TextList({ items, ordered = false }: { items: ReactNode[]; ordered?: boolean }) {
+	const List = ordered ? 'ol' : 'ul';
+
 	return (
-		<ul className="flex list-disc flex-col gap-1 ps-5">
+		<List className={clsx('flex flex-col gap-1 ps-5', ordered ? 'list-decimal' : 'list-disc')}>
 			{items.map((item, index) => (
 				<li key={index}>
 					<Typography variant="body1">{item}</Typography>
 				</li>
 			))}
-		</ul>
-	);
-}
-
-export function Numbered({ items }: { items: ReactNode[] }) {
-	return (
-		<ol className="flex list-decimal flex-col gap-1 ps-5">
-			{items.map((item, index) => (
-				<li key={index}>
-					<Typography variant="body1">{item}</Typography>
-				</li>
-			))}
-		</ol>
+		</List>
 	);
 }
 

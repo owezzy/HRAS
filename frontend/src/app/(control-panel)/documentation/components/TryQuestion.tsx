@@ -6,13 +6,12 @@ import Link from 'next/link';
 
 interface TryQuestionProps {
 	question: string;
-	note?: string;
 }
 
 /**
  * An example question with a button that opens Chat with the question already typed in.
  */
-function TryQuestion({ question, note }: TryQuestionProps) {
+function TryQuestion({ question }: TryQuestionProps) {
 	return (
 		<Paper
 			variant="outlined"
@@ -25,17 +24,7 @@ function TryQuestion({ question, note }: TryQuestionProps) {
 				>
 					heroicons-outline:chat-bubble-left
 				</FuseSvgIcon>
-				<div>
-					<Typography variant="body2">{question}</Typography>
-					{note && (
-						<Typography
-							variant="caption"
-							color="text.secondary"
-						>
-							{note}
-						</Typography>
-					)}
-				</div>
+				<Typography variant="body2">{question}</Typography>
 			</div>
 			<Button
 				component={Link}

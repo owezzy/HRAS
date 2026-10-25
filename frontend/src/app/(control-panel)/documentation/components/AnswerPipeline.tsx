@@ -7,8 +7,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import clsx from 'clsx';
-
-type QueryType = 'research' | 'compare' | 'advisory';
+import { QUESTION_TYPES, QueryType } from './questionTypes';
 
 interface Stage {
 	id: string;
@@ -62,18 +61,6 @@ const STAGES: Stage[] = [
 	}
 ];
 
-const PATHS: Record<QueryType, string[]> = {
-	research: ['question', 'check', 'supervisor', 'research', 'advisory', 'answer'],
-	compare: ['question', 'check', 'supervisor', 'compare', 'advisory', 'answer'],
-	advisory: ['question', 'check', 'supervisor', 'advisory', 'answer']
-};
-
-const EXAMPLES: Record<QueryType, string> = {
-	research: 'What UPR recommendations has Kenya received on freedom of expression?',
-	compare: 'Compare recommendations on torture for Brazil and Mexico.',
-	advisory: 'Summarise the key concerns we should raise at the next review.'
-};
-
 /**
  * Interactive walk-through of the agent workflow: pick a question type, then click a stage to read what it does.
  */
@@ -81,7 +68,7 @@ function AnswerPipeline() {
 	const [queryType, setQueryType] = useState<QueryType>('research');
 	const [selectedId, setSelectedId] = useState('supervisor');
 
-	const path = PATHS[queryType];
+	const { path, example } = QUESTION_TYPES.find((type) => type.id === queryType);
 	const stages = STAGES.filter((stage) => path.includes(stage.id));
 	const selected = STAGES.find((stage) => stage.id === selectedId && path.includes(stage.id)) ?? stages[0];
 
@@ -101,15 +88,20 @@ function AnswerPipeline() {
 					onChange={(_event, value: QueryType | null) => value && setQueryType(value)}
 					aria-label="Question type"
 				>
-					<ToggleButton value="research">Research</ToggleButton>
-					<ToggleButton value="compare">Compare</ToggleButton>
-					<ToggleButton value="advisory">Advisory</ToggleButton>
+					{QUESTION_TYPES.map((type) => (
+						<ToggleButton
+							key={type.id}
+							value={type.id}
+						>
+							{type.title}
+						</ToggleButton>
+					))}
 				</ToggleButtonGroup>
 				<Typography
 					variant="body2"
 					color="text.secondary"
 				>
-					For example: <em>{EXAMPLES[queryType]}</em>
+					For example: <em>{example}</em>
 				</Typography>
 			</div>
 

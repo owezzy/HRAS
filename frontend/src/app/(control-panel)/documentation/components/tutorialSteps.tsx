@@ -6,7 +6,8 @@ import Typography from '@mui/material/Typography';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import AnswerPipeline from './AnswerPipeline';
 import TryQuestion from './TryQuestion';
-import { Bullets, Kbd, Numbered } from './TutorialText';
+import { QUESTION_TYPES } from './questionTypes';
+import { Kbd, TextList } from './TutorialText';
 
 export interface TutorialStep {
 	id: string;
@@ -14,27 +15,6 @@ export interface TutorialStep {
 	summary: string;
 	content: ReactNode;
 }
-
-const QUESTION_TYPES = [
-	{
-		icon: 'heroicons-outline:magnifying-glass',
-		title: 'Research',
-		body: 'Facts about recommendations, documents or situations. HRAS searches the records and cites them.',
-		question: 'What UPR recommendations has Kenya received on freedom of expression?'
-	},
-	{
-		icon: 'heroicons-outline:scale',
-		title: 'Compare',
-		body: 'Two or more countries side by side, or patterns across them. Name every country you want in the comparison.',
-		question: 'Compare recommendations on torture for Brazil and Mexico.'
-	},
-	{
-		icon: 'heroicons-outline:pencil-square',
-		title: 'Advisory',
-		body: 'Guidance, priorities or a synthesis. HRAS answers from the language model without a fresh search, so expect few or no sources.',
-		question: 'What should we prioritise when preparing for a treaty body review?'
-	}
-];
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
 	{
@@ -56,7 +36,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 					, picks the relevant recommendations and writes an answer with its sources attached.
 				</Typography>
 				<Typography variant="body1">It is good at:</Typography>
-				<Bullets
+				<TextList
 					items={[
 						'Finding recommendations by country, mechanism (UPR, CAT, CERD, CEDAW and others) or theme',
 						'Comparing what different countries were asked to do',
@@ -86,7 +66,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 		summary: 'Send a question and read the reply.',
 		content: (
 			<div className="flex flex-col gap-4">
-				<Numbered
+				<TextList
+					ordered
 					items={[
 						<>
 							Open <strong>Chat</strong> from the menu on the left.
@@ -149,7 +130,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 				</Typography>
 				{QUESTION_TYPES.map((type) => (
 					<div
-						key={type.title}
+						key={type.id}
 						className="flex flex-col gap-2"
 					>
 						<div className="flex items-center gap-2">
@@ -166,8 +147,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 								{type.title}
 							</Typography>
 						</div>
-						<Typography variant="body2">{type.body}</Typography>
-						<TryQuestion question={type.question} />
+						<Typography variant="body2">{type.description}</Typography>
+						<TryQuestion question={type.example} />
 					</div>
 				))}
 			</div>
@@ -208,7 +189,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 					Under each answer you will see a link such as <strong>10 sources</strong>. Click it to open the UHRI
 					records HRAS used. Each card shows:
 				</Typography>
-				<Bullets
+				<TextList
 					items={[
 						<>
 							<strong>Country · Mechanism · Year</strong>: who received the recommendation, from which
@@ -224,7 +205,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 					]}
 				/>
 				<Typography variant="body1">Before you rely on an answer:</Typography>
-				<Numbered
+				<TextList
+					ordered
 					items={[
 						'Check that each claim in the answer matches a source card.',
 						<>
