@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { styled } from '@mui/material/styles';
+import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import ChatInput from '../ChatInput';
@@ -35,6 +36,8 @@ function ChatView() {
 	const [conversationId, setConversationId] = useState<string | undefined>();
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const chatMutation = useChatMutation();
+	// The documentation tutorial links here with ?q= to prefill a question.
+	const initialMessage = useSearchParams().get('q') ?? '';
 
 	const scrollToBottom = useCallback(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -218,6 +221,7 @@ function ChatView() {
 					<ChatInput
 						onSend={handleSend}
 						disabled={chatMutation.isPending}
+						initialMessage={initialMessage}
 					/>
 				</div>
 			}

@@ -19,6 +19,14 @@ const navigationConfig: FuseNavItemType[] = [
 		type: 'item',
 		icon: 'lucide:star',
 		url: 'chat'
+	},
+	{
+		id: 'documentation',
+		title: 'Documentation',
+		translate: 'DOCUMENTATION',
+		type: 'item',
+		icon: 'lucide:book-open',
+		url: 'documentation'
 	}
 ];
 
