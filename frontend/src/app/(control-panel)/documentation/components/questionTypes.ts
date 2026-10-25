@@ -19,7 +19,7 @@ export const QUESTION_TYPES: QuestionType[] = [
 		title: 'Research',
 		icon: 'heroicons-outline:magnifying-glass',
 		description: 'Facts about recommendations, documents or situations. HRAS searches the records and cites them.',
-		example: 'What UPR recommendations has Kenya received on freedom of expression?',
+		example: 'What UPR recommendations has Kenya received on torture?',
 		path: ['question', 'check', 'supervisor', 'research', 'advisory', 'answer']
 	},
 	{
@@ -28,7 +28,7 @@ export const QUESTION_TYPES: QuestionType[] = [
 		icon: 'heroicons-outline:scale',
 		description:
 			'Two or more countries side by side, or patterns across them. Name every country you want in the comparison.',
-		example: 'Compare recommendations on torture for Brazil and Mexico.',
+		example: 'Compare the recommendations made to Kenya and Brazil.',
 		path: ['question', 'check', 'supervisor', 'compare', 'advisory', 'answer']
 	},
 	{
