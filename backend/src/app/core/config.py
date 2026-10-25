@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     # Application Settings
     # ==========================================================================
     app_name: str = "HRAS - Human Rights Advisory System"
-    app_version: str = "0.3.0"
+    app_version: str = "0.3.1"
     debug: bool = False
     app_env: str = "development"  # development, staging, production
 
