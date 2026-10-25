@@ -109,12 +109,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 							Specific
 						</Typography>
 						<Typography variant="body2">
-							What did CERD recommend to South Africa on racial discrimination?
+							What did CEDAW recommend to South Africa on gender-based violence?
 						</Typography>
 					</Paper>
 				</div>
 				<Typography variant="body1">Try one now. The button opens Chat with the question typed in.</Typography>
-				<TryQuestion question="What did CERD recommend to South Africa on racial discrimination?" />
+				<TryQuestion question="What did CEDAW recommend to South Africa on gender-based violence?" />
 			</div>
 		)
 	},

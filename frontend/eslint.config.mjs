@@ -5,16 +5,7 @@ import eslintPluginReactRefresh from 'eslint-plugin-react-refresh';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslint from '@eslint/js';
 import eslintPluginReact from 'eslint-plugin-react';
-import eslintPluginReactHooks from 'eslint-plugin-react-hooks';
-import { FlatCompat } from '@eslint/eslintrc';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-    baseDirectory: __dirname
-});
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 
 export default tseslint.config({
     files: ['**/*.ts', '**/*.tsx'],
@@ -33,21 +24,20 @@ export default tseslint.config({
         "@typescript-eslint": tseslint.plugin,
         "unused-imports": eslintPluginUnusedImports,
         "react": eslintPluginReact,
-        "react-hooks": eslintPluginReactHooks,
         "react-refresh": eslintPluginReactRefresh,
         "prettier": eslintPluginPrettier,
     },
     extends: [
         // Eslint
         eslint.configs.recommended,
-        ...compat.extends('next/core-web-vitals'),
+        // Next.js (also registers the react-hooks plugin and rules)
+        ...nextCoreWebVitals,
         // TypeScript
         ...tseslint.configs.recommended,
         ...tseslint.configs.stylistic,
         // React
         eslintPluginReact.configs.flat.recommended,
         eslintPluginReact.configs.flat['jsx-runtime'],
-        ...compat.extends('plugin:react-hooks/recommended'),
         // Prettier
         eslintPluginPrettierRecommended
     ],
@@ -67,6 +57,13 @@ export default tseslint.config({
         }
     },
     rules: {
+        // React Compiler rules added in eslint-plugin-react-hooks 7 (via eslint-config-next 16).
+        // The Fuse template predates them; warn until those components are refactored.
+        "react-hooks/set-state-in-effect": "warn",
+        "react-hooks/refs": "warn",
+        "react-hooks/immutability": "warn",
+        "react-hooks/preserve-manual-memoization": "warn",
+        "react-hooks/use-memo": "warn",
         "prettier/prettier": [
             "warn",
             {

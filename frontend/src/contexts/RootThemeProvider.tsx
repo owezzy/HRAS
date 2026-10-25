@@ -1,10 +1,9 @@
 import * as React from 'react';
-import { useMemo } from 'react';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useMainTheme } from '@fuse/core/FuseSettings/hooks/fuseThemeHooks';
-import createCache, { Options, StylisPlugin } from '@emotion/cache';
-import { CacheProvider } from '@emotion/react';
+import { Options, StylisPlugin } from '@emotion/cache';
 import { CssBaseline } from '@mui/material';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 
 type MainThemeProviderProps = {
 	children: React.ReactNode;
@@ -46,14 +45,16 @@ function RootThemeProvider({ children }: MainThemeProviderProps) {
 	const mainTheme = useMainTheme();
 	const langDirection = mainTheme?.direction;
 
-	const cacheProviderValue = useMemo(() => createCache(emotionCacheOptions[langDirection]), [langDirection]);
-
+	// AppRouterCacheProvider flushes Emotion styles into <head> during SSR, so the server and client markup match.
 	return (
-		<CacheProvider value={cacheProviderValue}>
+		<AppRouterCacheProvider
+			key={langDirection}
+			options={emotionCacheOptions[langDirection]}
+		>
 			<CssBaseline />
 
 			{children}
-		</CacheProvider>
+		</AppRouterCacheProvider>
 	);
 }
 
