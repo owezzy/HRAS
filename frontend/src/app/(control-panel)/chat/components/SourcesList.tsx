@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Collapse from '@mui/material/Collapse';
-import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
@@ -44,25 +43,20 @@ function SourcesList({ sources }: SourcesListProps) {
 							className="border border-gray-200 p-3"
 							elevation={0}
 						>
-							<div className="flex items-start justify-between gap-2">
+							<Typography
+								variant="subtitle2"
+								className="font-semibold text-[#0072BC]"
+							>
+								{[source.country, source.mechanism, source.year].filter(Boolean).join(' · ')}
+							</Typography>
+							{(source.theme || source.status) && (
 								<Typography
-									variant="subtitle2"
-									className="font-semibold text-[#0072BC]"
+									variant="caption"
+									color="text.secondary"
 								>
-									{source.title}
+									{[source.theme, source.status].filter(Boolean).join(' · ')}
 								</Typography>
-								{source.url && (
-									<IconButton
-										size="small"
-										href={source.url}
-										target="_blank"
-										rel="noopener noreferrer"
-										component="a"
-									>
-										<FuseSvgIcon size={16}>heroicons-outline:external-link</FuseSvgIcon>
-									</IconButton>
-								)}
-							</div>
+							)}
 							<Typography
 								variant="body2"
 								className="mt-1 line-clamp-3 text-gray-600"
