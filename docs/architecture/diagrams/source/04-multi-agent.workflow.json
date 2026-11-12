@@ -4,7 +4,7 @@
   "meta": {
     "title": "Multi-agent workflow (LangGraph)",
     "locale": "en",
-    "output": "docs/architecture/diagrams/04-multi-agent-workflow.html",
+    "output": "frontend/public/docs/diagrams/04-multi-agent-workflow.html",
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/owezzy/HRAS.git",

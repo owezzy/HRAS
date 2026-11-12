@@ -4,7 +4,7 @@
   "meta": {
     "title": "UHRI ingestion pipeline",
     "locale": "en",
-    "output": "docs/architecture/diagrams/05-data-ingestion-pipeline.html",
+    "output": "frontend/public/docs/diagrams/05-data-ingestion-pipeline.html",
     "quality_profile": "showcase",
     "repository": { "url": "https://github.com/owezzy/HRAS.git", "provider": "github", "link_mode": "web", "revision": "84e983f2e40c0361ceaf8571e3a3b08080ce1d11" }
   },

@@ -5,21 +5,10 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import Typography from '@mui/material/Typography';
-import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import { styled } from '@mui/material/styles';
+import ControlPanelPage from '@/components/ControlPanelPage';
 
-const Root = styled(FusePageSimple)(({ theme }) => ({
-	'& .FusePageSimple-header': {
-		backgroundColor: theme.vars.palette.background.paper,
-		borderBottomWidth: 1,
-		borderStyle: 'solid',
-		borderColor: theme.vars.palette.divider
-	}
-}));
-
-/** Interactive Archify diagrams, served from public/docs/diagrams (copies of docs/architecture/diagrams). */
+/** Interactive Archify diagrams in public/docs/diagrams (see docs/architecture/DIAGRAMS.md). */
 const DIAGRAMS = [
 	{ file: '01-system-architecture.html', label: 'System architecture' },
 	{ file: '02-chat-request-sequence.html', label: 'Chat request' },
@@ -35,39 +24,12 @@ function ArchitectureView() {
 	const src = `/docs/diagrams/${diagram.file}`;
 
 	return (
-		<Root
-			scroll="content"
-			header={
-				<div className="flex items-center gap-3 p-6">
-					<Box
-						className="flex h-10 w-10 items-center justify-center rounded-lg"
-						sx={{ backgroundColor: '#0072BC' }}
-					>
-						<FuseSvgIcon
-							className="text-white"
-							size={24}
-						>
-							lucide:network
-						</FuseSvgIcon>
-					</Box>
-					<div>
-						<Typography
-							variant="h6"
-							className="font-semibold"
-						>
-							Architecture
-						</Typography>
-						<Typography
-							variant="body2"
-							color="text.secondary"
-						>
-							Interactive diagrams of how HRAS is built. Hover or click parts to explore them.
-						</Typography>
-					</div>
-				</div>
-			}
+		<ControlPanelPage
+			icon="lucide:network"
+			title="Architecture"
+			subtitle="Interactive diagrams of how HRAS is built. Hover or click parts to explore them."
 			content={
-				<div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4 sm:p-6">
+				<div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 sm:p-6">
 					<div className="flex flex-wrap items-center justify-between gap-2">
 						<Tabs
 							value={active}
@@ -96,11 +58,10 @@ function ArchitectureView() {
 					</div>
 					<Box
 						component="iframe"
-						key={diagram.file}
 						src={src}
 						title={diagram.label}
-						className="w-full rounded-lg border-0"
-						sx={{ height: 'calc(100vh - 280px)', minHeight: 480, backgroundColor: 'background.paper' }}
+						className="min-h-[480px] w-full flex-1 rounded-lg border-0"
+						sx={{ backgroundColor: 'background.paper' }}
 					/>
 				</div>
 			}

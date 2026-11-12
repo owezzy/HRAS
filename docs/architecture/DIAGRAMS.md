@@ -17,7 +17,7 @@ The main path of a chat request, from the officer's browser to the language mode
 
 ![HRAS system architecture](./diagrams/01-system-architecture.svg)
 
-[Open the interactive diagram](./diagrams/01-system-architecture.html)
+[Open the interactive diagram](../../frontend/public/docs/diagrams/01-system-architecture.html)
 
 Things the picture does not say on its own:
 
@@ -34,7 +34,7 @@ What happens, step by step, when someone asks a research question. This is the m
 
 ![Chat request sequence](./diagrams/02-chat-request-sequence.svg)
 
-[Open the interactive diagram](./diagrams/02-chat-request-sequence.html)
+[Open the interactive diagram](../../frontend/public/docs/diagrams/02-chat-request-sequence.html)
 
 A research question makes three LLM calls: the Supervisor classifies it, the Research agent summarises what it found, and the Advisory agent writes the answer. A compare question goes through the Compare agent instead of Research. An advisory question goes straight to the Advisory agent, with no retrieval.
 
@@ -48,7 +48,7 @@ The relational tables that hold saved conversations.
 
 ![Conversation storage schema](./diagrams/03-conversation-erd.svg)
 
-[Open the interactive diagram](./diagrams/03-conversation-erd.html)
+[Open the interactive diagram](../../frontend/public/docs/diagrams/03-conversation-erd.html)
 
 | Table | Column | Type | Description |
 |-------|--------|------|-------------|
@@ -80,7 +80,7 @@ How the LangGraph supervisor routes a question to the specialist agents.
 
 ![Multi-agent workflow](./diagrams/04-multi-agent-workflow.svg)
 
-[Open the interactive diagram](./diagrams/04-multi-agent-workflow.html)
+[Open the interactive diagram](../../frontend/public/docs/diagrams/04-multi-agent-workflow.html)
 
 | Agent | Role | Key actions |
 |-------|------|-------------|
@@ -97,7 +97,7 @@ How UHRI recommendations become searchable vectors.
 
 ![UHRI ingestion pipeline](./diagrams/05-data-ingestion-pipeline.svg)
 
-[Open the interactive diagram](./diagrams/05-data-ingestion-pipeline.html)
+[Open the interactive diagram](../../frontend/public/docs/diagrams/05-data-ingestion-pipeline.html)
 
 Ingestion runs in two cases:
 
@@ -120,7 +120,7 @@ The middleware every request passes through, in order, and the route groups behi
 
 ![API layer: middleware and routes](./diagrams/06-api-architecture.svg)
 
-[Open the interactive diagram](./diagrams/06-api-architecture.html)
+[Open the interactive diagram](../../frontend/public/docs/diagrams/06-api-architecture.html)
 
 Starlette runs the last middleware added first, so CORS sees each request before the others. Trusted-host checking runs only when `APP_ENV=production`.
 
@@ -145,23 +145,23 @@ Starlette runs the last middleware added first, so CORS sees each request before
    ```bash
    node <archify>/bin/archify.mjs finalize <type> \
      docs/architecture/diagrams/source/<file>.json \
-     docs/architecture/diagrams/<name>.html \
+     frontend/public/docs/diagrams/<name>.html \
      --repo-root . --quality showcase
    ```
 
 3. Open the HTML file, choose **Export → SVG**, and save it over `diagrams/<name>.svg`.
 
+The HTML files live in the frontend's `public/` folder so the app's **Architecture** page can show them. They are not copied anywhere else.
+
 ## File locations
 
 ```
 docs/architecture/diagrams/
-├── 01-system-architecture.{html,svg}
-├── 02-chat-request-sequence.{html,svg}
-├── 03-conversation-erd.{html,svg}
-├── 04-multi-agent-workflow.{html,svg}
-├── 05-data-ingestion-pipeline.{html,svg}
-├── 06-api-architecture.{html,svg}
-└── source/          # Archify JSON for each diagram
+├── 01-system-architecture.svg … 06-api-architecture.svg   # static exports
+└── source/                                                # Archify JSON for each diagram
+
+frontend/public/docs/diagrams/
+└── 01-system-architecture.html … 06-api-architecture.html # interactive, served at /docs/diagrams/
 ```
 
 ---

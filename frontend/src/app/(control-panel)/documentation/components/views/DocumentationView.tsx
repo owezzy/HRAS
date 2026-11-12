@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import Paper from '@mui/material/Paper';
@@ -10,20 +9,10 @@ import StepButton from '@mui/material/StepButton';
 import StepContent from '@mui/material/StepContent';
 import Stepper from '@mui/material/Stepper';
 import Typography from '@mui/material/Typography';
-import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import { styled } from '@mui/material/styles';
 import Link from 'next/link';
+import ControlPanelPage from '@/components/ControlPanelPage';
 import { TUTORIAL_STEPS } from '../tutorialSteps';
-
-const Root = styled(FusePageSimple)(({ theme }) => ({
-	'& .FusePageSimple-header': {
-		backgroundColor: theme.vars.palette.background.paper,
-		borderBottomWidth: 1,
-		borderStyle: 'solid',
-		borderColor: theme.vars.palette.divider
-	}
-}));
 
 function DocumentationView() {
 	const [activeStep, setActiveStep] = useState(0);
@@ -48,37 +37,10 @@ function DocumentationView() {
 	};
 
 	return (
-		<Root
-			scroll="content"
-			header={
-				<div className="flex items-center gap-3 p-6">
-					<Box
-						className="flex h-10 w-10 items-center justify-center rounded-lg"
-						sx={{ backgroundColor: '#0072BC' }}
-					>
-						<FuseSvgIcon
-							className="text-white"
-							size={24}
-						>
-							heroicons-outline:book-open
-						</FuseSvgIcon>
-					</Box>
-					<div>
-						<Typography
-							variant="h6"
-							className="font-semibold"
-						>
-							Documentation
-						</Typography>
-						<Typography
-							variant="body2"
-							color="text.secondary"
-						>
-							A six-step tour of HRAS. Takes about ten minutes.
-						</Typography>
-					</div>
-				</div>
-			}
+		<ControlPanelPage
+			icon="heroicons-outline:book-open"
+			title="Documentation"
+			subtitle="A six-step tour of HRAS. Takes about ten minutes."
 			content={
 				<div
 					ref={contentTopRef}

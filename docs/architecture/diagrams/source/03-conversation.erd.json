@@ -4,7 +4,7 @@
   "meta": {
     "title": "Conversation storage schema",
     "locale": "en",
-    "output": "docs/architecture/diagrams/03-conversation-erd.html",
+    "output": "frontend/public/docs/diagrams/03-conversation-erd.html",
     "quality_profile": "showcase",
     "repository": { "url": "https://github.com/owezzy/HRAS.git", "provider": "github", "link_mode": "web", "revision": "84e983f2e40c0361ceaf8571e3a3b08080ce1d11" }
   },

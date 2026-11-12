@@ -4,7 +4,7 @@
   "meta": {
     "title": "API layer: middleware and routes",
     "locale": "en",
-    "output": "docs/architecture/diagrams/06-api-architecture.html",
+    "output": "frontend/public/docs/diagrams/06-api-architecture.html",
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/owezzy/HRAS.git",
