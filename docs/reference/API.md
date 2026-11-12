@@ -61,7 +61,7 @@ curl https://hetzner-api.hras.owezzy.tech/api/v1/admin/stats
 ```json
 {
   "status": "healthy",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "service": "HRAS - Human Rights Advisory System"
 }
 ```
