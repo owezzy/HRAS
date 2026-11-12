@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import FusePageSimple from '@fuse/core/FusePageSimple';
+import ControlPanelPage from '@/components/ControlPanelPage';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { styled } from '@mui/material/styles';
 import { useSearchParams } from 'next/navigation';
@@ -16,13 +16,7 @@ import ChatMessage from '../ChatMessage';
 import { useChatMutation } from '../../hooks/useChatMutation';
 import type { MessageWithSources } from '../../types';
 
-const Root = styled(FusePageSimple)(({ theme }) => ({
-	'& .FusePageSimple-header': {
-		backgroundColor: theme.vars.palette.background.paper,
-		borderBottomWidth: 1,
-		borderStyle: 'solid',
-		borderColor: theme.vars.palette.divider
-	},
+const Root = styled(ControlPanelPage)(() => ({
 	'& .FusePageSimple-content': {
 		display: 'flex',
 		flexDirection: 'column',
@@ -107,36 +101,9 @@ function ChatView() {
 
 	return (
 		<Root
-			scroll="content"
-			header={
-				<div className="flex items-center gap-3 p-6">
-					<Box
-						className="flex h-10 w-10 items-center justify-center rounded-lg"
-						sx={{ backgroundColor: '#0072BC' }}
-					>
-						<FuseSvgIcon
-							className="text-white"
-							size={24}
-						>
-							heroicons-outline:chat-bubble-left-right
-						</FuseSvgIcon>
-					</Box>
-					<div>
-						<Typography
-							variant="h6"
-							className="font-semibold"
-						>
-							{t('TITLE')}
-						</Typography>
-						<Typography
-							variant="body2"
-							color="text.secondary"
-						>
-							{t('SUBTITLE')}
-						</Typography>
-					</div>
-				</div>
-			}
+			icon="heroicons-outline:chat-bubble-left-right"
+			title={t('TITLE')}
+			subtitle={t('SUBTITLE')}
 			content={
 				<div className="flex h-full flex-col">
 					<div className="flex-1 overflow-y-auto p-6">

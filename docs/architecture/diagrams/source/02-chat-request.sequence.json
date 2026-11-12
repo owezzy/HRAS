@@ -4,7 +4,7 @@
   "meta": {
     "title": "Chat request: research path",
     "locale": "en",
-    "output": "docs/architecture/diagrams/02-chat-request-sequence.html",
+    "output": "frontend/public/docs/diagrams/02-chat-request-sequence.html",
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/owezzy/HRAS.git",
