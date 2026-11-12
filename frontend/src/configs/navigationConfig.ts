@@ -27,6 +27,14 @@ const navigationConfig: FuseNavItemType[] = [
 		type: 'item',
 		icon: 'lucide:book-open',
 		url: 'documentation'
+	},
+	{
+		id: 'architecture',
+		title: 'Architecture',
+		translate: 'ARCHITECTURE',
+		type: 'item',
+		icon: 'lucide:network',
+		url: 'architecture'
 	}
 ];
 

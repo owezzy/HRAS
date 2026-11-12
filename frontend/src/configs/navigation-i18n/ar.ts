@@ -1,7 +1,8 @@
 const locale = {
 	APPLICATIONS: 'تطبيقات',
 	EXAMPLE: 'مثال',
-	DOCUMENTATION: 'التوثيق'
+	DOCUMENTATION: 'التوثيق',
+	ARCHITECTURE: 'البنية'
 };
 
 export default locale;
