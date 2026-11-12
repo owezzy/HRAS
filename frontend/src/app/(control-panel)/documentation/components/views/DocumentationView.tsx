@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -32,9 +32,11 @@ function DocumentationView() {
 	const step = TUTORIAL_STEPS[activeStep];
 	const isLast = activeStep === TUTORIAL_STEPS.length - 1;
 
+	const contentTopRef = useRef<HTMLDivElement>(null);
+
 	const goTo = (index: number) => {
 		setActiveStep(index);
-		window.scrollTo({ top: 0, behavior: 'smooth' });
+		contentTopRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
 	};
 
 	const handleNext = () => {
@@ -47,6 +49,7 @@ function DocumentationView() {
 
 	return (
 		<Root
+			scroll="content"
 			header={
 				<div className="flex items-center gap-3 p-6">
 					<Box
@@ -77,7 +80,10 @@ function DocumentationView() {
 				</div>
 			}
 			content={
-				<div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6 md:flex-row">
+				<div
+					ref={contentTopRef}
+					className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6 md:flex-row"
+				>
 					<nav
 						aria-label="Tutorial steps"
 						className="hidden shrink-0 md:block md:w-64"
