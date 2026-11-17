@@ -215,7 +215,6 @@ def build_graph() -> StateGraph:
         route_to_agent,
         {
             "research": "research",
-            "advisory": "advisory",
             "compare": "compare",
         },
     )
