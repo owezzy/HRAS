@@ -1,0 +1,838 @@
+{
+  "meta": {
+    "date": "2026-11-17",
+    "llm_model": "deepseek-flash",
+    "embedding_model": "@cf/baai/bge-small-en-v1.5",
+    "corpus_size": 480
+  },
+  "summary": {
+    "overall": {
+      "questions": 30,
+      "recall@1": 0.26666666666666666,
+      "recall@3": 0.6416666666666667,
+      "recall@5": 0.8133333333333332,
+      "recall@8": 0.8933333333333333,
+      "faithfulness": 0.7736567510727718,
+      "claims": 815,
+      "unsupported_claims": 239,
+      "answer_ms_p50": 35265.19620849285,
+      "answer_ms_p95": 56892.65375869583,
+      "retrieval_ms_p50": 816.7475209920667,
+      "retrieval_ms_p95": 1123.2832060661167
+    },
+    "by_route": {
+      "advisory": {
+        "questions": 4,
+        "recall@1": 0.16666666666666666,
+        "recall@3": 0.29166666666666663,
+        "recall@5": 0.5208333333333333,
+        "recall@8": 0.75,
+        "faithfulness": 0.0,
+        "claims": 161,
+        "unsupported_claims": 161,
+        "answer_ms_p50": 44057.02489556279,
+        "answer_ms_p95": 62500.320583814755,
+        "retrieval_ms_p50": 803.3648750279099,
+        "retrieval_ms_p95": 1054.0390161448158
+      },
+      "compare": {
+        "questions": 4,
+        "recall@1": 0.19166666666666668,
+        "recall@3": 0.575,
+        "recall@5": 0.6583333333333333,
+        "recall@8": 0.6583333333333333,
+        "faithfulness": 0.3389539422326307,
+        "claims": 78,
+        "unsupported_claims": 62,
+        "answer_ms_p50": 45058.034062501974,
+        "answer_ms_p95": 64430.68771514809,
+        "retrieval_ms_p50": 730.9186040656641,
+        "retrieval_ms_p95": 819.2754856485408
+      },
+      "research": {
+        "questions": 22,
+        "recall@1": 0.29848484848484846,
+        "recall@3": 0.7174242424242424,
+        "recall@5": 0.8946969696969697,
+        "recall@8": 0.9621212121212122,
+        "faithfulness": 0.973599270655113,
+        "claims": 576,
+        "unsupported_claims": 16,
+        "answer_ms_p50": 32359.464811976068,
+        "answer_ms_p95": 42420.502430951456,
+        "retrieval_ms_p50": 821.1278124945238,
+        "retrieval_ms_p95": 1125.9860228281468
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "r01",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 557.0653749164194,
+      "answer_ms": 32676.755458000116,
+      "faithfulness": 0.9761904761904762,
+      "claims": 42,
+      "unsupported_claims": [
+        "The 2025 France recommendation is part of UPR pressure on Kenya to ratify or sign the ICPPED."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r02",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 837.6025829929858,
+      "answer_ms": 42105.296583031304,
+      "faithfulness": 1.0,
+      "claims": 22,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r03",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 813.1131669506431,
+      "answer_ms": 33654.41812505014,
+      "faithfulness": 0.92,
+      "claims": 25,
+      "unsupported_claims": [
+        "The Kenya recommendations, read together, ask Kenya to pursue in-situ upgrading.",
+        "The Kenya recommendations, read together, ask Kenya to pursue upgrading rather than displacement or relocation."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r04",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.75,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 692.709167022258,
+      "answer_ms": 34877.088250010274,
+      "faithfulness": 0.9565217391304348,
+      "claims": 23,
+      "unsupported_claims": [
+        "UN bodies generally treat demarcation as a legal and constitutional obligation and as a precondition for protecting Indigenous rights."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r05",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.5,
+        "5": 0.75,
+        "8": 0.75
+      },
+      "retrieval_ms": 820.3818750334904,
+      "answer_ms": 42273.95966707263,
+      "faithfulness": 0.9705882352941176,
+      "claims": 34,
+      "unsupported_claims": [
+        "The National Indian Foundation is abbreviated as FUNAI in the source."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r06",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1063.0188749637455,
+      "answer_ms": 25500.709583982825,
+      "faithfulness": 1.0,
+      "claims": 24,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r07",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.5,
+        "5": 0.75,
+        "8": 1.0
+      },
+      "retrieval_ms": 773.2872919877991,
+      "answer_ms": 39330.28400002513,
+      "faithfulness": 0.9310344827586207,
+      "claims": 29,
+      "unsupported_claims": [
+        "Noted recommendations do not enjoy the State's formal support under the UPR.",
+        "Supported recommendations indicate acceptance but do not by themselves guarantee implementation."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r08",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.6666666666666666,
+        "5": 0.6666666666666666,
+        "8": 0.6666666666666666
+      },
+      "retrieval_ms": 642.3157079843804,
+      "answer_ms": 26635.371375014074,
+      "faithfulness": 0.9473684210526315,
+      "claims": 19,
+      "unsupported_claims": [
+        "A status of Noted generally indicates that the recommendation was not accepted by the State under review."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r09",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.25,
+        "5": 0.5,
+        "8": 0.75
+      },
+      "retrieval_ms": 810.6769579462707,
+      "answer_ms": 31365.96362502314,
+      "faithfulness": 1.0,
+      "claims": 29,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r10",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 854.4361249078065,
+      "answer_ms": 24529.123124899343,
+      "faithfulness": 1.0,
+      "claims": 23,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r11",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1126.3238749234006,
+      "answer_ms": 29688.645708025433,
+      "faithfulness": 0.9130434782608695,
+      "claims": 23,
+      "unsupported_claims": [
+        "A recommendation recorded as Supported indicates acceptance by the State.",
+        "A recommendation recorded as Supported does not by itself demonstrate implementation."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r12",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.6666666666666666,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1119.5668330183253,
+      "answer_ms": 32042.17416595202,
+      "faithfulness": 1.0,
+      "claims": 23,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r13",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 777.0040410105139,
+      "answer_ms": 23415.257500018924,
+      "faithfulness": 1.0,
+      "claims": 13,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r14",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 577.5918330764398,
+      "answer_ms": 42428.21520799771,
+      "faithfulness": 0.9523809523809523,
+      "claims": 21,
+      "unsupported_claims": [
+        "A Noted status indicates that the recommendation was not accepted by the State as reported."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r15",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.6666666666666666,
+        "8": 1.0
+      },
+      "retrieval_ms": 822.8184169856831,
+      "answer_ms": 31941.737874993123,
+      "faithfulness": 1.0,
+      "claims": 22,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r16",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 832.4902079766616,
+      "answer_ms": 37918.979833018966,
+      "faithfulness": 1.0,
+      "claims": 20,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r17",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.6666666666666666,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 821.8737499555573,
+      "answer_ms": 35653.30416697543,
+      "faithfulness": 0.9473684210526315,
+      "claims": 38,
+      "unsupported_claims": [
+        "SR Housing recommendations are not legally binding.",
+        "UPR recommendations supported by Nigeria constitute political commitments."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r18",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.5,
+        "5": 0.75,
+        "8": 1.0
+      },
+      "retrieval_ms": 875.1011670101434,
+      "answer_ms": 24286.907957983203,
+      "faithfulness": 0.967741935483871,
+      "claims": 31,
+      "unsupported_claims": [
+        "Several recommendations link education access to legal implementation of child rights instruments."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r19",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.8,
+        "8": 1.0
+      },
+      "retrieval_ms": 843.4446250321344,
+      "answer_ms": 33195.30820893124,
+      "faithfulness": 0.9655172413793104,
+      "claims": 29,
+      "unsupported_claims": [
+        "The SPT issued its 2017 recommendations to Ukraine following its 2017 visit to Ukraine."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r20",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.75,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 785.1865829434246,
+      "answer_ms": 45046.979125007056,
+      "faithfulness": 1.0,
+      "claims": 24,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r21",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1148.762457887642,
+      "answer_ms": 24851.459666970186,
+      "faithfulness": 1.0,
+      "claims": 27,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r22",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.8,
+        "8": 1.0
+      },
+      "retrieval_ms": 758.5967920022085,
+      "answer_ms": 30673.14808408264,
+      "faithfulness": 0.9714285714285714,
+      "claims": 35,
+      "unsupported_claims": [
+        "The recommendations focus on rural children."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "c01",
+      "kind": "compare",
+      "route": "compare",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.6,
+        "8": 0.6
+      },
+      "retrieval_ms": 802.3608750663698,
+      "answer_ms": 43001.28000008408,
+      "faithfulness": 0.6,
+      "claims": 10,
+      "unsupported_claims": [
+        "UPR recommendations are peer-review outputs and may be general.",
+        "Treaty body observations are more legally grounded.",
+        "Special procedures communications may concern individual cases.",
+        "Recommendations to Mexico and Ukraine arise from different mechanisms, cycles, and contexts."
+      ],
+      "context_docs": 6
+    },
+    {
+      "id": "c02",
+      "kind": "compare",
+      "route": "compare",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.6,
+        "8": 0.6
+      },
+      "retrieval_ms": 615.1406249264255,
+      "answer_ms": 67664.10008398816,
+      "faithfulness": 0.13114754098360656,
+      "claims": 61,
+      "unsupported_claims": [
+        "Recommendations to Brazil and Colombia address structural racism.",
+        "Recommendations to Brazil and Colombia address intersecting forms of discrimination.",
+        "Recommendations to Brazil and Colombia concern people of African descent.",
+        "Brazil has been asked to implement the Statute of Racial Equality.",
+        "Brazil has been asked to strengthen affirmative action and quotas.",
+        "Brazil has been asked to combat police violence and racial profiling against Afro-Brazilians.",
+        "Brazil has been asked to protect quilombola land rights and prior consultation.",
+        "Brazil has been asked to combat religious intolerance against Afro-Brazilian religions.",
+        "Brazil has been asked to address environmental racism and socioeconomic disparities.",
+        "Colombia has been asked to implement Law 70 of 1993.",
+        "Colombia has been asked to implement the ethnic chapter of the 2016 peace agreement.",
+        "Colombia has been asked to adopt or strengthen comprehensive anti-discrimination measures.",
+        "Colombia has been asked to prevent forced displacement and violence against Afro-Colombian communities.",
+        "Colombia has been asked to guarantee collective land titling, prior consultation and free, prior and informed consent.",
+        "Colombia has been asked to protect Afro-Colombian human rights defenders.",
+        "Colombia has been asked to address conflict-related and intersectional discrimination.",
+        "Both Brazil and Colombia have been asked to provide disaggregated data by race/ethnicity.",
+        "Both Brazil and Colombia have been asked to ensure effective access to justice and remedies.",
+        "Both Brazil and Colombia have been asked to combat hate speech and stereotypes.",
+        "Both Brazil and Colombia have been asked to improve health and education outcomes.",
+        "Both Brazil and Colombia have been asked to ensure participation of Afro-descendant organizations.",
+        "Both Brazil and Colombia have been asked to apply an intersectional lens, particularly for women, youth, LGBTQ persons and human rights defenders.",
+        "CERD issued concluding observations on Brazil in 2022 with document symbol CERD/C/BRA/CO/18-20.",
+        "Brazil's UPR 2017 and CERD 2022 recommendations include implementing the Statute of Racial Equality and strengthening national anti-racism policies.",
+        "Brazil's UPR 2017 and CERD 2022 recommendations include expanding and protecting affirmative action and quotas in education, public employment and political representation.",
+        "Brazil's CERD 2022 and UPR 2017 recommendations include combating police violence and racial profiling, reducing lethal force, ensuring accountability and improving prison conditions.",
+        "Brazil's CERD 2022 and UPR recommendations include ensuring effective remedies and reparations for victims of racial discrimination and violence.",
+        "Brazil's CERD 2022 and UPR 2017 recommendations include demarcating and regularizing quilombola territories, guaranteeing prior consultation and protecting traditional communities from extractive and environmental harm.",
+        "Brazil's CERD 2022 and UPR recommendations include combating religious intolerance against Afro-Brazilian religions and hate speech.",
+        "Brazil's CERD 2022 and UPR recommendations include collecting and using disaggregated data by race/ethnicity, improving health, education and maternal health, and addressing discrimination against Afro-Brazilian women and domestic workers.",
+        "CERD issued concluding observations on Colombia in 2020 with document symbol CERD/C/COL/CO/17-19.",
+        "Colombia's UPR 2018 and CERD 2020 recommendations include adopting or strengthening a comprehensive anti-discrimination law and national policy against racism and racial discrimination.",
+        "Colombia's CERD 2020 and UPR 2018 recommendations include implementing Law 70 of 1993 and the ethnic chapter of the 2016 peace agreement, including collective land titling, prior consultation and free, prior and informed consent.",
+        "Colombia's CERD 2020 and UPR 2018 recommendations include preventing forced displacement, confinement, recruitment and violence against Afro-Colombian and indigenous communities, and guaranteeing reparations, land restitution and protection for community leaders and human rights defenders.",
+        "Colombia's CERD 2020 and UPR recommendations include addressing security-force violence and racial profiling, and ensuring access to justice for Afro-Colombian victims.",
+        "Colombia's CERD 2020 and UPR recommendations include strengthening intercultural health and ethno-education, combating stereotypes in media, collecting disaggregated data, and addressing discrimination against Afro-Colombian women, youth and LGBTQ persons.",
+        "Colombia's CERD 2020 and UPR recommendations include addressing environmental racism and the impact of extractive industries on Afro-Colombian territories.",
+        "The comparative summary attributes recommendations on the Statute of Racial Equality and affirmative action/quotas to Brazil.",
+        "The comparative summary attributes recommendations on Law 70/1993, the ethnic chapter and a comprehensive anti-discrimination law to Colombia.",
+        "The shared legal-framework emphasis for Brazil and Colombia is effective implementation, harmonization and remedies.",
+        "The comparative summary attributes recommendations on police violence, racial profiling and prison conditions to Brazil.",
+        "The comparative summary attributes recommendations on armed conflict, displacement, defenders and security-force violence to Colombia.",
+        "The shared violence-and-justice emphasis for Brazil and Colombia is access to justice, accountability and protection.",
+        "The comparative summary attributes recommendations on quilombola land rights and prior consultation to Brazil.",
+        "The comparative summary attributes recommendations on collective land titling, prior consultation/FPIC and land restitution to Colombia.",
+        "The shared land-and-consultation emphasis for Brazil and Colombia is land rights, participation and environmental protection.",
+        "The comparative summary attributes recommendations on religious intolerance against Afro-Brazilian religions to Brazil.",
+        "The comparative summary attributes recommendations on media stereotypes and ethno-education to Colombia.",
+        "The shared culture-and-hate-speech emphasis for Brazil and Colombia is combatting hate speech and stereotypes.",
+        "The comparative summary attributes recommendations on disaggregated data, health, education and maternal health to Brazil.",
+        "The comparative summary attributes recommendations on disaggregated data, intercultural health and ethno-education to Colombia.",
+        "The shared data-and-socioeconomic-rights emphasis for Brazil and Colombia is data, health, education and intersectionality.",
+        "Recommendations to Brazil and Colombia have accumulated across multiple UPR cycles and treaty body reviews."
+      ],
+      "context_docs": 6
+    },
+    {
+      "id": "c03",
+      "kind": "compare",
+      "route": "compare",
+      "recall": {
+        "1": 0.16666666666666666,
+        "3": 0.5,
+        "5": 0.8333333333333334,
+        "8": 0.8333333333333334
+      },
+      "retrieval_ms": 822.2604169277474,
+      "answer_ms": 44008.050499949604,
+      "faithfulness": null,
+      "claims": 0,
+      "unsupported_claims": [],
+      "context_docs": 6
+    },
+    {
+      "id": "c04",
+      "kind": "compare",
+      "route": "compare",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.6,
+        "8": 0.6
+      },
+      "retrieval_ms": 659.4763330649585,
+      "answer_ms": 46108.017625054345,
+      "faithfulness": 0.2857142857142857,
+      "claims": 7,
+      "unsupported_claims": [
+        "UPR recommendations may be accepted, noted, or partially implemented.",
+        "Treaty body observations carry different legal and reporting significance.",
+        "Special Rapporteur reports may be thematic or country-specific.",
+        "India has federal/state coordination relevant to human trafficking recommendations.",
+        "Kenya has national and county-level implementation relevant to human trafficking recommendations."
+      ],
+      "context_docs": 6
+    },
+    {
+      "id": "a01",
+      "kind": "advisory",
+      "route": "advisory",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.3333333333333333,
+        "5": 0.6666666666666666,
+        "8": 0.6666666666666666
+      },
+      "retrieval_ms": 584.5659170299768,
+      "answer_ms": 38250.62750000507,
+      "faithfulness": 0.0,
+      "claims": 27,
+      "unsupported_claims": [
+        "Kenya has a forthcoming UPR cycle.",
+        "Kenya\u2019s Constitution recognizes the right to health under Article 43(1)(a).",
+        "Kenya has a Health Act 2017.",
+        "Kenya has a Primary Health Care Act.",
+        "Kenya has a Social Health Insurance Act.",
+        "Kenya has a Digital Health Act 2023.",
+        "ICESCR Article 12 concerns the right to health.",
+        "CESCR General Comment No. 14 addresses the right to the highest attainable standard of health and the AAAQ elements.",
+        "The Abuja Declaration sets a public health expenditure target.",
+        "ICESCR Article 2(1) is relevant to health financing.",
+        "CESCR General Comment No. 14 paragraphs 12 and 18\u201325 are relevant to health financing.",
+        "Women and adolescents, persons with disabilities, people living with HIV, key populations, refugees and migrants, informal-settlement residents and pastoralist communities face structural barriers in access to health in Kenya.",
+        "CESCR concluding observations on Kenya are E/C.12/KEN/CO/2-5 (2016).",
+        "CEDAW concluding observations on Kenya are CEDAW/C/KEN/CO/8 (2017).",
+        "CRC concluding observations on Kenya are CRC/C/KEN/CO/3-5 (2016).",
+        "CRPD concluding observations on Kenya are CRPD/C/KEN/CO/1 (2015).",
+        "CEDAW and CRC recommendations address unsafe abortion and harmful practices, including FGM and child marriage.",
+        "Kenya has accepted UPR commitments relevant to unsafe abortion and harmful practices, including FGM and child marriage.",
+        "CESCR has expressed concerns about maximum available resources and health-system governance.",
+        "HIV/TB, non-communicable diseases and mental health are recurrent in Kenya\u2019s treaty-body and UPR-related health recommendations.",
+        "CRPD Article 25 concerns health.",
+        "Kenya has CRPD concluding observations.",
+        "The right to health includes underlying determinants such as water, sanitation, nutrition, housing and a healthy environment.",
+        "Kenya has had previous UPR cycles.",
+        "Kenya has a National Mechanism for Reporting and Follow-up.",
+        "Kenya has a Ministry of Health and a Kenya National Bureau of Statistics (KNBS).",
+        "Kenya has a Council of Governors and a KNCHR."
+      ],
+      "context_docs": 0
+    },
+    {
+      "id": "a02",
+      "kind": "advisory",
+      "route": "advisory",
+      "recall": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.3333333333333333
+      },
+      "retrieval_ms": 838.5065000038594,
+      "answer_ms": 44275.604458060116,
+      "faithfulness": 0.0,
+      "claims": 60,
+      "unsupported_claims": [
+        "Brazil has a comprehensive constitutional and legal framework.",
+        "Access to justice and effective remedies in Brazil remain uneven across race, gender, region, disability, Indigenous and quilombola status, sexual orientation and gender identity, and socioeconomic status.",
+        "The UPR has repeatedly addressed access to justice in Brazil.",
+        "The UPR has repeatedly addressed legal aid in Brazil.",
+        "The UPR's 3rd cycle was in 2017.",
+        "The UPR's 4th cycle was in 2022.",
+        "UPR 3rd cycle documentation addressed access to justice in Brazil.",
+        "UPR 3rd cycle documentation addressed legal aid in Brazil.",
+        "UPR 4th cycle documentation addressed access to justice in Brazil.",
+        "UPR 4th cycle documentation addressed legal aid in Brazil.",
+        "CESCR is a treaty body.",
+        "CESCR General Comment No. 9 is on the domestic application of the Covenant.",
+        "CESCR General Comment No. 9 emphasizes that effective remedies require accessible, affordable and timely legal assistance.",
+        "The Committee against Torture issued concluding observations on Brazil.",
+        "The Committee against Torture document on Brazil is CAT/C/BRA/CO/3.",
+        "The Committee against Torture document on Brazil is from 2015.",
+        "The Committee against Torture recommended strengthening independent investigation of torture and ill-treatment in Brazil.",
+        "The Committee against Torture recommended combating impunity in Brazil.",
+        "The Committee against Torture recommended improving prison conditions in Brazil.",
+        "The Committee against Torture recommended ensuring redress for victims in Brazil.",
+        "The UPR included recommendations to investigate police killings in Brazil.",
+        "The UPR included recommendations to strengthen police accountability in Brazil.",
+        "CEDAW issued concluding observations on Brazil.",
+        "The CEDAW document on Brazil is CEDAW/C/BRA/CO/7.",
+        "The CEDAW document on Brazil is from 2018.",
+        "CEDAW recommended ensuring women's effective access to justice in Brazil.",
+        "CEDAW recommended adequate legal aid for women in Brazil.",
+        "CEDAW recommended protection measures for women in Brazil.",
+        "CEDAW recommended specialized services for women in Brazil.",
+        "CERD issued concluding observations on Brazil.",
+        "The CERD document on Brazil is CERD/C/BRA/CO/18-20.",
+        "The CERD document on Brazil is from 2016.",
+        "CERD recommended strengthening access to justice and effective remedies for Afro-Brazilians in Brazil.",
+        "CERD recommended strengthening access to justice and effective remedies for quilombola communities in Brazil.",
+        "CERD's recommendations on Brazil included land rights.",
+        "CERD's recommendations on Brazil included racial violence.",
+        "The UPR addressed Indigenous land rights in Brazil.",
+        "The Special Rapporteur on the rights of Indigenous Peoples addressed Indigenous land rights in Brazil.",
+        "The UPR addressed access to justice for Indigenous peoples in Brazil.",
+        "The Special Rapporteur on the rights of Indigenous Peoples addressed access to justice for Indigenous peoples in Brazil.",
+        "CESCR recommended effective judicial protection against forced evictions in Brazil.",
+        "CESCR recommended adequate housing remedies in Brazil.",
+        "CESCR concluding observations on Brazil addressed adequate housing.",
+        "CESCR concluding observations on Brazil addressed forced evictions.",
+        "CESCR concluding observations on Brazil addressed labour rights.",
+        "CESCR concluding observations on Brazil addressed remedies.",
+        "The UPR included recommendations on business and human rights in Brazil.",
+        "The UPR included recommendations on access to remedy in Brazil.",
+        "The UPR included recommendations on environmental protection in Brazil.",
+        "The UPR emphasized access to effective remedy under the UN Guiding Principles on Business and Human Rights.",
+        "The UN Working Group on Business and Human Rights emphasized access to effective remedy under the UN Guiding Principles on Business and Human Rights.",
+        "UPR recommendations addressed protection of human rights defenders in Brazil.",
+        "Special procedures communications addressed protection of human rights defenders in Brazil.",
+        "UPR recommendations addressed judicial independence in Brazil.",
+        "Special procedures communications addressed judicial independence in Brazil.",
+        "Treaty bodies have repeatedly emphasized victim and witness protection as part of effective remedy.",
+        "Brazil's federal system means access to justice varies significantly between states.",
+        "Brazil's federal structure creates significant variation in legal aid and judicial practice.",
+        "Official data on case outcomes, reparations and access to justice in Brazil are often incomplete or not disaggregated.",
+        "Access to justice is not limited to courts."
+      ],
+      "context_docs": 0
+    },
+    {
+      "id": "a03",
+      "kind": "advisory",
+      "route": "advisory",
+      "recall": {
+        "1": 0.0,
+        "3": 0.5,
+        "5": 0.75,
+        "8": 1.0
+      },
+      "retrieval_ms": 768.2232500519603,
+      "answer_ms": 65716.44695894793,
+      "faithfulness": 0.0,
+      "claims": 30,
+      "unsupported_claims": [
+        "CESCR General Comment No. 14 is document E/C.12/2000/4, paras. 12 and 17.",
+        "The right to health requires availability, accessibility, acceptability and quality, including non-discrimination and economic accessibility.",
+        "The UN Guiding Principles on Internal Displacement are document E/CN.4/1998/53/Add.2.",
+        "The UN Guiding Principles on Internal Displacement require safe access to essential medical services and sanitation in Principles 18\u201319.",
+        "ICESCR article 12 is a relevant standard for an essential health care package.",
+        "CEDAW article 12 is a relevant standard for an essential health care package.",
+        "CRC article 24 is a relevant standard for an essential health care package.",
+        "CRPD article 25 is a relevant standard for an essential health care package.",
+        "The CRPD Committee General Comment No. 7 concerns persons with disabilities in situations of risk and humanitarian emergencies.",
+        "The CRPD Committee General Comment No. 7 is document CRPD/C/GC/7.",
+        "UPR recommendations to Ukraine have addressed IDP access to health care and social services.",
+        "The third-cycle UPR for Ukraine is document A/HRC/37/16.",
+        "There are fourth-cycle UPR recommendations for Ukraine.",
+        "Security Council resolution 2286 (2016) concerns protection of health care in armed conflict.",
+        "The Body of Principles for the Protection of All Persons under Any Form of Detention or Imprisonment is document A/RES/43/173.",
+        "Principle 24 of the Body of Principles provides key standards for medical examination and care of detainees.",
+        "The Nelson Mandela Rules are document A/RES/70/175.",
+        "Rules 24\u201335 of the Nelson Mandela Rules provide key standards for medical examination and care of detainees.",
+        "The Istanbul Protocol is document HR/P/PT/8/Rev.2, 2022 revision.",
+        "CAT article 2 is relevant to safeguards against torture.",
+        "CAT articles 10\u201314 are relevant to investigations and rehabilitation for torture victims.",
+        "CAT article 16 is relevant to safeguards against torture and ill-treatment.",
+        "CAT General Comment No. 2 is document CAT/C/GC/2.",
+        "CAT has consistently recommended effective safeguards, prompt independent investigations, and rehabilitation for victims.",
+        "The Independent International Commission of Inquiry on Ukraine has documented serious concerns regarding torture and ill-treatment in detention.",
+        "The Independent International Commission of Inquiry on Ukraine has recommended independent investigations, accountability, and redress.",
+        "The Independent International Commission of Inquiry on Ukraine document is A/HRC/55/66, 2024.",
+        "ICCPR article 10 requires humane treatment and conditions consistent with dignity.",
+        "Human Rights Committee General Comment No. 35 is document CCPR/C/GC/35.",
+        "Human Rights Committee General Comment No. 35 requires humane treatment and conditions consistent with dignity."
+      ],
+      "context_docs": 0
+    },
+    {
+      "id": "a04",
+      "kind": "advisory",
+      "route": "advisory",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.3333333333333333,
+        "5": 0.6666666666666666,
+        "8": 1.0
+      },
+      "retrieval_ms": 1092.0741660520434,
+      "answer_ms": 43838.445333065465,
+      "faithfulness": 0.0,
+      "claims": 44,
+      "unsupported_claims": [
+        "Colombia has a 2016 Peace Agreement.",
+        "Colombia has made important institutional progress, including through the Comprehensive System for Peace.",
+        "Access-to-justice gaps persist in Colombia, particularly in rural and conflict-affected areas.",
+        "Access-to-justice gaps persist in Colombia for ethnic communities, women, children, human rights defenders, and victims of the armed conflict.",
+        "The Comprehensive System for Peace includes the JEP, Truth Commission, and Missing Persons Unit.",
+        "The UNGA Basic Principles and Guidelines on the Right to a Remedy and Reparation are A/RES/60/147.",
+        "There is a Special Rapporteur on truth, justice, reparation and guarantees of non-recurrence.",
+        "There are UPR recommendations on transitional justice for Colombia.",
+        "OHCHR Colombia produces reporting.",
+        "CERD General Recommendation No. 31 concerns racial discrimination in the criminal justice system.",
+        "There are UPR recommendations on rural access to justice for Colombia.",
+        "CESCR and treaty body concluding observations exist on Colombia.",
+        "CEDAW General Recommendation No. 33 (2015) concerns women\u2019s access to justice.",
+        "CEDAW has concluding observations on Colombia.",
+        "UN Security Council resolution 1325 was adopted in 2000.",
+        "UN Security Council resolution 1820 was adopted in 2008.",
+        "There are UPR recommendations on gender-based violence for Colombia.",
+        "There is a Special Rapporteur on human rights defenders.",
+        "Human Rights Committee General Comment No. 32 was issued in 2007.",
+        "There are UPR recommendations on human rights defenders for Colombia.",
+        "The UN Basic Principles on the Independence of the Judiciary are from 1985.",
+        "CAT and CCPR have concluding observations on Colombia.",
+        "There is a Special Rapporteur on the independence of judges and lawyers.",
+        "The UNGA UN Principles and Guidelines on Access to Legal Aid in Criminal Justice Systems are A/RES/67/187.",
+        "CRC and CEDAW have concluding observations relevant to Colombia.",
+        "There are UPR recommendations on legal aid for Colombia.",
+        "CCPR, CAT, and Special Procedures communications and reports address civic space and accountability in Colombia.",
+        "There are UPR recommendations on civic space and accountability for Colombia.",
+        "UPR follow-up mechanisms exist.",
+        "Treaty body reporting exists.",
+        "SDG 16.3 exists.",
+        "OHCHR has indicators and Colombia reports.",
+        "Colombia has a most recent UPR cycle.",
+        "Colombia has treaty body concluding observations.",
+        "Colombia has accepted UPR recommendations and voluntary commitments.",
+        "Colombia\u2019s key counterparts include the Ministry of Justice and Law, Fiscal\u00eda General de la Naci\u00f3n, Rama Judicial, Defensor\u00eda del Pueblo, Procuradur\u00eda, JEP, Congress, and territorial authorities.",
+        "OHCHR Colombia, the UN Country Team, UN Women, UNICEF, UNDP, and UNODC exist as partners.",
+        "Attacks and threats against human rights defenders, social leaders, prosecutors, judges, and victims\u2019 representatives occur in Colombia.",
+        "Colombia has judicial backlog and prison overcrowding.",
+        "Colombia has corruption and impunity.",
+        "Colombia has femicide, conflict-related sexual violence, and domestic violence.",
+        "Indigenous and Afro-Colombian authorities exist in conflict-affected municipalities in Colombia.",
+        "Colombia has protest-related arrests and alleged excessive force.",
+        "The Defensor\u00eda del Pueblo is a Colombian institution relevant to public defence and legal aid."
+      ],
+      "context_docs": 0
+    }
+  ]
+}

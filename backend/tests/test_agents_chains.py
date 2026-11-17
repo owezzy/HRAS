@@ -145,7 +145,7 @@ class TestAgentWorkflow:
             assert result.next_agent == "compare"
 
     @pytest.mark.asyncio
-    async def test_supervisor_node_routes_to_advisory(self, mock_llm):
+    async def test_supervisor_node_researches_advisory_questions_first(self, mock_llm):
         from src.app.ai.agents.graph import supervisor_node
 
         mock_llm.ainvoke = AsyncMock(
@@ -158,7 +158,9 @@ class TestAgentWorkflow:
             state = AgentState(question="What should we focus on?")
             result = await supervisor_node(state)
 
-            assert result.next_agent == "advisory"
+            # Advisory answers must be grounded in retrieved records, so research runs first.
+            assert result.query_type == "advisory"
+            assert result.next_agent == "research"
 
     @pytest.mark.asyncio
     async def test_supervisor_node_fallback_on_invalid_json(self, mock_llm):
@@ -171,6 +173,20 @@ class TestAgentWorkflow:
             result = await supervisor_node(state)
 
             assert result.next_agent == "research"
+
+    @pytest.mark.asyncio
+    async def test_advisory_agent_answers_from_the_comparison(self, mock_llm):
+        from src.app.ai.agents.nodes import advisory_agent
+
+        mock_llm.ainvoke = AsyncMock(return_value=create_mock_llm_response("advice"))
+        state = AgentState(question="Compare Kenya and India", comparison_result="Kenya: X. India: Y.")
+
+        with patch("src.app.ai.agents.nodes.get_llm", return_value=mock_llm):
+            await advisory_agent(state)
+
+        prompt = mock_llm.ainvoke.call_args.args[0][0].content
+        assert "Comparison Analysis:\nKenya: X. India: Y." in prompt
+        assert "Research Summary:" not in prompt
 
 
 class TestRAGChain:

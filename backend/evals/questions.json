@@ -1,0 +1,314 @@
+[
+ {
+  "id": "r01",
+  "kind": "research",
+  "question": "What have UN mechanisms recommended to Kenya about enforced disappearances?",
+  "gold_ids": [
+   "3129e19d-5f05-4704-9294-5c9b79346c45",
+   "004faf6d-403b-411e-ac08-8f94a64115b0",
+   "bd97b0a2-a98c-4ea1-9e36-e1597c2ec9da"
+  ]
+ },
+ {
+  "id": "r02",
+  "kind": "research",
+  "question": "What recommendations has Kenya received on terrorism and counter-terrorism measures?",
+  "gold_ids": [
+   "21ae2224-80c1-46cc-a115-ccd7052af3f9",
+   "0ad9459a-ab67-4953-9524-8959fa666ae5",
+   "1269cdb2-94fe-4b43-b6ed-775128e4afc1"
+  ]
+ },
+ {
+  "id": "r03",
+  "kind": "research",
+  "question": "What has Kenya been asked to do about adequate housing and informal settlements?",
+  "gold_ids": [
+   "041a0a1e-5c14-4e40-aebf-d29b42a3fb76",
+   "0803cfaf-e31a-42f0-afb5-3107b854378e"
+  ]
+ },
+ {
+  "id": "r04",
+  "kind": "research",
+  "question": "What have UN bodies recommended about demarcating and protecting Indigenous lands in Brazil?",
+  "gold_ids": [
+   "01c9cadc-d857-40b3-bc88-02f0ae781e99",
+   "0d8e6165-5de7-469f-a416-3ed6c6ac81a6",
+   "101fce4c-cfa6-4dae-9e36-7c1b9b537f95",
+   "49321e32-c6b3-442a-b65c-1f12f28559ce"
+  ]
+ },
+ {
+  "id": "r05",
+  "kind": "research",
+  "question": "What recommendations on food and nutrition has Brazil received, particularly for Indigenous Peoples and other vulnerable groups?",
+  "gold_ids": [
+   "1fb8c9bd-6c82-44d0-b0ca-94f787506287",
+   "043ff573-74cc-4a11-bf72-918206660edd",
+   "54bf18d8-2148-46b6-8e6c-934474e55768",
+   "4a97bc97-4d5a-44c3-bcf6-c9ea7247a677"
+  ]
+ },
+ {
+  "id": "r06",
+  "kind": "research",
+  "question": "What has Brazil been told about prison overcrowding and conditions of detention?",
+  "gold_ids": [
+   "551eb1c3-9075-455c-b244-553d08396bb8",
+   "1d74edc8-b1fb-4b34-9113-373784645119",
+   "04037c01-3fd3-4549-a5bd-f7b50c113896"
+  ]
+ },
+ {
+  "id": "r07",
+  "kind": "research",
+  "question": "What recommendations has India received on freedom of expression and the protection of journalists?",
+  "gold_ids": [
+   "45ef6459-5866-44d8-80e2-b07f6191db51",
+   "11163ef8-fef8-4eae-84cb-c8d5a2178fe7",
+   "1247ef29-661a-4af2-8699-3047d582524b",
+   "6560bf7d-c6af-409e-bd3c-1c25c6d488db"
+  ]
+ },
+ {
+  "id": "r08",
+  "kind": "research",
+  "question": "What has India been asked to do about birth registration, nationality and statelessness?",
+  "gold_ids": [
+   "01cea5e2-54d9-4bb1-98c2-64f711440142",
+   "ccc3fee7-ec1e-40b2-8263-a69855439f11",
+   "155801c6-63a6-476c-bd49-9c95b47e40b7"
+  ]
+ },
+ {
+  "id": "r09",
+  "kind": "research",
+  "question": "What did the UN recommend to India on forced evictions and the right to housing?",
+  "gold_ids": [
+   "854093b9-5109-475e-b082-858b6315c6c6",
+   "2540d64a-8da0-4ed0-af42-152015f3c96c",
+   "0409adb7-3c43-4b03-bd27-fcba10e09072",
+   "3828f526-a89b-4d21-a502-4defc2e1118d"
+  ]
+ },
+ {
+  "id": "r10",
+  "kind": "research",
+  "question": "What recommendations has Mexico received on prison conditions and the use of administrative segregation?",
+  "gold_ids": [
+   "4782068f-0261-4edc-9819-f823987e3d53",
+   "497c1418-7030-4dda-b58f-c4a1c90dd406"
+  ]
+ },
+ {
+  "id": "r11",
+  "kind": "research",
+  "question": "What has Mexico been asked to do to combat trafficking in persons?",
+  "gold_ids": [
+   "00565c5c-0280-443a-b355-283668b6e808",
+   "29e95707-16f6-4536-8a4a-c8dfce1ea7a6"
+  ]
+ },
+ {
+  "id": "r12",
+  "kind": "research",
+  "question": "What recommendations has Mexico received on access to health care, including for migrant workers?",
+  "gold_ids": [
+   "05db944e-2e7c-4b20-a8ff-9f77b058f76e",
+   "0d35ab91-8732-440b-8539-7a3b96f42097",
+   "50dedc43-b017-4375-ac53-5fd7561f5c10"
+  ]
+ },
+ {
+  "id": "r13",
+  "kind": "research",
+  "question": "Has the Philippines been asked to set up a national preventive mechanism against torture?",
+  "gold_ids": [
+   "306b2e4b-72e2-43c9-a92e-13aeced6fae8",
+   "45a2e83d-5235-47be-bcc3-86cb4e339f97"
+  ]
+ },
+ {
+  "id": "r14",
+  "kind": "research",
+  "question": "What recommendations has the Philippines received on enforced disappearances?",
+  "gold_ids": [
+   "22679334-5f59-45db-9a9e-e720f83076ed",
+   "1865e9cd-e2cd-4042-a5b6-8d11466f346d"
+  ]
+ },
+ {
+  "id": "r15",
+  "kind": "research",
+  "question": "What has the Philippines been asked to do to make education accessible to everyone, including displaced people?",
+  "gold_ids": [
+   "275cf81c-0efa-44bc-9932-45c93ee8ede5",
+   "a61f984e-da05-463e-9a80-1903f4149e4d",
+   "245f9497-0dfe-4280-8145-85e690b80cf7"
+  ]
+ },
+ {
+  "id": "r16",
+  "kind": "research",
+  "question": "What has Nigeria been asked to do on international criminal law, such as the Rome Statute and atrocity crimes?",
+  "gold_ids": [
+   "6ef434a1-fda6-458a-a5f0-3484cd8c295d",
+   "1ab35810-625a-4e40-b6cc-97eb1c8d4d3a"
+  ]
+ },
+ {
+  "id": "r17",
+  "kind": "research",
+  "question": "What did the UN recommend to Nigeria on housing, land rights and informal settlements?",
+  "gold_ids": [
+   "25a12ae0-5977-4ee7-b646-639579524e1a",
+   "15848d0e-d3fd-4e06-9bf2-c06fbdc5b01f",
+   "57a57922-714d-4931-9cb0-22afea23f4f2"
+  ]
+ },
+ {
+  "id": "r18",
+  "kind": "research",
+  "question": "What recommendations has Nigeria received on out-of-school children and girls' education?",
+  "gold_ids": [
+   "03202477-dd76-43fc-ab55-bacb2b1c9051",
+   "34a25b43-fce4-4cbb-805c-8427216956cb",
+   "13206642-31f0-4e41-ad52-7c64ee4a65a0",
+   "47c33a33-bebd-4704-9e59-5b67e920c81f"
+  ]
+ },
+ {
+  "id": "r19",
+  "kind": "research",
+  "question": "What has Ukraine been told about conditions for detainees, including mothers with babies and juveniles?",
+  "gold_ids": [
+   "3879881d-650d-4453-b84c-9e4cfbe2c403",
+   "17d6b62e-21c0-4f77-9c9f-c7d82f18d514",
+   "04fabf13-6eff-4a34-9aaa-11edbb736b68",
+   "04057f1a-44e6-484f-b32a-e10438d686b4",
+   "18a879ea-2515-44a4-84d4-d15f913e0c86"
+  ]
+ },
+ {
+  "id": "r20",
+  "kind": "research",
+  "question": "What recommendations address living conditions for internally displaced people and persons with disabilities in Ukraine?",
+  "gold_ids": [
+   "1bbf4a52-674d-4d4f-9b64-75f8625ed69c",
+   "9e7d7cad-296c-4d28-bfb5-50fd1b736e7c",
+   "18706419-1bf1-4b4f-ae1a-2cc227c70a66",
+   "73457763-94e7-4d38-bb40-9512133af671"
+  ]
+ },
+ {
+  "id": "r21",
+  "kind": "research",
+  "question": "What has Colombia been asked to do about implementing the 2016 peace agreement?",
+  "gold_ids": [
+   "232b028a-960e-4bcd-b8c2-b19498e12a5e"
+  ]
+ },
+ {
+  "id": "r22",
+  "kind": "research",
+  "question": "What recommendations has Colombia received on access to education for children in vulnerable situations?",
+  "gold_ids": [
+   "021d467f-68e1-4371-ac6c-17e8bf6f749c",
+   "04d1c7bb-f06f-43fc-9194-e9f82edc4fdf",
+   "1fde4df9-375b-4c49-9808-5838a8fc56fe",
+   "6aae0327-5f3a-4925-b24b-aa6555257ace",
+   "3aa358c2-b8bd-4dc1-9e35-ed1e355190d5"
+  ]
+ },
+ {
+  "id": "c01",
+  "kind": "compare",
+  "question": "How do the recommendations on enforced disappearances made to Mexico and Ukraine compare?",
+  "gold_ids": [
+   "13b5e4eb-160b-4cbe-a431-a6f308156be5",
+   "14f6aae4-a459-440a-abc0-259f595be7b7",
+   "2454dac8-c8ad-4c40-9a75-5d1ab326f065",
+   "6fd8c27d-1039-40e8-bd8e-fa0020f91755",
+   "c7e8b5cc-c658-47d2-b542-d68823bdda90"
+  ]
+ },
+ {
+  "id": "c02",
+  "kind": "compare",
+  "question": "Compare what Brazil and Colombia have been asked to do about racial discrimination against people of African descent.",
+  "gold_ids": [
+   "054d87d2-2a50-4c17-a1b1-96ee3420cdaa",
+   "00daac78-4761-4d41-a14c-e591c0506494",
+   "02bd2be5-2350-4f51-a8ea-78bd44538f7e",
+   "54668a87-14a6-4539-b818-f01142a23d83",
+   "02314fb8-34ed-463c-95e9-48b6a4506118"
+  ]
+ },
+ {
+  "id": "c03",
+  "kind": "compare",
+  "question": "Compare the climate change recommendations made to Nigeria and the Philippines.",
+  "gold_ids": [
+   "18af4ca5-f88b-467c-b06d-57d34d7a2fa1",
+   "316646d8-38b0-4541-b39a-5affc6af14b3",
+   "0acce535-6b30-4d67-a3eb-22f4f3edc80b",
+   "618610f6-0754-4e85-8e6a-2e655ba7ed5c",
+   "263dc6c6-f642-42e3-b656-01a8143377e7",
+   "157adbbb-da1b-471f-98ee-94c5cacc40ee"
+  ]
+ },
+ {
+  "id": "c04",
+  "kind": "compare",
+  "question": "How do the human trafficking recommendations to India and Kenya differ?",
+  "gold_ids": [
+   "10074868-efa6-456e-b95c-7d8bf05df10b",
+   "020dffbd-f9fe-4719-a063-016aa915d3b3",
+   "0141bcf1-9e3b-4f1d-991b-7b64576c9273",
+   "20c98464-543a-41a0-b2c5-2f841fa21993",
+   "0464c697-f982-43b7-a275-638c159e05e0"
+  ]
+ },
+ {
+  "id": "a01",
+  "kind": "advisory",
+  "question": "Ahead of Kenya's next review, what should we prioritise on the right to health?",
+  "gold_ids": [
+   "048439e7-616a-4d4e-a06c-10aacf570cf0",
+   "06f17648-fb37-4412-9712-a45d5b457b30",
+   "2dfbe1e1-7cc6-483b-b228-ae40c03e7c6c"
+  ]
+ },
+ {
+  "id": "a02",
+  "kind": "advisory",
+  "question": "What should a human rights officer focus on regarding access to justice and remedies in Brazil?",
+  "gold_ids": [
+   "0d8b7ecd-667b-4092-8529-534e5c87e478",
+   "0526a45c-5265-4403-8598-a8c01fdd0a0a",
+   "9e139e3b-6e01-4aeb-bc59-b13ee3e29231"
+  ]
+ },
+ {
+  "id": "a03",
+  "kind": "advisory",
+  "question": "Advise on the priorities for health care for displaced and detained people in Ukraine.",
+  "gold_ids": [
+   "369037e9-7818-4d8b-999a-7d2f8e732d72",
+   "02d36716-6bd2-4127-bd22-5fd417ce5218",
+   "3879881d-650d-4453-b84c-9e4cfbe2c403",
+   "04057f1a-44e6-484f-b32a-e10438d686b4"
+  ]
+ },
+ {
+  "id": "a04",
+  "kind": "advisory",
+  "question": "What should we prioritise when engaging Colombia on access to justice?",
+  "gold_ids": [
+   "021d467f-68e1-4371-ac6c-17e8bf6f749c",
+   "12a1123c-0ca2-4be2-81e4-d6cdfdd8ce7b",
+   "07aef152-4f1d-49b2-b80c-d925725560ba"
+  ]
+ }
+]

@@ -165,10 +165,10 @@ Classify this query:"""
             state.countries = classification.get("countries", [])
             state.themes = classification.get("themes", [])
 
+            # Advisory questions go through research too, so the advisory agent answers from
+            # retrieved UHRI records rather than from model memory.
             if classification.get("requires_comparison") or state.query_type == "compare":
                 state.next_agent = "compare"
-            elif state.query_type == "advisory":
-                state.next_agent = "advisory"
             else:
                 state.next_agent = "research"
         else:
@@ -298,12 +298,7 @@ async def run_agent_workflow(question: str) -> dict:
             success=True,
         )
 
-        return {
-            "answer": final_state.get("final_response", ""),
-            "sources": [s.model_dump() for s in final_state.get("sources", [])],
-            "query_type": final_state.get("query_type", "general"),
-            "research_summary": final_state.get("research_summary", ""),
-        }
+        return _workflow_result(final_state)
     except Exception as e:
         duration = time.perf_counter() - start_time
 
@@ -320,6 +315,20 @@ async def run_agent_workflow(question: str) -> dict:
         )
         logger.error("agent_workflow_failed", error=str(e), duration_s=duration)
         raise
+
+
+def _workflow_result(final_state: dict) -> dict:
+    """Shape the final graph state into the workflow's response.
+
+    ``context`` is the document text the agents were given, which answers are judged against.
+    """
+    return {
+        "answer": final_state.get("final_response", ""),
+        "sources": [s.model_dump() for s in final_state.get("sources", [])],
+        "query_type": final_state.get("query_type", "general"),
+        "research_summary": final_state.get("research_summary", ""),
+        "context": final_state.get("context_docs", []),
+    }
 
 
 def _count_workflow_steps(state: dict) -> int:
@@ -365,12 +374,7 @@ async def run_agent_workflow_with_tracing(question: str) -> dict:
                 success=True,
             )
 
-            result = {
-                "answer": final_state.get("final_response", ""),
-                "sources": [s.model_dump() for s in final_state.get("sources", [])],
-                "query_type": final_state.get("query_type", "general"),
-                "research_summary": final_state.get("research_summary", ""),
-            }
+            result = _workflow_result(final_state)
 
             await _run_evaluations(parent_run, question, result)
 

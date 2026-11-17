@@ -223,7 +223,7 @@ Production variables are `vars` in each `wrangler.jsonc`; secrets are set with `
 | **Development** | [Backend README](./backend/README.md) · [Frontend README](./frontend/README.md) · [Dev Guide](./docs/development/DEVELOPMENT.md) |
 | **Deployment** | [Deployment Guide](./docs/deployment/DEPLOYMENT.md) · [Backend README](./backend/README.md) |
 | **Architecture** | [System Architecture](./docs/architecture/ARCHITECTURE.md) · [AI/ML Pipeline](./docs/architecture/AI_ML.md) |
-| **Reference** | [API Documentation](./docs/reference/API.md) · [Docs Index](./docs/00-INDEX.md) · [Troubleshooting](./docs/operations/TROUBLESHOOTING.md) |
+| **Reference** | [API Documentation](./docs/reference/API.md) · [Evaluation](./docs/reference/EVALS.md) · [Docs Index](./docs/00-INDEX.md) · [Troubleshooting](./docs/operations/TROUBLESHOOTING.md) |
 
 ## Common Commands
 

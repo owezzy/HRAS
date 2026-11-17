@@ -4,6 +4,9 @@ Fetches human rights recommendations from the UN OHCHR database.
 Data source: https://uhri.ohchr.org/en/our-data-api
 """
 
+import html
+import re
+
 import httpx
 
 from src.app.core.config import get_settings
@@ -28,7 +31,7 @@ class UHRIClient:
         """Fetch the complete UHRI dataset.
 
         Returns:
-            List of recommendation records from UHRI.
+            Records in the flat shape the document loader reads (see normalize_export_record).
 
         Raises:
             httpx.HTTPError: If the request fails.
@@ -36,7 +39,7 @@ class UHRIClient:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.get(self.EXPORT_URL)
             response.raise_for_status()
-            return response.json()
+            return [normalize_export_record(record) for record in response.json()]
 
     async def fetch_sample_data(self, limit: int = 100) -> list[dict]:
         """Fetch a sample of UHRI data for testing.
@@ -52,6 +55,42 @@ class UHRIClient:
         """
         data = await self.fetch_full_dataset()
         return data[:limit]
+
+
+def _clean(value: object) -> str:
+    """Strip the "- " prefix the export puts on enumerated values such as "- CCPR"."""
+    return str(value or "").strip().removeprefix("- ").strip()
+
+
+def _plain_text(html_text: object) -> str:
+    """The export's Text field is HTML; keep only the readable text for embedding."""
+    without_tags = re.sub(r"<[^>]+>", " ", str(html_text or ""))
+    return re.sub(r"\s+", " ", html.unescape(without_tags)).strip()
+
+
+def _join(values: list | None) -> str:
+    return "; ".join(cleaned for cleaned in (_clean(v) for v in values or []) if cleaned)
+
+
+def normalize_export_record(record: dict) -> dict:
+    """Map a record from the UHRI full JSON export to the flat shape the document loader reads.
+
+    The export uses lists for countries, themes and UPR fields, and prefixes enumerated values
+    with "- ". Records about several countries keep every name, joined with "; ".
+    """
+    return {
+        "id": record["AnnotationId"],
+        "country": _join(record.get("Countries")) or "Unknown",
+        "mechanism": _clean(record.get("Body")),
+        "cycle": _clean(record.get("UprCycle")),
+        "year": str(record.get("PublicationDate") or "")[:4],
+        "recommending_state": _join(record.get("UprRecommendingCountry")) or None,
+        "recommendation": _plain_text(record.get("Text")),
+        "theme": _join(record.get("Themes")),
+        "status": _join(record.get("UprPositions")),
+        "annotation_type": _clean(record.get("AnnotationType")),
+        "symbol": record.get("Symbol", ""),
+    }
 
 
 # Sample data for offline development/testing
