@@ -44,6 +44,7 @@ Welcome to the **Human Rights Advisory System (HRAS)** documentation. This AI-po
 | Document | Description |
 |----------|-------------|
 | [API Reference](reference/API.md) | REST endpoints, examples, testing |
+| [Evaluation](reference/EVALS.md) | Retrieval recall@k, faithfulness and latency on 30 labelled questions |
 
 ---
 

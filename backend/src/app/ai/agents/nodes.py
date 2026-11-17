@@ -82,12 +82,11 @@ async def research_agent(state: AgentState) -> AgentState:
             )
         state.sources = sources
 
-        context = "\n\n".join(
-            [
-                f"[{r.get('country', 'N/A')} - {r.get('mechanism', 'N/A')} ({r.get('year', 'N/A')})]\n{r.get('content', '')}"
-                for r in search_results[:8]
-            ]
-        )
+        state.context_docs = [
+            f"[{r.get('country', 'N/A')} - {r.get('mechanism', 'N/A')} ({r.get('year', 'N/A')})]\n{r.get('content', '')}"
+            for r in search_results[:8]
+        ]
+        context = "\n\n".join(state.context_docs)
 
         prompt = f"""{RESEARCH_SYSTEM_PROMPT}
 
@@ -148,12 +147,17 @@ async def advisory_agent(state: AgentState) -> AgentState:
             [f"- {s.country} ({s.mechanism}, {s.year}): {s.snippet}..." for s in state.sources[:5]]
         )
 
+        # The compare agent hands over a comparison; the research agent hands over a summary.
+        if state.comparison_result:
+            findings = f"Comparison Analysis:\n{state.comparison_result}"
+        else:
+            findings = f"Research Summary:\n{state.research_summary}"
+
         prompt = f"""{ADVISORY_SYSTEM_PROMPT}
 
 User Question: {state.question}
 
-Research Summary:
-{state.research_summary}
+{findings}
 
 Available Sources:
 {sources_context}
@@ -230,7 +234,20 @@ async def compare_agent(state: AgentState) -> AgentState:
             comparison_context += f"\n## {country}\n"
             for rec in recs[:3]:
                 if isinstance(rec, dict):
-                    comparison_context += f"- [{rec.get('mechanism', 'N/A')}, {rec.get('year', 'N/A')}] {rec.get('recommendation', rec.get('content', ''))[:150]}...\n"
+                    label = f"{rec.get('mechanism', 'N/A')}, {rec.get('year', 'N/A')}"
+                    excerpt = rec.get("recommendation", rec.get("content", ""))[:150]
+                    comparison_context += f"- [{label}] {excerpt}...\n"
+                    state.context_docs.append(f"[{country}, {label}] {excerpt}...")
+                    state.sources.append(
+                        Source(
+                            country=country,
+                            mechanism=rec.get("mechanism", ""),
+                            year=rec.get("year", ""),
+                            theme=rec.get("theme", ""),
+                            status=rec.get("status", ""),
+                            snippet=excerpt,  # the same text the compare prompt used
+                        )
+                    )
 
         prompt = f"""{COMPARE_SYSTEM_PROMPT}
 

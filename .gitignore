@@ -72,6 +72,7 @@ coverage/
 *.db
 *.sqlite3
 chroma_db/
+backend/evals/.chroma/
 
 # Logs
 *.log

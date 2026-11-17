@@ -1,0 +1,640 @@
+{
+  "meta": {
+    "date": "2026-11-18",
+    "llm_model": "deepseek-flash",
+    "embedding_model": "@cf/baai/bge-small-en-v1.5",
+    "corpus_size": 480
+  },
+  "summary": {
+    "overall": {
+      "questions": 30,
+      "recall@1": 0.26666666666666666,
+      "recall@3": 0.6416666666666667,
+      "recall@5": 0.8133333333333332,
+      "recall@8": 0.8933333333333333,
+      "faithfulness": 0.9628152398315837,
+      "claims": 932,
+      "unsupported_claims": 43,
+      "answer_ms_p50": 36820.51724998746,
+      "answer_ms_p95": 52254.75592933362,
+      "retrieval_ms_p50": 845.6079585012048,
+      "retrieval_ms_p95": 1263.2793521916028
+    },
+    "by_route": {
+      "advisory": {
+        "questions": 4,
+        "recall@1": 0.16666666666666666,
+        "recall@3": 0.29166666666666663,
+        "recall@5": 0.5208333333333333,
+        "recall@8": 0.75,
+        "faithfulness": 0.9861111111111112,
+        "claims": 100,
+        "unsupported_claims": 1,
+        "answer_ms_p50": 44350.308854016475,
+        "answer_ms_p95": 50830.25705627515,
+        "retrieval_ms_p50": 866.7065415065736,
+        "retrieval_ms_p95": 1596.1411401280202
+      },
+      "compare": {
+        "questions": 4,
+        "recall@1": 0.19166666666666668,
+        "recall@3": 0.575,
+        "recall@5": 0.6583333333333333,
+        "recall@8": 0.6583333333333333,
+        "faithfulness": 0.9355296343001261,
+        "claims": 238,
+        "unsupported_claims": 18,
+        "answer_ms_p50": 50850.14743747888,
+        "answer_ms_p95": 63803.08126434102,
+        "retrieval_ms_p50": 831.4708124962635,
+        "retrieval_ms_p95": 886.564910702873
+      },
+      "research": {
+        "questions": 22,
+        "recall@1": 0.29848484848484846,
+        "recall@3": 0.7174242424242424,
+        "recall@5": 0.8946969696969697,
+        "recall@8": 0.9621212121212122,
+        "faithfulness": 0.9635406460592073,
+        "claims": 594,
+        "unsupported_claims": 24,
+        "answer_ms_p50": 34222.45618747547,
+        "answer_ms_p95": 41891.77003123914,
+        "retrieval_ms_p50": 845.6079585012048,
+        "retrieval_ms_p95": 1206.3303256116342
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "r01",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 657.6195830712095,
+      "answer_ms": 29452.82125007361,
+      "faithfulness": 0.9473684210526315,
+      "claims": 19,
+      "unsupported_claims": [
+        "In UPR practice, \"Noted\" indicates that Kenya did not accept the recommendations in the outcome as recorded."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r02",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 850.2326250309125,
+      "answer_ms": 37061.40808400232,
+      "faithfulness": 0.9629629629629629,
+      "claims": 27,
+      "unsupported_claims": [
+        "Kenya has received at least five relevant recommendations through the UPR concerning terrorism and counter-terrorism measures."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r03",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 761.5003749961033,
+      "answer_ms": 26233.110875007696,
+      "faithfulness": 0.95,
+      "claims": 20,
+      "unsupported_claims": [
+        "The CESCR (2026) recommendation gives explicit attention to marginalized regions."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r04",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.75,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 789.9534580064937,
+      "answer_ms": 39823.7369999988,
+      "faithfulness": 0.9259259259259259,
+      "claims": 27,
+      "unsupported_claims": [
+        "FUNAI refers to the National Indian Foundation.",
+        "Several mechanisms have highlighted the need to protect human rights defenders and environmentalists working on Indigenous land issues."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r05",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.5,
+        "5": 0.75,
+        "8": 0.75
+      },
+      "retrieval_ms": 783.1012500682846,
+      "answer_ms": 51181.74962501507,
+      "faithfulness": 0.95,
+      "claims": 60,
+      "unsupported_claims": [
+        "CERD 2022 recommends that this first improve the enjoyment of economic and social rights by Quilombola women.",
+        "Recommendations connect food to health systems, safe drinking water, sanitation, education, income, land rights, and environmental protection.",
+        "Brazil's follow-up obligations differ across mechanisms."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r06",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1008.2443749997765,
+      "answer_ms": 23370.037292013876,
+      "faithfulness": 0.9142857142857143,
+      "claims": 35,
+      "unsupported_claims": [
+        "SPT, UPR (Cycle 3, 2017), and CRPD are UN human rights mechanisms.",
+        "Brazil has been advised to bring all detention conditions into line with international standards.",
+        "Available findings indicate that overcrowding is linked to broader detention conditions."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r07",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.5,
+        "5": 0.75,
+        "8": 1.0
+      },
+      "retrieval_ms": 755.5640409700572,
+      "answer_ms": 33680.1608329406,
+      "faithfulness": 0.9310344827586207,
+      "claims": 29,
+      "unsupported_claims": [
+        "In UPR practice, supported recommendations indicate acceptance by the State under review.",
+        "In UPR practice, noted recommendations indicate that the State did not accept them at the time."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r08",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.6666666666666666,
+        "5": 0.6666666666666666,
+        "8": 0.6666666666666666
+      },
+      "retrieval_ms": 840.9832919714972,
+      "answer_ms": 25504.121709032916,
+      "faithfulness": 1.0,
+      "claims": 15,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r09",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.25,
+        "5": 0.5,
+        "8": 0.75
+      },
+      "retrieval_ms": 864.5533339586109,
+      "answer_ms": 39356.88866709825,
+      "faithfulness": 1.0,
+      "claims": 26,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r10",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 930.1334159681574,
+      "answer_ms": 28051.282541942783,
+      "faithfulness": 1.0,
+      "claims": 25,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r11",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 813.9899589587003,
+      "answer_ms": 28529.18266702909,
+      "faithfulness": 0.9523809523809523,
+      "claims": 21,
+      "unsupported_claims": [
+        "The two UPR recommendations concern implementation of the existing national programme, inter-agency coordination, criminalization and prevention, and international cooperation."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r12",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.6666666666666666,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1306.3462079735473,
+      "answer_ms": 32770.45862504747,
+      "faithfulness": 1.0,
+      "claims": 27,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r13",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1110.9227079432458,
+      "answer_ms": 27021.547625074163,
+      "faithfulness": 1.0,
+      "claims": 16,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r14",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1124.4069159729406,
+      "answer_ms": 35449.65629209764,
+      "faithfulness": 1.0,
+      "claims": 28,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r15",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.6666666666666666,
+        "8": 1.0
+      },
+      "retrieval_ms": 587.3238749336451,
+      "answer_ms": 36821.15400000475,
+      "faithfulness": 1.0,
+      "claims": 26,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r16",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.5,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 1026.971166022122,
+      "answer_ms": 39799.92379201576,
+      "faithfulness": 0.9259259259259259,
+      "claims": 27,
+      "unsupported_claims": [
+        "The 'Noted' status for recommendation 148.14 indicates that Nigeria did not accept it in the UPR context at that time.",
+        "Recommendation 148.61 is a political commitment to support Security Council action against atrocity crimes rather than a treaty ratification or domestic legal reform measure."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r17",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.6666666666666666,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 828.124750056304,
+      "answer_ms": 35000.92275009956,
+      "faithfulness": 0.918918918918919,
+      "claims": 37,
+      "unsupported_claims": [
+        "The relevant Act establishing the National Commission for Persons with Disabilities is the 2018 Act.",
+        "The recommendations include last-resort relocation only with due-process safeguards.",
+        "UPR Supported status indicates Nigeria\u2019s position on the recommendation, not evidence of implementation."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r18",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.5,
+        "5": 0.75,
+        "8": 1.0
+      },
+      "retrieval_ms": 808.8228330016136,
+      "answer_ms": 34764.751542010345,
+      "faithfulness": 0.95,
+      "claims": 20,
+      "unsupported_claims": [
+        "Recommendation 148.42 is relevant to education."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r19",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.8,
+        "8": 1.0
+      },
+      "retrieval_ms": 1210.6420840136707,
+      "answer_ms": 31332.40529196337,
+      "faithfulness": 0.96,
+      "claims": 25,
+      "unsupported_claims": [
+        "The mechanism is the UN Subcommittee on Prevention of Torture and Other Cruel, Inhuman or Degrading Treatment or Punishment (SPT)."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r20",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.25,
+        "3": 0.75,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 919.9998750118539,
+      "answer_ms": 42000.61387498863,
+      "faithfulness": 0.9090909090909091,
+      "claims": 33,
+      "unsupported_claims": [
+        "The SR IDPs (2015) recommended linking housing and food assistance to registration and profiling.",
+        "The SR IDPs (2015) recommended ensuring support reaches unregistered IDPs in need of housing, food and other essential needs.",
+        "The SR IDPs (2015) recommended giving high priority to psychosocial care as part of the specific health-care needs of vulnerable groups."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "r21",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "retrieval_ms": 946.4407920604572,
+      "answer_ms": 22245.78916700557,
+      "faithfulness": 1.0,
+      "claims": 26,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "r22",
+      "kind": "research",
+      "route": "research",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.8,
+        "8": 1.0
+      },
+      "retrieval_ms": 589.4062080187723,
+      "answer_ms": 36819.88049997017,
+      "faithfulness": 1.0,
+      "claims": 25,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "c01",
+      "kind": "compare",
+      "route": "compare",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.6,
+        "8": 0.6
+      },
+      "retrieval_ms": 863.7444999767467,
+      "answer_ms": 49075.10145800188,
+      "faithfulness": 0.9,
+      "claims": 80,
+      "unsupported_claims": [
+        "Ukraine's WG Disappearances 2019 entry is framed around conflict.",
+        "CED is a treaty body.",
+        "Mexico's recommending actors include CED.",
+        "Ukraine's recommending actors are thematic special procedures.",
+        "Ukraine's framing is tied to conflict.",
+        "Mexico visible themes cluster around torture prevention.",
+        "Ukraine visible themes cluster around conflict.",
+        "Ukraine visible themes cluster around IDP protection."
+      ],
+      "context_docs": 6
+    },
+    {
+      "id": "c02",
+      "kind": "compare",
+      "route": "compare",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.6,
+        "8": 0.6
+      },
+      "retrieval_ms": 799.1971250157803,
+      "answer_ms": 65775.64970799722,
+      "faithfulness": 0.9076923076923077,
+      "claims": 65,
+      "unsupported_claims": [
+        "Both Brazil and Colombia have been asked, through CERD and UPR processes, to strengthen efforts against racial discrimination.",
+        "The visible recommendation excerpts are all labelled under the broader theme \u201cRacial discrimination.\u201d",
+        "Brazil\u2019s UPR 2017 recommendation from Colombia is a peer recommendation from a Global South State.",
+        "Both Brazil and Colombia are subject to CERD recommendations tagged to racial discrimination or related implementation measures.",
+        "The records are tagged under the broader theme \u201cRacial discrimination.\u201d",
+        "Colombia\u2019s 2025 Special Procedures record is relevant primarily through intersectional equality/non-discrimination themes."
+      ],
+      "context_docs": 6
+    },
+    {
+      "id": "c03",
+      "kind": "compare",
+      "route": "compare",
+      "recall": {
+        "1": 0.16666666666666666,
+        "3": 0.5,
+        "5": 0.8333333333333334,
+        "8": 0.8333333333333334
+      },
+      "retrieval_ms": 890.5920420074835,
+      "answer_ms": 41666.69833299238,
+      "faithfulness": 1.0,
+      "claims": 32,
+      "unsupported_claims": [],
+      "context_docs": 6
+    },
+    {
+      "id": "c04",
+      "kind": "compare",
+      "route": "compare",
+      "recall": {
+        "1": 0.2,
+        "3": 0.6,
+        "5": 0.6,
+        "8": 0.6
+      },
+      "retrieval_ms": 769.68154089991,
+      "answer_ms": 52625.19341695588,
+      "faithfulness": 0.9344262295081968,
+      "claims": 61,
+      "unsupported_claims": [
+        "Kenya\u2019s data include UN human rights mechanisms.",
+        "The Working Group entry is a UN Working Group.",
+        "The Working Group entry is relevant to business-related exploitation.",
+        "The CRC entry is the Committee on the Rights of the Child."
+      ],
+      "context_docs": 6
+    },
+    {
+      "id": "a01",
+      "kind": "advisory",
+      "route": "advisory",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.3333333333333333,
+        "5": 0.6666666666666666,
+        "8": 0.6666666666666666
+      },
+      "retrieval_ms": 1717.6620840327814,
+      "answer_ms": 43376.89833296463,
+      "faithfulness": 1.0,
+      "claims": 14,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "a02",
+      "kind": "advisory",
+      "route": "advisory",
+      "recall": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.3333333333333333
+      },
+      "retrieval_ms": 825.8906250121072,
+      "answer_ms": 45323.71937506832,
+      "faithfulness": 1.0,
+      "claims": 31,
+      "unsupported_claims": [],
+      "context_docs": 8
+    },
+    {
+      "id": "a03",
+      "kind": "advisory",
+      "route": "advisory",
+      "recall": {
+        "1": 0.0,
+        "3": 0.5,
+        "5": 0.75,
+        "8": 1.0
+      },
+      "retrieval_ms": 907.5224580010399,
+      "answer_ms": 41805.449415929615,
+      "faithfulness": 0.9444444444444444,
+      "claims": 18,
+      "unsupported_claims": [
+        "The SR IDPs (2015) recommendation included maintaining primary health care and psychosocial care."
+      ],
+      "context_docs": 8
+    },
+    {
+      "id": "a04",
+      "kind": "advisory",
+      "route": "advisory",
+      "recall": {
+        "1": 0.3333333333333333,
+        "3": 0.3333333333333333,
+        "5": 0.6666666666666666,
+        "8": 1.0
+      },
+      "retrieval_ms": 780.9812079649419,
+      "answer_ms": 51801.99900001753,
+      "faithfulness": 1.0,
+      "claims": 37,
+      "unsupported_claims": [],
+      "context_docs": 8
+    }
+  ]
+}

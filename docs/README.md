@@ -49,6 +49,7 @@ docs/
 - [Configuration](development/CONFIGURATION.md) - Environment variables
 - [Architecture](architecture/ARCHITECTURE.md) - System design overview
 - [API Reference](reference/API.md) - REST endpoints
+- [Evaluation](reference/EVALS.md) - retrieval recall, faithfulness and latency on 30 labelled questions
 
   ### I'm an Operator/DevOps
   - **[Cloudflare Deployment](deployment/CLOUDFLARE.md)** - **Start here** for the current setup

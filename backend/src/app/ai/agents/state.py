@@ -46,6 +46,10 @@ class AgentState(BaseModel):
         default_factory=list,
         description="Formatted source citations",
     )
+    context_docs: list[str] = Field(
+        default_factory=list,
+        description="Document text placed in agent prompts; what answers should be grounded in",
+    )
 
     # Agent routing
     next_agent: Literal["research", "advisory", "compare", "supervisor", "end"] = Field(

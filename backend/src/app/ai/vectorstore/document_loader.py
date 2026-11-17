@@ -32,7 +32,7 @@ class UHRIDocumentLoader:
         else:
             raw_data = await self.client.fetch_full_dataset()
 
-        return self._convert_to_documents(raw_data)
+        return self.to_documents(raw_data)
 
     async def load_sample(self, limit: int = 100) -> list[Document]:
         """Load a sample of UHRI data.
@@ -48,9 +48,9 @@ class UHRIDocumentLoader:
         else:
             raw_data = await self.client.fetch_sample_data(limit)
 
-        return self._convert_to_documents(raw_data)
+        return self.to_documents(raw_data)
 
-    def _convert_to_documents(self, records: list[dict]) -> list[Document]:
+    def to_documents(self, records: list[dict]) -> list[Document]:
         """Convert UHRI records to LangChain Documents.
 
         Args:
