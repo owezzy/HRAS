@@ -1,11 +1,12 @@
 """Admin routes for data ingestion and management."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from src.app.core.security import require_admin
 from src.app.services.chat_service import get_ingestion_service
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(prefix="/admin", tags=["Admin"], dependencies=[Depends(require_admin)])
 
 
 class IngestRequest(BaseModel):

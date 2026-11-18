@@ -46,6 +46,7 @@ service directory:
 | Service | Secret | Purpose |
 |---------|--------|---------|
 | backend | `LLM_API_KEY` | DeepSeek API key |
+| backend | `ADMIN_API_KEY` | Sent as `X-Admin-Key` to the admin and conversation endpoints. Without it they refuse every request. Generate with `openssl rand -hex 32` |
 | backend | `EMBEDDING_API_KEY` | Workers AI API token |
 | backend | `EMBEDDING_BASE_URL` | `https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1` |
 | backend | `LANGSMITH_API_KEY` | Only when `USE_LANGSMITH_TRACING` is `true` |

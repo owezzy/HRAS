@@ -7,6 +7,7 @@ import os
 os.environ["USE_LANGSMITH_TRACING"] = "false"
 
 os.environ.setdefault("LLM_API_KEY", "test-key")
+os.environ.setdefault("ADMIN_API_KEY", "test-admin-key")
 
 from collections.abc import AsyncGenerator
 from typing import Any
@@ -34,6 +35,7 @@ async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
+        headers={"X-Admin-Key": "test-admin-key"},
     ) as ac:
         yield ac
 

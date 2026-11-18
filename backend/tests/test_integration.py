@@ -39,6 +39,7 @@ async def integration_client(integration_app):
     async with AsyncClient(
         transport=ASGITransport(app=integration_app),
         base_url="http://test",
+        headers={"X-Admin-Key": "test-admin-key"},
     ) as client:
         yield client
 
