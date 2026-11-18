@@ -25,6 +25,7 @@ async def client(app):
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
+        headers={"X-Admin-Key": "test-admin-key"},
     ) as ac:
         yield ac
 

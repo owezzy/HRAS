@@ -29,7 +29,7 @@
 			"tag": "v1"
 		}
 	],
-	// Secrets (`npx wrangler secret put <NAME>`): LLM_API_KEY, EMBEDDING_API_KEY, EMBEDDING_BASE_URL, LANGSMITH_API_KEY
+	// Secrets (`npx wrangler secret put <NAME>`): LLM_API_KEY, ADMIN_API_KEY, EMBEDDING_API_KEY, EMBEDDING_BASE_URL, LANGSMITH_API_KEY
 	"vars": {
 		"APP_ENV": "production",
 		"AUTO_INGEST_ON_EMPTY": "true",

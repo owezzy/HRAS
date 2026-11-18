@@ -232,17 +232,18 @@ backend-format:
 # Data Management
 # =============================================================================
 
+# The admin endpoints need the key the backend has in ADMIN_API_KEY; export it first.
 ingest:
 	@echo "Ingesting UHRI data into vector store..."
-	curl -X POST http://localhost:8000/api/v1/admin/ingest
+	curl -X POST -H "X-Admin-Key: $$ADMIN_API_KEY" http://localhost:8000/api/v1/admin/ingest
 
 ingest-clear:
 	@echo "Clearing and re-ingesting UHRI data..."
-	curl -X POST "http://localhost:8000/api/v1/admin/ingest?clear_existing=true"
+	curl -X POST -H "X-Admin-Key: $$ADMIN_API_KEY" "http://localhost:8000/api/v1/admin/ingest?clear_existing=true"
 
 db-stats:
 	@echo "Fetching vector store statistics..."
-	curl -s http://localhost:8000/api/v1/admin/stats | python3 -m json.tool
+	curl -s -H "X-Admin-Key: $$ADMIN_API_KEY" http://localhost:8000/api/v1/admin/stats | python3 -m json.tool
 
 # =============================================================================
 # Database Management

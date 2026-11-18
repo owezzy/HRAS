@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app.core.config import get_settings
 from src.app.core.database import get_db
+from src.app.core.security import require_admin
 from src.app.repositories.conversation import ConversationRepository
 from src.app.schemas.chat import (
     ConversationListItem,
@@ -14,7 +15,8 @@ from src.app.schemas.chat import (
     SourceResponse,
 )
 
-router = APIRouter(prefix="/conversations", tags=["Conversations"])
+# Conversations have no owner yet, so reading or deleting them is an admin task.
+router = APIRouter(prefix="/conversations", tags=["Conversations"], dependencies=[Depends(require_admin)])
 settings = get_settings()
 
 

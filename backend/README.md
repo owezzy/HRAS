@@ -34,11 +34,13 @@ PYTHONPATH=. uv run uvicorn src.app.main:app --reload
 | `GET` | `/health` | Health check - verify server status |
 | `GET` | `/` | Welcome message |
 | `POST` | `/api/v1/chat` | Process chat message through RAG pipeline |
-| `GET` | `/api/v1/conversations` | List conversations (requires `use_postgres` flag) |
-| `GET` | `/api/v1/conversations/{id}` | Get conversation by ID |
-| `DELETE` | `/api/v1/conversations/{id}` | Delete conversation |
-| `POST` | `/api/v1/admin/ingest` | Ingest documents into vector store |
-| `GET` | `/api/v1/admin/stats` | Get vector store statistics |
+| `GET` | `/api/v1/conversations` | List conversations (admin key; requires `use_postgres` flag) |
+| `GET` | `/api/v1/conversations/{id}` | Get conversation by ID (admin key) |
+| `DELETE` | `/api/v1/conversations/{id}` | Delete conversation (admin key) |
+| `POST` | `/api/v1/admin/ingest` | Ingest documents into vector store (admin key) |
+| `GET` | `/api/v1/admin/stats` | Get vector store statistics (admin key) |
+
+Endpoints marked "admin key" need an `X-Admin-Key` header that matches `ADMIN_API_KEY` on the server. Without that setting they refuse every request.
 
 ### Chat Endpoint
 
