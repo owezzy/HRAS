@@ -89,7 +89,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ### Production (.env.production)
 ```env
-NEXT_PUBLIC_API_URL=https://backend-production-f15e.up.railway.app
+NEXT_PUBLIC_API_URL=https://hras-api.owenadirah.com
 ```
 
 ## Code Style
